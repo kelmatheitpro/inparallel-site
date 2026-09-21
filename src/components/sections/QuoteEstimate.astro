@@ -1,0 +1,313 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import {
+  QUOTE_PACKAGES,
+  QUOTE_ADDONS,
+  QUOTE_RATES,
+  QUOTE_CURRENCY,
+  QUOTE_LOCALE,
+  QUOTE_NOTE,
+  QUOTE_WITHIN,
+} from "@/data/services.ts";
+
+interface Props {
+  /** Which package the estimator opens on. Defaults to the first. */
+  initial?: string;
+}
+
+const { initial } = Astro.props;
+
+const opening =
+  QUOTE_PACKAGES.find((item) => item.id === initial) ?? QUOTE_PACKAGES[0]!;
+---
+
+{
+  /* The page promises a fixed price inside a day, so it answers with a number
+     here rather than sending the visitor to a form to find one out. */
+}
+<Section id="estimate" theme="dark" containerClass="container-narrow">
+  <div class="section-head">
+    <Heading tag="h2" class="heading-split">
+      Price it yourself. <em>Then hold us to it.</em>
+    </Heading>
+  </div>
+
+  <div
+    class="quote surface surface-raised"
+    data-quote
+    data-currency={QUOTE_CURRENCY}
+    data-locale={QUOTE_LOCALE}
+    data-per-page={QUOTE_RATES.perPage}
+    data-per-collection={QUOTE_RATES.perCollection}
+    data-spread={QUOTE_RATES.spread}
+  >
+    <div class="quote_inputs">
+      <label class="quote_field">
+        <span class="quote_label">What you need</span>
+        <select class="quote_control" data-quote-package>
+          {
+            QUOTE_PACKAGES.map((item) => (
+              <option
+                value={item.id}
+                selected={item.id === opening.id}
+                data-base={item.base}
+                data-unit={item.unit}
+                data-pages={item.pagesIncluded}
+                data-collections={item.collectionsIncluded}
+                data-days-min={item.days[0]}
+                data-days-max={item.days[1]}
+                data-summary={item.summary}
+              >
+                {item.name}
+              </option>
+            ))
+          }
+        </select>
+        <span class="quote_hint" data-quote-summary>{opening.summary}</span>
+      </label>
+
+      <div class="quote_scope" data-quote-scope>
+        <label class="quote_field">
+          <span class="quote_label">Pages</span>
+          <input
+            class="quote_control"
+            type="number"
+            min="1"
+            max="200"
+            step="1"
+            inputmode="numeric"
+            value={opening.pagesIncluded}
+            data-quote-pages
+          />
+          <span class="quote_hint" data-quote-pages-note></span>
+        </label>
+
+        <label class="quote_field">
+          <span class="quote_label">CMS collections</span>
+          <input
+            class="quote_control"
+            type="number"
+            min="0"
+            max="50"
+            step="1"
+            inputmode="numeric"
+            value={opening.collectionsIncluded}
+            data-quote-collections
+          />
+          <span class="quote_hint" data-quote-collections-note></span>
+        </label>
+      </div>
+
+      <fieldset class="quote_addons">
+        <legend class="quote_label">Anything else?</legend>
+        {
+          QUOTE_ADDONS.map((addOn) => (
+            <label class="quote_addon">
+              <input
+                type="checkbox"
+                data-quote-addon
+                data-price={addOn.price}
+                data-days={addOn.days}
+              />
+              <span class="quote_addon_body">
+                <span class="quote_addon_label">{addOn.label}</span>
+                <span class="quote_hint">{addOn.note}</span>
+              </span>
+            </label>
+          ))
+        }
+      </fieldset>
+    </div>
+
+    <div class="quote_out">
+      <div class="quote_figures">
+        <div class="stat quote_stat">
+          <span class="stat_value" data-quote-total>—</span>
+          <span class="stat_label" data-quote-unit>for the project</span>
+        </div>
+        <div class="stat quote_stat">
+          <span class="stat_value" data-quote-timeline>—</span>
+          <span class="stat_label" data-quote-timeline-label>
+            start to handover
+          </span>
+        </div>
+      </div>
+
+      {
+        QUOTE_PACKAGES.map((item) => (
+          <ul
+            class="quote_includes"
+            data-quote-includes={item.id}
+            hidden={item.id !== opening.id}
+          >
+            {item.includes.map((line) => (
+              <li>{line}</li>
+            ))}
+          </ul>
+        ))
+      }
+
+      <a class="cta quote_cta" href="/contact">
+        Get a fixed quote in {QUOTE_WITHIN}
+      </a>
+    </div>
+  </div>
+
+  <Paragraph class="text-muted quote_note">{QUOTE_NOTE}</Paragraph>
+</Section>
+
+<style is:global>
+  @layer components {
+    .quote {
+      width: 100%;
+      display: grid;
+      gap: var(--space-8);
+      grid-template-columns: repeat(auto-fit, minmax(min(19rem, 100%), 1fr));
+      padding: var(--space-7);
+    }
+
+    /* ---- inputs --------------------------------------------------------- */
+    .quote_inputs {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-5);
+    }
+
+    .quote_field {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .quote_label {
+      font-size: var(--text-small);
+      color: var(--text-muted);
+    }
+
+    .quote_control {
+      width: 100%;
+      padding: var(--space-4);
+      background-color: rgb(0 0 0 / 0.2);
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius-main);
+      color: var(--text);
+      font-size: var(--text-main);
+      &:focus-visible {
+        border-color: var(--brand-300);
+      }
+    }
+
+    .quote_hint {
+      color: var(--text-faded);
+      font-size: var(--text-tiny);
+      line-height: var(--line-height-large);
+    }
+
+    /* Two counts sit side by side until the panel is too narrow to hold both
+       and the labels start wrapping. */
+    .quote_scope {
+      display: grid;
+      gap: var(--space-4);
+      grid-template-columns: repeat(auto-fit, minmax(min(8rem, 100%), 1fr));
+    }
+
+    .quote_scope[hidden] {
+      display: none;
+    }
+
+    .quote_addons {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    .quote_addon {
+      display: flex;
+      align-items: start;
+      gap: var(--space-3);
+      cursor: pointer;
+    }
+
+    .quote_addon input {
+      margin-top: 0.2rem;
+      accent-color: var(--brand-500);
+      flex-shrink: 0;
+    }
+
+    .quote_addon_body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .quote_addon_label {
+      font-size: var(--text-small);
+      font-weight: var(--primary-medium);
+    }
+
+    /* ---- outcome -------------------------------------------------------- */
+    .quote_out {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+      justify-content: center;
+    }
+
+    .quote_figures {
+      display: grid;
+      gap: var(--space-5);
+      grid-template-columns: repeat(auto-fit, minmax(min(10rem, 100%), 1fr));
+    }
+
+    .quote_stat {
+      --_stat-size: var(--h4);
+    }
+
+    .quote_includes {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+
+    /* `hidden` is a UA style, so the `display` above would beat it. Restated
+       as an author rule, the same way `.tabs_panel` does. */
+    .quote_includes[hidden] {
+      display: none;
+    }
+
+    .quote_includes li {
+      padding-left: var(--space-5);
+      background-image: linear-gradient(var(--brand-300), var(--brand-300));
+      background-repeat: no-repeat;
+      background-size: 0.375rem 0.375rem;
+      background-position: 0 0.55em;
+    }
+
+    /* The shared button, stretched to the panel's width. */
+    .quote_cta {
+      width: 100%;
+    }
+
+    .quote_note {
+      max-width: var(--max-width-small);
+      font-size: var(--text-small);
+    }
+
+    @media (width < 48rem) {
+      .quote {
+        padding: var(--space-6);
+      }
+    }
+  }
+</style>

@@ -1,0 +1,124 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import { TEAM, TEAM_LEAD } from "@/data/services.ts";
+---
+
+{
+  /* For a studio of two this is the advantage, not the disclosure, so it is
+     stated in the heading rather than buried on an about page.
+
+     TODO: photographs. Import them the way `about.ts` does and drop them in
+     place of the initials — the layout already reserves the square. */
+}
+<Section theme="dark" containerClass="container-narrow">
+  <div class="section-head" data-reveal>
+    <Heading tag="h2" class="heading-split">
+      You talk to the people <em>who build your site.</em>
+    </Heading>
+    <Paragraph class="text-muted us_lead">{TEAM_LEAD}</Paragraph>
+  </div>
+
+  <ul class="us grid-cards" data-reveal>
+    {
+      TEAM.map((person) => (
+        <li class="us_person surface surface-raised">
+          <span class="us_avatar" aria-hidden="true">
+            {person.name.slice(0, 1)}
+          </span>
+          <div class="us_body">
+            <h3 class="us_name">{person.name}</h3>
+            <p class="us_role">{person.role}</p>
+            <p class="us_text">{person.text}</p>
+            <a
+              class="us_link"
+              href={person.href}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              {person.name} on LinkedIn
+            </a>
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+</Section>
+
+<style is:global>
+  @layer components {
+    .us_lead {
+      max-width: 28rem;
+      font-size: var(--text-small);
+    }
+
+    .us {
+      --_min: 20rem;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .us_person {
+      display: flex;
+      gap: var(--space-5);
+      align-items: start;
+      padding: var(--space-6);
+    }
+
+    /* The square is the photograph's place. Until there is one it holds an
+       initial rather than collapsing, so the row doesn't reflow later. */
+    .us_avatar {
+      display: grid;
+      place-items: center;
+      width: 4.5rem;
+      height: 4.5rem;
+      flex-shrink: 0;
+      background-color: var(--dark-850);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: var(--radius-card);
+      color: var(--brand-300);
+      font-size: var(--h5);
+      font-weight: var(--primary-semibold);
+    }
+
+    .us_body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .us_name {
+      font-size: var(--h6);
+      font-weight: var(--primary-semibold);
+    }
+
+    .us_role {
+      color: var(--brand-300);
+      font-size: var(--text-tiny);
+      letter-spacing: var(--letter-spacing-wide);
+      text-transform: uppercase;
+    }
+
+    .us_text {
+      margin-top: var(--space-2);
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+
+    .us_link {
+      margin-top: var(--space-2);
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      text-underline-offset: 0.25em;
+      @media (hover: hover) {
+        &:hover {
+          color: var(--link-text-hover);
+        }
+      }
+    }
+  }
+</style>

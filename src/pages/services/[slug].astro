@@ -1,0 +1,89 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import ServicesHero from "@/components/sections/ServicesHero.astro";
+import ProofStrip from "@/components/sections/ProofStrip.astro";
+import LaneClients from "@/components/sections/LaneClients.astro";
+import LaneProblem from "@/components/sections/LaneProblem.astro";
+import LaneCapabilities from "@/components/sections/LaneCapabilities.astro";
+import LaneCredentials from "@/components/sections/LaneCredentials.astro";
+import LaneProcess from "@/components/sections/LaneProcess.astro";
+import LaneNumbers from "@/components/sections/LaneNumbers.astro";
+import AlwaysIncluded from "@/components/sections/AlwaysIncluded.astro";
+import Reviews from "@/components/sections/Reviews.astro";
+import CleanBuild from "@/components/sections/CleanBuild.astro";
+import Handover from "@/components/sections/Handover.astro";
+import Automations from "@/components/sections/Automations.astro";
+import QuoteEstimate from "@/components/sections/QuoteEstimate.astro";
+import ServicesFaq from "@/components/sections/ServicesFaq.astro";
+import ClosingCta from "@/components/sections/ClosingCta.astro";
+import { LANE_PAGES } from "@/data/lanes.ts";
+
+export function getStaticPaths() {
+  return LANE_PAGES.map((lane) => ({
+    params: { slug: lane.slug },
+    props: { lane },
+  }));
+}
+
+const { lane } = Astro.props;
+
+/**
+ * The one section each lane gets that the others don't. A page arguing for a
+ * retainer and a page arguing for a build are not short of the same thing.
+ */
+const extra = {
+  build: "navigator",
+  launch: "handover",
+  plus: "automations",
+} as const;
+
+const only = extra[lane.id as keyof typeof extra];
+---
+
+<Layout theme="light" overlap title={lane.name} description={lane.description}>
+  <ServicesHero
+    variant="both"
+    mark={lane.slug}
+    title={lane.hero.title}
+    titleMuted={lane.hero.titleMuted}
+    lead={lane.hero.lead}
+  />
+  <ProofStrip />
+
+  {
+    /* Who we've done it for, then their situation, then what it takes to
+      fix it — the grid answers the problem while the problem is still on
+      screen, rather than after two sections of something else. */
+  }
+  <LaneClients
+    services={lane.proofServices}
+    title="Who we built for,"
+    titleMuted="and what moved."
+  />
+  <LaneProblem problem={lane.problem} />
+  <LaneCapabilities
+    capabilities={lane.capabilities}
+    title="What that takes."
+    titleMuted="All of it included."
+  />
+
+  {only === "navigator" && <CleanBuild />}
+  {only === "handover" && <Handover variant="cards" />}
+  {only === "automations" && <Automations />}
+
+  <AlwaysIncluded />
+  <LaneCredentials />
+  <LaneProcess title={lane.processTitle} titleMuted={lane.processTitleMuted} />
+
+  <Reviews />
+  <LaneNumbers
+    services={lane.proofServices}
+    title="The work,"
+    titleMuted="with the numbers attached."
+    lead="Every figure below is lifted from the case study it belongs to. Click one and you can read how it happened."
+  />
+
+  <QuoteEstimate initial={lane.id} />
+  <ServicesFaq items={lane.faq} />
+  <ClosingCta />
+</Layout>

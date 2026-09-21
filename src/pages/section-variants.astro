@@ -1,0 +1,48 @@
+---
+/**
+ * TEMPORARY. Four replacements for the Navigator comparison, stacked so they
+ * can be compared. Delete this file once one is chosen.
+ */
+import Layout from "@/layouts/BaseLayout.astro";
+import Handover from "@/components/sections/Handover.astro";
+import CleanBuild from "@/components/sections/CleanBuild.astro";
+
+const variants = ["cards", "ledger", "editor", "promise"] as const;
+---
+
+<Layout theme="dark" title="Section variants" description="Scratch page.">
+  <div class="variant" id="current">
+    <p class="variant_tag">sada (Navigator)</p>
+    <CleanBuild />
+  </div>
+
+  {
+    variants.map((variant) => (
+      <div class="variant" id={variant}>
+        <p class="variant_tag">{variant}</p>
+        <Handover variant={variant} />
+      </div>
+    ))
+  }
+</Layout>
+
+<style is:global>
+  .variant {
+    position: relative;
+  }
+  .variant_tag {
+    position: absolute;
+    top: 1rem;
+    left: 1.5rem;
+    z-index: 5;
+    padding: 0.35rem 0.75rem;
+    background: #000;
+    color: #fff;
+    border-radius: 0.5rem;
+    font:
+      600 0.75rem/1 ui-monospace,
+      monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+</style>

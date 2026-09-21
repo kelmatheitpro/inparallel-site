@@ -1,0 +1,136 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import { STEPS } from "@/data/services.ts";
+
+interface Props {
+  title?: string;
+  titleMuted?: string;
+}
+
+const { title = "How a project runs.", titleMuted = "No decks about decks." } =
+  Astro.props;
+---
+
+<Section theme="light" containerClass="container-narrow">
+  <div class="section-head" data-reveal>
+    <Heading tag="h2" class="heading-split inline">
+      {title}{" "}
+      <em>{titleMuted}</em>
+    </Heading>
+  </div>
+
+  {
+    /* Four steps, and each one names what the client is actually holding when
+       it ends — a step with no output is a status meeting with a number on it. */
+  }
+  <ol class="run" data-reveal>
+    {
+      STEPS.map((step, index) => (
+        <li class="run_step">
+          <p class="runstep_number" aria-hidden="true">
+            {String(index + 1).padStart(2, "0")}
+          </p>
+          <div class="runstep_body">
+            <h3 class="runstep_title">{step.title}</h3>
+            <p class="runstep_text">{step.text}</p>
+            <ul
+              class="runstep_deliverables"
+              aria-label={`${step.title} deliverables`}
+            >
+              {step.deliverables.map((item) => (
+                <li class="pill-tag">{item}</li>
+              ))}
+            </ul>
+          </div>
+          <p class="runstep_output">{step.output}</p>
+        </li>
+      ))
+    }
+  </ol>
+</Section>
+
+<style is:global>
+  @layer components {
+    /* Four steps read as a sequence rather than as four cards, so they share
+       one rule down the page and the number sits on it. */
+    .run {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: none;
+    }
+
+    .run_step {
+      display: grid;
+      gap: var(--space-4) var(--space-6);
+      grid-template-columns: 4rem minmax(0, 1fr) minmax(0, 14rem);
+      align-items: start;
+      padding-block: var(--space-6);
+      border-top: var(--border-width) solid var(--border-soft);
+    }
+
+    .run_step:last-child {
+      border-bottom: var(--border-width) solid var(--border-soft);
+    }
+
+    .runstep_number {
+      font-size: var(--h5);
+      font-weight: var(--primary-semibold);
+      font-variant-numeric: tabular-nums;
+      color: var(--brand-500);
+      line-height: var(--line-height-large);
+    }
+
+    .runstep_body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .runstep_title {
+      font-size: var(--h6);
+      font-weight: var(--primary-medium);
+    }
+
+    .runstep_text {
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+
+    /* A step nobody can itemise is a meeting with a number on it, so each one
+       names the work inside it rather than only what comes out. */
+    .runstep_deliverables {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: var(--space-2) 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .runstep_output {
+      justify-self: end;
+      padding: 0.4375rem 0.875rem;
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius-round);
+      color: var(--text-muted);
+      font-size: var(--text-tiny);
+      text-align: center;
+    }
+
+    @media (width < 48rem) {
+      .run_step {
+        grid-template-columns: 2.5rem minmax(0, 1fr);
+      }
+      .runstep_output {
+        grid-column: 2;
+        justify-self: start;
+      }
+    }
+  }
+</style>

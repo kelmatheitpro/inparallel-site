@@ -2,10 +2,15 @@
   margin-bottom: var(--_margin-bottom);
 }
 
-.heading,
 .text {
   margin-top: var(--_margin-top);
   max-width: var(--_mw, none);
+}
+
+.heading {
+  margin-top: 0;
+  max-width: var(--_mw, none);
+  padding-top: var(--space-4);
 }
 
 .heading + .text {

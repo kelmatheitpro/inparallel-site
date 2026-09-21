@@ -1,0 +1,227 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Img from "@/components/Img.astro";
+import ArrowLink from "@/components/inparallel/ArrowLink.astro";
+import { getProjects } from "@/utils/content.ts";
+import { REVIEWS } from "@/data/home.ts";
+
+/* Each study carries its own numbers and the list of what we actually did, so
+   the card is assembled from the case study rather than written again here —
+   a result can't drift from the write-up it came from. The quote is matched by
+   client, and a study without one simply runs without it. */
+interface Props {
+  /**
+   * Only show studies that list one of these under `services`. A lane's page
+   * proves itself with the work that actually used it; the hub shows all of it.
+   */
+  services?: string[];
+  title?: string;
+  titleMuted?: string;
+}
+
+const {
+  services,
+  title = "Every project,",
+  titleMuted = "measured by what moved.",
+} = Astro.props;
+
+const all = await getProjects();
+const projects = services?.length
+  ? all.filter((project) =>
+      project.data.services.some((used) => services.includes(used)),
+    )
+  : all;
+
+const quoteFor = (id: string) => REVIEWS.find((review) => review.id === id);
+---
+
+<Section theme="dark" containerClass="container-narrow">
+  <div class="section-head" data-reveal>
+    <Heading tag="h2" class="heading-split inline">
+      {title}{" "}
+      <em>{titleMuted}</em>
+    </Heading>
+    <ArrowLink href="/work" class="proofs_all">See all work</ArrowLink>
+  </div>
+
+  <ul class="proofs grid-cards" data-reveal>
+    {
+      projects.map((project) => {
+        const { data } = project;
+        const review = quoteFor(project.id);
+        /* Two is what a card can carry before the numbers stop competing. */
+        const results = data.results.slice(0, 2);
+
+        return (
+          <li class="proof-card surface surface-raised">
+            <div class="proof-card_top">
+              <span class="logo-chip">
+                <Img
+                  src={data.logo}
+                  alt={data.client}
+                  class="logo-chip_mark"
+                  transparent
+                />
+              </span>
+              <p class="proof-card_who">
+                <span class="proof-card_client">{data.client}</span>
+                <span class="proof-card_industry">{data.industry}</span>
+              </p>
+            </div>
+
+            {review ? (
+              <blockquote class="proof-card_quote">
+                “{review.quote}”
+                <footer class="proof-card_attrib">
+                  {review.role}, {data.client}
+                </footer>
+              </blockquote>
+            ) : (
+              <p class="proof-card_summary">{data.summary}</p>
+            )}
+
+            <dl class="proof-card_results">
+              {results.map((result) => (
+                <div class="stat proof-card_stat">
+                  <dt class="sr-only">{result.label}</dt>
+                  <dd class="stat_value">{result.value}</dd>
+                  <dd class="stat_label">{result.label}</dd>
+                </div>
+              ))}
+            </dl>
+
+            <div class="proof-card_foot">
+              <ul class="proof-card_services" aria-label="What we did">
+                {data.services.slice(0, 3).map((service) => (
+                  <li class="pill-tag">{service}</li>
+                ))}
+              </ul>
+              <ArrowLink href={`/work/${project.id}`} diagonal>
+                Read the case study
+              </ArrowLink>
+            </div>
+          </li>
+        );
+      })
+    }
+  </ul>
+</Section>
+
+<style is:global>
+  @layer components {
+    .proofs_all {
+      flex: none;
+    }
+
+    .proofs {
+      --_min: 22rem;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .proof-card {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-5);
+      padding: var(--space-6);
+    }
+
+    .proof-card_top {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+    }
+
+    .proof-card_who {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+
+    .proof-card_client {
+      font-weight: var(--primary-semibold);
+    }
+
+    .proof-card_industry {
+      color: var(--text-faded);
+      font-size: var(--text-tiny);
+    }
+
+    .proof-card_quote {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+      text-wrap: pretty;
+    }
+
+    .proof-card_summary {
+      /* An unquoted study still has to fill the same slot, so the lead is
+         clamped to roughly the height a quote occupies. */
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+
+    .proof-card_attrib {
+      margin-top: var(--space-3);
+      color: var(--text-faded);
+      font-size: var(--text-tiny);
+    }
+
+    /* The numbers are the point of the card, so they get the space a heading
+       would and sit above the fold of it. */
+    .proof-card_results {
+      display: grid;
+      gap: var(--space-4);
+      grid-template-columns: repeat(auto-fit, minmax(min(8rem, 100%), 1fr));
+      margin: 0;
+      padding-block: var(--space-5);
+      border-block: var(--border-width) solid var(--border-soft);
+    }
+
+    .proof-card_stat {
+      --_stat-size: var(--h4);
+    }
+
+    /* The figure is the shared `.stat_value`; only its colour is this card's
+       business, and `--_stat-size` above is the hook the pattern documents. */
+    .proof-card_results .stat_value {
+      margin: 0;
+      color: var(--brand-300);
+    }
+
+    .proof-card_results .stat_label {
+      margin: 0;
+    }
+
+    .proof-card_foot {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      margin-top: auto;
+    }
+
+    .proof-card_services {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    @media (width < 48rem) {
+      .proof-card {
+        padding: var(--space-5);
+      }
+    }
+  }
+</style>

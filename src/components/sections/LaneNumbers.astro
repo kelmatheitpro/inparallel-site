@@ -1,0 +1,182 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import { getProjects } from "@/utils/content.ts";
+
+interface Props {
+  /** Only count results from studies that used one of these services. */
+  services: string[];
+  title: string;
+  titleMuted: string;
+  lead: string;
+}
+
+const { services, title, titleMuted, lead } = Astro.props;
+
+/* Every figure here is lifted from a case study's own `results`, so the section
+   can't drift from the write-up it came from — and a lane can only show the
+   numbers its own work produced. Four is what a row can carry before they stop
+   competing and start blurring. */
+const projects = await getProjects();
+const numbers = projects
+  .filter((project) =>
+    project.data.services.some((used) => services.includes(used)),
+  )
+  .flatMap((project) =>
+    project.data.results.map((result) => ({
+      ...result,
+      client: project.data.client,
+      slug: project.id,
+    })),
+  )
+  .slice(0, 4);
+---
+
+<Section
+  theme="dark"
+  containerClass="container-narrow"
+  class="figures"
+  render={numbers.length > 0}
+>
+  <div slot="background" class="figures_field" aria-hidden="true"></div>
+
+  <div class="section-head centered" data-reveal>
+    <div class="figures_intro">
+      <Heading tag="h2" class="heading-split figures_title">
+        {title}{" "}
+        <em>{titleMuted}</em>
+      </Heading>
+      <Paragraph class="text-muted figures_lead">{lead}</Paragraph>
+    </div>
+  </div>
+
+  <ul class="figures_grid" data-reveal>
+    {
+      numbers.map((number, index) => (
+        <li class:list={["figure", index === 1 && "is-brand"]}>
+          <p class="figure_value">{number.value}</p>
+          <div class="figure_body">
+            <p class="figure_label">{number.label}</p>
+            <a class="figure_client" href={`/work/${number.slug}`}>
+              {number.client}
+            </a>
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+</Section>
+
+<style is:global>
+  @layer components {
+    .figures {
+      overflow: clip;
+    }
+
+    .figures_field {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        60% 75% at 50% 110%,
+        color-mix(in srgb, var(--brand-500) 28%, transparent),
+        transparent 70%
+      );
+    }
+
+    .figures_intro {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      align-items: center;
+      margin-inline: auto;
+      max-width: var(--max-width-small);
+      text-align: center;
+    }
+
+    .figures_title {
+      text-wrap: balance;
+    }
+
+    .figures_lead {
+      font-size: var(--text-small);
+    }
+
+    .figures_grid {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      display: grid;
+      gap: var(--space-5);
+      grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr));
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .figure {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: var(--space-6);
+      min-height: 13rem;
+      padding: var(--space-6);
+      background-color: var(--background-raised);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: var(--radius-card);
+    }
+
+    /* One card carries the brand so the row has a centre of gravity. */
+    .figure.is-brand {
+      background-color: var(--brand-500);
+      border-color: transparent;
+    }
+
+    /* Not every result is a numeral — "From scratch" and "2 weeks" come out of
+       the same field — so the figure wraps and the long ones step down a size
+       rather than running off the card. */
+    .figure_value {
+      font-size: clamp(2rem, 4vw, 3.25rem);
+      font-weight: var(--primary-semibold);
+      letter-spacing: var(--letter-spacing-tighter);
+      line-height: 0.95;
+      text-wrap: balance;
+      overflow-wrap: break-word;
+      hyphens: auto;
+    }
+
+    .figure_body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .figure_label {
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+
+    .figure.is-brand .figure_label {
+      color: color-mix(in srgb, var(--light-100) 80%, transparent);
+    }
+
+    .figure_client {
+      color: var(--brand-300);
+      font-size: var(--text-tiny);
+      letter-spacing: var(--letter-spacing-wide);
+      text-transform: uppercase;
+      text-decoration: none;
+      @media (hover: hover) {
+        &:hover {
+          text-decoration: underline;
+          text-underline-offset: 0.25em;
+        }
+      }
+    }
+
+    .figure.is-brand .figure_client {
+      color: var(--light-100);
+    }
+  }
+</style>

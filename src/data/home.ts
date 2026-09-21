@@ -220,7 +220,7 @@ export interface Differentiator {
 export const DIFFERENTIATORS: Differentiator[] = [
   {
     icon: "target",
-    title: "Radical condor",
+    title: "Radical candor",
     text: "If it won't work, we say so — before the work starts, not after the invoice. Some clients hear no from us more than from their own board.",
   },
   {
@@ -258,8 +258,8 @@ export interface StudioCard {
 
 export const STUDIO_CARDS: StudioCard[] = [
   {
-    title: "Six people. Zero layers.",
-    text: "Design, copy, build and growth sit at the same table — yours. The people you meet on the first call are the people who ship.",
+    title: "Two people. Zero layers.",
+    text: "Design, copy, build and growth sit at the same table — yours. The two people you meet on the first call are the only two who touch your site.",
     linkLabel: "Meet the studio",
     href: "/about",
   },
@@ -367,10 +367,10 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
   {
     title: "Services",
     links: [
-      { label: "inparallelDesign", href: "/services#services" },
-      { label: "inparallelBuild", href: "/services#services" },
-      { label: "inparallelLaunch", href: "/services#services" },
-      { label: "inparallel+", href: "/services#services" },
+      { label: "inparallelDesign", href: "/services/design" },
+      { label: "inparallelBuild", href: "/services/build" },
+      { label: "inparallelLaunch", href: "/services/launch" },
+      { label: "inparallel+", href: "/services/plus" },
       { label: "Extended team", href: "/extended-team" },
     ],
   },

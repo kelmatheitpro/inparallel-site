@@ -1,0 +1,53 @@
+---
+/**
+ * TEMPORARY. Five backdrops for the services hero, stacked so they can be
+ * compared. Delete this file once one is chosen.
+ */
+import Layout from "@/layouts/BaseLayout.astro";
+import ServicesHero from "@/components/sections/ServicesHero.astro";
+
+const variants = [
+  "bands",
+  "beams",
+  "both",
+  "arcs",
+  "grid",
+  "aurora",
+  "contour",
+  "spotlight",
+  "split",
+  "dots",
+] as const;
+---
+
+<Layout theme="light" overlap title="Hero variants" description="Scratch page.">
+  {
+    variants.map((variant) => (
+      <div class="variant" id={variant}>
+        <p class="variant_tag">{variant}</p>
+        <ServicesHero variant={variant} />
+      </div>
+    ))
+  }
+</Layout>
+
+<style is:global>
+  .variant {
+    position: relative;
+  }
+  .variant_tag {
+    position: absolute;
+    top: 6.5rem;
+    left: 1.5rem;
+    z-index: 5;
+    padding: 0.35rem 0.75rem;
+    background: #000;
+    color: #fff;
+    border-radius: 0.5rem;
+    font:
+      600 0.75rem/1 ui-monospace,
+      monospace;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+</style>

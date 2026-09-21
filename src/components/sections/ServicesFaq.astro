@@ -1,0 +1,79 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import { FAQ, QUOTE_WITHIN } from "@/data/services.ts";
+
+interface Props {
+  /** A lane's own questions. Defaults to the hub's general set. */
+  items?: { question: string; answer: string }[];
+}
+
+const { items = FAQ } = Astro.props;
+---
+
+{
+  /* The accordion itself is the `.faq` pattern in `inparallel.css`, the same
+     one the extended-team pages use — `<details>` the browser already opens,
+     announces and finds in page, with the project's own chevron on it. What
+     this section adds is only the column the heading sits in. */
+}
+<Section theme="light" containerClass="container-narrow">
+  <div class="questions" data-reveal>
+    <div class="questions_aside">
+      <Heading tag="h2" class="heading-split">
+        Questions <em>we get asked.</em>
+      </Heading>
+      <Paragraph class="text-muted questions_note">
+        Anything not here, ask us directly — you'll have an answer the same day,
+        and a fixed quote within {QUOTE_WITHIN}.
+      </Paragraph>
+    </div>
+
+    <ul class="faq">
+      {
+        items.map((item) => (
+          <li>
+            <details class="faq_item">
+              <summary class="faq_question">{item.question}</summary>
+              <p class="faq_answer text-muted">{item.answer}</p>
+            </details>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    /* The heading holds its own column so the questions stay one readable
+       measure rather than running the whole width of the page. */
+    .questions {
+      width: 100%;
+      display: grid;
+      gap: var(--space-7) var(--space-8);
+      grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+      align-items: start;
+    }
+
+    .questions_aside {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      position: sticky;
+      top: var(--space-8);
+    }
+
+    .questions_note {
+      max-width: 24rem;
+      font-size: var(--text-small);
+    }
+
+    @media (width < 48rem) {
+      .questions_aside {
+        position: static;
+      }
+    }
+  }
+</style>

@@ -1,0 +1,445 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import {
+  OWNERSHIP,
+  LEDGER,
+  LEDGER_LEAD,
+  EDITOR_FIELDS,
+  EDITOR_NOTE,
+  PROMISE_FACTS,
+} from "@/data/services.ts";
+
+/**
+ * What the buyer gets when the work ends.
+ *
+ * Kept as a prop while we choose one. The Navigator comparison this replaces
+ * argued in class names, which is a developer's language — and a developer is
+ * not the person who signs.
+ *
+ * - `cards`   three claims, each with a word standing behind it
+ * - `ledger`  the same jobs, done two ways
+ * - `editor`  the fields a marketer sees, drawn as the Editor shows them
+ * - `promise` one statement, three facts under it
+ */
+interface Props {
+  variant?: "cards" | "ledger" | "editor" | "promise";
+}
+
+const { variant = "cards" } = Astro.props;
+---
+
+<Section theme="dark" containerClass="container-narrow" class="handover">
+  <div slot="background" class="handover_field" aria-hidden="true"></div>
+
+  {
+    variant === "cards" && (
+      <>
+        <div class="section-head centered" data-reveal>
+          <Heading tag="h2" class="heading-split">
+            You own the site. <em>Not a licence to it.</em>
+          </Heading>
+        </div>
+
+        <ul class="own grid-cards" data-reveal>
+          {OWNERSHIP.map((item) => (
+            <li class="own_card surface">
+              <span class="own_ghost" aria-hidden="true">
+                {item.ghost}
+              </span>
+              <p class="own_figure">{item.figure}</p>
+              <div class="own_body">
+                <h3 class="own_title">{item.title}</h3>
+                <p class="own_text">{item.text}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </>
+    )
+  }
+
+  {
+    variant === "ledger" && (
+      <>
+        <div class="section-head" data-reveal>
+          <Heading tag="h2" class="heading-split">
+            The real test comes later. <em>The first time you change it.</em>
+          </Heading>
+          <Paragraph class="text-muted ledger_lead">{LEDGER_LEAD}</Paragraph>
+        </div>
+
+        <ul class="ledger" data-reveal>
+          <li class="ledger_head" aria-hidden="true">
+            <span class="ledger_job" />
+            <span class="ledger_usual">What you're used to</span>
+            <span class="ledger_ours">With us</span>
+          </li>
+          {LEDGER.map((row) => (
+            <li class="ledger_row">
+              <span class="ledger_job">{row.job}</span>
+              <span class="ledger_usual">{row.usual}</span>
+              <span class="ledger_ours">{row.ours}</span>
+            </li>
+          ))}
+        </ul>
+      </>
+    )
+  }
+
+  {
+    variant === "editor" && (
+      <div class="ed" data-reveal>
+        <div class="ed_intro">
+          <Heading tag="h2" class="heading-split">
+            This is everything <em>your team has to learn.</em>
+          </Heading>
+          <Paragraph class="text-muted ed_lead">{EDITOR_NOTE}</Paragraph>
+        </div>
+
+        {/* A drawing of the Editor, not a screenshot: it stays right when the
+            copy changes and costs nothing to keep current. */}
+        <div class="ed_panel surface surface-raised">
+          <div class="ed_bar">
+            <span class="ed_dot" />
+            <span class="ed_dot" />
+            <span class="ed_dot" />
+            <span class="ed_bar_label">Editing · home</span>
+          </div>
+          <ul class="ed_fields">
+            {EDITOR_FIELDS.map((field) => (
+              <li class="ed_field">
+                <span class="ed_label">{field.label}</span>
+                <span class="ed_value">{field.value}</span>
+              </li>
+            ))}
+          </ul>
+          <p class="ed_foot">
+            <span class="ed_save">Publish</span>
+            <span class="ed_hint">changes go live in seconds</span>
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  {
+    variant === "promise" && (
+      <div class="promise" data-reveal>
+        <Heading tag="h2" variant="h1" class="heading-split promise_title">
+          When we're done, <em>nothing depends on us.</em>
+        </Heading>
+
+        <dl class="promise_facts">
+          {PROMISE_FACTS.map((fact) => (
+            <div class="promise_fact">
+              <dt class="promise_value">{fact.value}</dt>
+              <dd class="promise_label">{fact.label}</dd>
+            </div>
+          ))}
+        </dl>
+      </div>
+    )
+  }
+</Section>
+
+<style is:global>
+  @layer components {
+    .handover {
+      overflow: clip;
+    }
+
+    /* The hero's light carried one section further down the page, rather than
+       stopping dead at a flat panel. */
+    .handover_field {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(
+          60% 80% at 80% 15%,
+          color-mix(in srgb, var(--brand-500) 34%, transparent),
+          transparent 70%
+        ),
+        radial-gradient(
+          55% 70% at 8% 92%,
+          color-mix(in srgb, var(--navy-900) 60%, transparent),
+          transparent 72%
+        );
+    }
+
+    /* ---- cards ---------------------------------------------------------- */
+    .own {
+      --_min: 17rem;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .own_card {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-5);
+      padding: var(--space-6);
+      background-image: linear-gradient(
+        160deg,
+        color-mix(in srgb, var(--brand-500) 26%, transparent),
+        transparent 70%
+      );
+      border: var(--border-width) solid
+        color-mix(in srgb, var(--brand-300) 24%, transparent);
+    }
+
+    /* The word sits behind the card's own text, cropped by the card. It is
+       decoration with a meaning, which is the only kind worth the pixels. */
+    .own_ghost {
+      position: absolute;
+      right: -0.15em;
+      bottom: -0.32em;
+      z-index: 0;
+      font-size: 6.5rem;
+      font-weight: var(--primary-semibold);
+      letter-spacing: var(--letter-spacing-tighter);
+      line-height: 1;
+      color: color-mix(in srgb, var(--light-100) 7%, transparent);
+      user-select: none;
+    }
+
+    .own_figure {
+      font-size: var(--h4);
+      font-weight: var(--primary-semibold);
+      letter-spacing: var(--letter-spacing-tight);
+      color: var(--brand-300);
+    }
+
+    .own_body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      margin-top: auto;
+    }
+
+    .own_title {
+      font-size: var(--text-large);
+      font-weight: var(--primary-medium);
+    }
+
+    .own_text {
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+
+    /* ---- ledger --------------------------------------------------------- */
+    .ledger_lead {
+      max-width: 28rem;
+      font-size: var(--text-small);
+    }
+
+    .ledger {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .ledger_head,
+    .ledger_row {
+      display: grid;
+      gap: var(--space-3) var(--space-6);
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
+      align-items: baseline;
+      padding-block: var(--space-5);
+      border-top: var(--border-width) solid var(--border-soft);
+    }
+
+    .ledger_head {
+      padding-block: var(--space-3);
+      border-top: 0;
+      font-size: var(--text-tiny);
+      letter-spacing: var(--letter-spacing-wide);
+      text-transform: uppercase;
+      color: var(--text-faded);
+    }
+
+    .ledger_row:last-child {
+      border-bottom: var(--border-width) solid var(--border-soft);
+    }
+
+    .ledger_job {
+      font-weight: var(--primary-medium);
+    }
+
+    .ledger_usual {
+      color: var(--text-faded);
+      font-size: var(--text-small);
+      text-decoration: line-through;
+      text-decoration-color: color-mix(in srgb, currentcolor 45%, transparent);
+    }
+
+    .ledger_ours {
+      color: var(--brand-300);
+      font-size: var(--text-small);
+    }
+
+    @media (width < 48rem) {
+      .ledger_head {
+        display: none;
+      }
+      .ledger_row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-2);
+      }
+    }
+
+    /* ---- editor --------------------------------------------------------- */
+    .ed {
+      width: 100%;
+      display: grid;
+      gap: var(--space-7) var(--space-8);
+      grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+      align-items: center;
+    }
+
+    .ed_intro {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .ed_lead {
+      max-width: 28rem;
+      font-size: var(--text-small);
+    }
+
+    .ed_panel {
+      display: flex;
+      flex-direction: column;
+      overflow: clip;
+    }
+
+    .ed_bar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-4) var(--space-5);
+      border-bottom: var(--border-width) solid var(--border-soft);
+    }
+
+    .ed_dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: var(--radius-round);
+      background-color: color-mix(in srgb, var(--light-100) 22%, transparent);
+    }
+
+    .ed_bar_label {
+      margin-left: auto;
+      color: var(--text-faded);
+      font-size: var(--text-tiny);
+    }
+
+    .ed_fields {
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .ed_field {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      padding: var(--space-4) var(--space-5);
+      border-bottom: var(--border-width) solid var(--border-soft);
+    }
+
+    .ed_label {
+      font-size: var(--text-tiny);
+      letter-spacing: var(--letter-spacing-wide);
+      text-transform: uppercase;
+      color: var(--text-faded);
+    }
+
+    /* Drawn as a field rather than as text: the point is that it is editable,
+       and a box with a caret in it says that faster than a sentence does. */
+    .ed_value {
+      padding: var(--space-3) var(--space-4);
+      background-color: rgb(0 0 0 / 0.25);
+      border: var(--border-width) solid
+        color-mix(in srgb, var(--brand-300) 30%, transparent);
+      border-radius: var(--radius-small);
+      font-size: var(--text-small);
+    }
+
+    .ed_foot {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-5);
+    }
+
+    .ed_save {
+      padding: var(--space-3) var(--space-5);
+      background-color: var(--brand-500);
+      border-radius: var(--radius-main);
+      color: var(--light-100);
+      font-size: var(--text-small);
+      font-weight: var(--primary-medium);
+    }
+
+    .ed_hint {
+      color: var(--text-faded);
+      font-size: var(--text-small);
+    }
+
+    /* ---- promise -------------------------------------------------------- */
+    .promise {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-8);
+      align-items: center;
+      text-align: center;
+    }
+
+    .promise_title {
+      max-width: 18ch;
+      font-weight: var(--primary-semibold);
+      text-wrap: balance;
+    }
+
+    .promise_facts {
+      display: grid;
+      gap: var(--space-6);
+      grid-template-columns: repeat(auto-fit, minmax(min(12rem, 100%), 1fr));
+      width: 100%;
+      margin: 0;
+      padding-top: var(--space-7);
+      border-top: var(--border-width) solid var(--border-soft);
+    }
+
+    .promise_fact {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .promise_value {
+      font-size: var(--h4);
+      font-weight: var(--primary-semibold);
+      letter-spacing: var(--letter-spacing-tight);
+      color: var(--brand-300);
+    }
+
+    .promise_label {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: var(--text-small);
+    }
+  }
+</style>

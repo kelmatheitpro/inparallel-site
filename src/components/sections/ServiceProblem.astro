@@ -1,0 +1,63 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import type { LanePage } from "@/data/lanes.ts";
+
+interface Props {
+  problem: LanePage["problem"];
+}
+
+const { problem } = Astro.props;
+---
+
+{
+  /* The visitor's situation, named before we say a word about ourselves. It is
+     the section that decides whether the rest gets read: someone who recognises
+     their own problem in it will stay for the answer. */
+}
+<Section theme="light" containerClass="container-narrow">
+  <div class="pain" data-reveal>
+    <Heading tag="h2" class="heading-split pain_title">
+      {problem.title}
+      <em>{problem.titleMuted}</em>
+    </Heading>
+
+    <div class="pain_body">
+      {problem.body.map((line) => <p class="pain_text">{line}</p>)}
+    </div>
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    .pain {
+      width: 100%;
+      display: grid;
+      gap: var(--space-6) var(--space-8);
+      grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
+      align-items: start;
+    }
+
+    .pain_title {
+      font-weight: var(--primary-semibold);
+      text-wrap: balance;
+    }
+
+    .pain_body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-5);
+      /* The copy sits a little lower than the heading it answers, so the pair
+         reads as statement and reply rather than as two columns. */
+      padding-top: var(--space-3);
+    }
+
+    .pain_text {
+      max-width: 38rem;
+      color: var(--text-muted);
+      font-size: var(--text-large);
+      line-height: var(--line-height-large);
+      text-wrap: pretty;
+    }
+  }
+</style>

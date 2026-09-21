@@ -1,0 +1,220 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import Img from "@/components/Img.astro";
+import Tabs from "@/components/inparallel/Tabs.astro";
+import TabPanel from "@/components/inparallel/TabPanel.astro";
+import { activeTab } from "@/utils/tabs.ts";
+import { STEPS } from "@/data/services.ts";
+import arcs from "@/assets/inparallel/services-illustration.svg";
+
+interface Props {
+  title: string;
+  titleMuted: string;
+}
+
+const { title, titleMuted } = Astro.props;
+
+/* The strip is a tab list, which means the project's own `Tabs` already gives
+   it arrow keys, `aria-selected` and a no-script fallback — none of that needs
+   writing again for a row of numbers. */
+const tabs = STEPS.map((step, index) => ({
+  id: `step-${index + 1}`,
+  label: String(index + 1).padStart(2, "0"),
+}));
+const active = activeTab(tabs);
+---
+
+<Section theme="dark" containerClass="container-narrow" class="runner">
+  <div slot="background" class="runner_field" aria-hidden="true"></div>
+
+  <div class="section-head centered" data-reveal>
+    <div class="runner_intro">
+      <Heading tag="h2" class="heading-split runner_title">
+        {title}{" "}
+        <em>{titleMuted}</em>
+      </Heading>
+      <Paragraph class="text-muted runner_lead">
+        The same steps, every project. The reliability is in the repetition.
+      </Paragraph>
+    </div>
+  </div>
+
+  <Tabs tabs={tabs} label="Project steps" class="runner_tabs" data-reveal>
+    {
+      STEPS.map((step, index) => (
+        <TabPanel
+          id={`step-${index + 1}`}
+          active={`step-${index + 1}` === active}
+          class="runner_panel"
+        >
+          <Img src={arcs} class="runner_art" transparent />
+
+          <div class="runner_body">
+            <p class="runner_step">Step {String(index + 1).padStart(2, "0")}</p>
+            <h3 class="runner_step_title">{step.title}</h3>
+            <p class="runner_text">{step.text}</p>
+
+            <ul class="runner_items" aria-label={`${step.title} deliverables`}>
+              {step.deliverables.map((item) => (
+                <li class="pill-tag">{item}</li>
+              ))}
+            </ul>
+
+            <p class="runner_output">
+              <span class="runner_output_label">You end up with</span>
+              <span class="runner_output_value">{step.output}</span>
+            </p>
+          </div>
+        </TabPanel>
+      ))
+    }
+  </Tabs>
+</Section>
+
+<style is:global>
+  @layer components {
+    .runner {
+      overflow: clip;
+    }
+
+    .runner_field {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        60% 70% at 20% 15%,
+        color-mix(in srgb, var(--brand-500) 24%, transparent),
+        transparent 70%
+      );
+    }
+
+    .runner_intro {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      align-items: center;
+      margin-inline: auto;
+      max-width: var(--max-width-small);
+      text-align: center;
+    }
+
+    .runner_title {
+      text-wrap: balance;
+    }
+
+    .runner_lead {
+      font-size: var(--text-small);
+    }
+
+    /* The panel sits above its numbers, the way a plate sits above its key —
+       `Tabs` renders the strip first, so the column is read in reverse. */
+    .runner_tabs {
+      position: relative;
+      z-index: 1;
+      flex-direction: column-reverse;
+      gap: var(--space-6);
+    }
+
+    .runner_tabs .tabs_list {
+      justify-content: space-between;
+      gap: var(--space-3);
+      padding: var(--space-3);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: var(--radius-card);
+      background-color: var(--background-raised);
+    }
+
+    .runner_tabs .tabs_tab {
+      flex: 1;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .runner_panel {
+      display: grid;
+      gap: var(--space-7) var(--space-8);
+      grid-template-columns: repeat(auto-fit, minmax(min(19rem, 100%), 1fr));
+      align-items: center;
+      padding: var(--space-7);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: var(--radius-card);
+      background-color: var(--background-raised);
+      overflow: clip;
+    }
+
+    /* The concentric artwork the services panels already wear, used here as the
+       plate for whichever step is open. */
+    .runner_art {
+      width: 100%;
+      max-width: 22rem;
+      height: auto;
+      margin-inline: auto;
+      opacity: 0.75;
+    }
+
+    .runner_body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .runner_step {
+      color: var(--brand-300);
+      font-size: var(--text-tiny);
+      font-weight: var(--primary-semibold);
+      letter-spacing: var(--letter-spacing-wide);
+      text-transform: uppercase;
+    }
+
+    .runner_step_title {
+      font-size: var(--h5);
+      font-weight: var(--primary-semibold);
+      line-height: var(--line-height-large);
+    }
+
+    .runner_text {
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+
+    .runner_items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: var(--space-2) 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .runner_output {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: var(--space-3);
+      margin-top: var(--space-3);
+      padding-top: var(--space-5);
+      border-top: var(--border-width) solid var(--border-soft);
+    }
+
+    .runner_output_label {
+      color: var(--text-faded);
+      font-size: var(--text-tiny);
+      letter-spacing: var(--letter-spacing-wide);
+      text-transform: uppercase;
+    }
+
+    .runner_output_value {
+      font-weight: var(--primary-medium);
+    }
+
+    @media (width < 48rem) {
+      .runner_panel {
+        padding: var(--space-5);
+      }
+      .runner_art {
+        max-width: 14rem;
+      }
+    }
+  }
+</style>
