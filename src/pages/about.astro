@@ -1,0 +1,26 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import AboutHero from "@/components/sections/AboutHero.astro";
+import AboutStory from "@/components/sections/AboutStory.astro";
+import AboutReach from "@/components/sections/AboutReach.astro";
+import AboutCrew from "@/components/sections/AboutCrew.astro";
+import WaysWeDiffer from "@/components/sections/WaysWeDiffer.astro";
+import Reviews from "@/components/sections/Reviews.astro";
+import MidCta from "@/components/sections/MidCta.astro";
+---
+
+<Layout
+  theme="light"
+  overlap
+  title="About the studio"
+  description="Designers, developers and strategists moving as one team. A Webflow studio born in Serbia, building for companies that treat the web as a growth channel."
+>
+  <AboutHero />
+  <AboutStory />
+  <AboutReach />
+  <AboutCrew />
+
+  <WaysWeDiffer />
+  <Reviews />
+  <MidCta />
+</Layout>

@@ -1,0 +1,452 @@
+---
+import type { Place } from "@/data/about.ts";
+
+interface Props {
+  /** Where every arc leaves from, and what the chip on the map calls it. */
+  origin: Place;
+  /** Where they land. */
+  destinations: Place[];
+  class?: string;
+}
+
+const { origin, destinations, class: className } = Astro.props;
+
+/**
+ * The world, as a grid of land and sea.
+ *
+ * 60 columns of 6° of longitude and 26 rows of 5° of latitude, running from
+ * 72°N down to 58°S — the band every client sits in, and tight enough that the
+ * continents fill the frame rather than floating in polar ice. A `#` is land
+ * and gets a dot; everything else is left empty.
+ *
+ * It is drawn here rather than traced from map data because at this resolution
+ * the shapes are the point and the coastlines are not: one character is around
+ * 500km, so a dot is a region, not a place.
+ */
+const LAND = [
+  "..#############.####.######.....############################",
+  "..############...###.###..##...#####.#####################..",
+  "..############...###..#........#######################..#...",
+  "..#############..####.......##.#######################..#...",
+  ".........##########.#........#########.###############......",
+  ".........###########........##########.###############......",
+  ".........#########..........##########.###############......",
+  "..........#######...........####...###################......",
+  "..........#######...........########################........",
+  "...........###.............########################.........",
+  "............###..#.........#############..#######...........",
+  "..............##...........############...##..##..#.........",
+  "...............######......############...##..##..#.........",
+  ".................######.....##########........#..#..........",
+  ".................#######.......#######........#####.........",
+  ".................########......######.........########......",
+  ".................########.......#####...............##......",
+  ".................#######........######............####......",
+  "..................######........####.#...........######.....",
+  "..................######........####.#...........#######....",
+  "..................####...........###.............#######....",
+  "..................###............................######.....",
+  "..................##..................................#...##",
+  ".................##.......................................#.",
+  ".................##.........................................",
+  "..................#.........................................",
+];
+
+const COLUMNS = 60;
+const ROWS = LAND.length;
+/** One grid cell, in the viewBox's own units. Dots sit at its centre. */
+const CELL = 10;
+const WIDTH = COLUMNS * CELL;
+const HEIGHT = ROWS * CELL;
+
+/** Equirectangular, over exactly the span the grid covers. */
+const project = ({ lon, lat }: Place) => ({
+  x: ((lon + 180) / 360) * WIDTH,
+  y: ((72 - lat) / (ROWS * 5)) * HEIGHT,
+});
+
+const from = project(origin);
+
+/* Every dot, with how far it sits from the origin as a share of the furthest
+   one. That share is what turns the reveal into a ripple leaving Belgrade
+   rather than the whole map arriving at once. */
+const dots = LAND.flatMap((row, r) =>
+  [...row].flatMap((cell, c) => {
+    if (cell !== "#") return [];
+    const x = c * CELL + CELL / 2;
+    const y = r * CELL + CELL / 2;
+    return [{ x, y, distance: Math.hypot(x - from.x, y - from.y) }];
+  }),
+);
+
+const furthest = Math.max(...dots.map((dot) => dot.distance));
+
+/**
+ * How many steps the ripple is cut into.
+ *
+ * The delay could be written onto each of the six-hundred-odd dots, but a
+ * ripple doesn't read any better for being continuous — grouping them means
+ * one delay per ring instead of one per dot, and markup that gzips to almost
+ * nothing.
+ */
+const RINGS = 14;
+/** How long the ripple takes to cross the map, end to end. */
+const SPREAD = 900;
+
+const rings = Array.from({ length: RINGS }, (_, ring) =>
+  dots.filter((dot) => {
+    const step = Math.min(
+      RINGS - 1,
+      Math.floor((dot.distance / furthest) * RINGS),
+    );
+    return step === ring;
+  }),
+);
+
+/**
+ * The arcs, as quadratic curves lifted off the straight line between their
+ * ends. The lift is a share of the distance so a short hop bows gently and a
+ * long one climbs, and it is capped so the longest arc doesn't leave the frame.
+ */
+const arcs = destinations.map((place, index) => {
+  const to = project(place);
+  const span = Math.hypot(to.x - from.x, to.y - from.y);
+  const lift = Math.min(span * 0.42, 150);
+  const cx = (from.x + to.x) / 2;
+  const cy = (from.y + to.y) / 2 - lift;
+
+  return {
+    label: place.label,
+    to,
+    d: `M ${from.x.toFixed(1)} ${from.y.toFixed(1)} Q ${cx.toFixed(1)} ${cy.toFixed(1)} ${to.x.toFixed(1)} ${to.y.toFixed(1)}`,
+    /* Each arc draws, then lands, a beat after the one before it. */
+    delay: 320 + index * 260,
+    /* Mismatched cycles, the same trick the hero beams use: six pulses on six
+       different clocks never come back into step. */
+    cycle: 5200 + index * 730,
+  };
+});
+
+const percent = (value: number, of: number) => `${((value / of) * 100).toFixed(3)}%`;
+---
+
+<div class:list={["dot-map", className]} data-reveal>
+  <div class="dot-map_stage">
+    <svg
+      class="dot-map_svg"
+      viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+      role="img"
+      aria-label={`A world map with arcs running from ${origin.label} to ${destinations.map((place) => place.label).join(", ")}`}
+    >
+      <defs>
+        {
+          /* Brightest at the apex and softer at both ends, so an arc reads as
+             light thrown between two places rather than a drawn line. The
+             gradient is in the arc's own box, which means it fades at both
+             ends whichever way the arc runs. */
+        }
+        <linearGradient id="dot-map-arc" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="var(--brand-300)" stop-opacity="0.15" />
+          <stop offset="0.5" stop-color="var(--brand-300)" stop-opacity="0.95" />
+          <stop offset="1" stop-color="var(--brand-300)" stop-opacity="0.15" />
+        </linearGradient>
+      </defs>
+
+      <g class="dot-map_land">
+        {
+          rings.map((ring, index) => (
+            <g
+              class="dot-map_ring"
+              style={`--_delay: ${Math.round((index / RINGS) * SPREAD)}ms;`}
+            >
+              {ring.map((dot) => (
+                <circle cx={dot.x} cy={dot.y} r="2.1" />
+              ))}
+            </g>
+          ))
+        }
+      </g>
+
+      <g class="dot-map_arcs">
+        {
+          arcs.map((arc) => (
+            <g style={`--_delay: ${arc.delay}ms; --_cycle: ${arc.cycle}ms;`}>
+              {
+                /* `pathLength` normalises every arc to one unit, so the same
+                   dash figures draw a short hop and a long haul alike. */
+              }
+              <path class="dot-map_arc" d={arc.d} pathLength="1" />
+              <path class="dot-map_spark" d={arc.d} pathLength="1" />
+              <circle class="dot-map_node" cx={arc.to.x} cy={arc.to.y} r="3" />
+              <circle class="dot-map_ping" cx={arc.to.x} cy={arc.to.y} r="3" />
+            </g>
+          ))
+        }
+      </g>
+
+      <circle class="dot-map_home" cx={from.x} cy={from.y} r="4" />
+      <circle class="dot-map_home-ping" cx={from.x} cy={from.y} r="4" />
+    </svg>
+
+    {
+      /* The chip is markup rather than SVG text: it has to stay legible at any
+         width, and counter-rotating it out of the stage's tilt is something
+         only a real element can do. */
+    }
+    <span
+      class="dot-map_chip"
+      style={`left: ${percent(from.x, WIDTH)}; top: ${percent(from.y, HEIGHT)};`}
+    >
+      <span class="dot-map_chip_dot"></span>
+      {origin.label}
+    </span>
+  </div>
+</div>
+
+<style is:global>
+  @layer components {
+    .dot-map {
+      width: 100%;
+      color: var(--brand-300);
+      /* The tilt is depth the children sit inside rather than a picture of
+         one, which is what lets the chip lean back out of it. */
+      perspective: 90rem;
+    }
+
+    .dot-map_stage {
+      position: relative;
+      transform-style: preserve-3d;
+      rotate: 1 0 0 13deg;
+    }
+
+    /* A phone is looking at the map nearly edge-on at that angle, and there is
+       too little of it left to read. It takes the map flat instead, and every
+       mark on it a size up: the whole drawing is scaled to a third of the
+       width it is built for, which takes a dot below the size a screen can
+       show and an arc down to a hairline. */
+    @media (width < 48rem) {
+      .dot-map_stage {
+        rotate: none;
+      }
+
+      .dot-map_land circle {
+        opacity: 0.26;
+      }
+
+      .dot-map_arc {
+        stroke-width: 2.6;
+      }
+
+      .dot-map_spark {
+        stroke-width: 3.4;
+      }
+
+      .dot-map_ping,
+      .dot-map_home-ping {
+        stroke-width: 2;
+      }
+    }
+
+    .dot-map_svg {
+      display: block;
+      width: 100%;
+      height: auto;
+      overflow: visible;
+    }
+
+    /* ---- the land ------------------------------------------------------- */
+    .dot-map_land circle {
+      fill: currentColor;
+      opacity: 0.16;
+    }
+
+    /* Each ring starts collapsed into its own centre and opens on the delay
+       its distance from Belgrade earns it. */
+    .dot-map_ring {
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    /* The resting state every reveal starts from, set only where there is a
+       script to bring it out of one. A reader without JavaScript — or a
+       renderer that isn't running it — gets the page already arrived rather
+       than a section that never does. */
+    @media (scripting: enabled) {
+      .dot-map_ring {
+        opacity: 0;
+        scale: 0.6;
+        transition:
+          opacity var(--duration-slow) var(--_delay) ease-out,
+          scale var(--duration-slow) var(--_delay) var(--ease-out);
+      }
+
+      .dot-map_arc {
+        stroke-dashoffset: 1;
+      }
+
+      .dot-map_node {
+        opacity: 0;
+        transition: opacity var(--duration-main) ease-out;
+      }
+
+      .dot-map_chip {
+        opacity: 0;
+        transition: opacity var(--duration-slow) 1400ms ease-out;
+      }
+    }
+
+    .dot-map.is-revealed .dot-map_ring {
+      opacity: 1;
+      scale: 1;
+    }
+
+    /* ---- the arcs ------------------------------------------------------- */
+    .dot-map_arc {
+      fill: none;
+      stroke: url(#dot-map-arc);
+      stroke-width: 1.4;
+      stroke-linecap: round;
+      stroke-dasharray: 1;
+    }
+
+    .dot-map.is-revealed .dot-map_arc {
+      /* Drawn once on arrival and then left up. The travelling spark is what
+         keeps the map alive after that, rather than the arcs redrawing. */
+      animation: dot-map-draw 1400ms var(--_delay) var(--ease-out) forwards;
+    }
+
+    @keyframes dot-map-draw {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    /* A short bright dash running the arc, on its own clock. `0.08 1` leaves
+       the rest of the path unpainted, so what shows is a comet rather than a
+       line with a bright patch in it. */
+    .dot-map_spark {
+      fill: none;
+      stroke: var(--light-100);
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-dasharray: 0.08 1;
+      stroke-dashoffset: 0.08;
+      opacity: 0;
+    }
+
+    .dot-map.is-revealed .dot-map_spark {
+      animation: dot-map-spark var(--_cycle) calc(var(--_delay) + 900ms)
+        infinite linear;
+    }
+
+    @keyframes dot-map-spark {
+      0% {
+        stroke-dashoffset: 0.08;
+        opacity: 0;
+      }
+      8%,
+      70% {
+        opacity: 0.9;
+      }
+      85%,
+      100% {
+        stroke-dashoffset: -1;
+        opacity: 0;
+      }
+    }
+
+    /* ---- the places ----------------------------------------------------- */
+    .dot-map_node {
+      fill: var(--brand-300);
+    }
+
+    .dot-map.is-revealed .dot-map_node {
+      opacity: 1;
+      /* Lands as the arc that drew it finishes, not before. */
+      transition-delay: calc(var(--_delay) + 1100ms);
+    }
+
+    /* The ring thrown off a node, and the one Belgrade throws continuously.
+       Both are drawn as a stroke that grows and fades rather than a filled
+       disc, so nothing ever covers the node underneath. */
+    .dot-map_ping,
+    .dot-map_home-ping {
+      fill: none;
+      stroke: var(--brand-300);
+      stroke-width: 1.2;
+      transform-box: fill-box;
+      transform-origin: center;
+      opacity: 0;
+    }
+
+    .dot-map.is-revealed .dot-map_ping {
+      animation: dot-map-ping var(--_cycle) calc(var(--_delay) + 1100ms)
+        infinite ease-out;
+    }
+
+    .dot-map_home {
+      fill: var(--light-100);
+      filter: drop-shadow(0 0 6px var(--brand-300));
+    }
+
+    .dot-map.is-revealed .dot-map_home-ping {
+      animation: dot-map-ping 2600ms infinite ease-out;
+    }
+
+    @keyframes dot-map-ping {
+      0% {
+        scale: 1;
+        opacity: 0.8;
+      }
+      60%,
+      100% {
+        scale: 4.5;
+        opacity: 0;
+      }
+    }
+
+    /* ---- the chip ------------------------------------------------------- */
+    .dot-map_chip {
+      position: absolute;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: 0.375rem 0.75rem 0.375rem 0.5rem;
+      border-radius: var(--radius-round);
+      background-color: var(--dark-900);
+      border: var(--border-width) solid
+        color-mix(in srgb, var(--brand-300) 35%, transparent);
+      box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.45);
+      color: var(--light-100);
+      font-size: var(--text-tiny);
+      font-weight: var(--primary-medium);
+      line-height: 1;
+      white-space: nowrap;
+      /* Anchored on the city, lifted clear of it, and leaned back out of the
+         stage's tilt so the words stay square to the reader. */
+      translate: -50% -50%;
+      rotate: 1 0 0 -13deg;
+      margin-top: -1.75rem;
+    }
+
+    @media (width < 48rem) {
+      .dot-map_chip {
+        rotate: none;
+      }
+    }
+
+    .dot-map.is-revealed .dot-map_chip {
+      opacity: 1;
+    }
+
+    .dot-map_chip_dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: var(--radius-round);
+      background-color: var(--brand-300);
+      box-shadow: 0 0 0 0.1875rem
+        color-mix(in srgb, var(--brand-300) 25%, transparent);
+    }
+  }
+</style>

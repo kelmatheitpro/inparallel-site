@@ -1,0 +1,32 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import Hero from "@/components/sections/Hero.astro";
+import Trusted from "@/components/sections/Trusted.astro";
+import CaseStudies from "@/components/sections/CaseStudies.astro";
+import VideoTestimonials from "@/components/sections/VideoTestimonials.astro";
+import Services from "@/components/sections/Services.astro";
+import WaysWeDiffer from "@/components/sections/WaysWeDiffer.astro";
+import MidCta from "@/components/sections/MidCta.astro";
+import Studio from "@/components/sections/Studio.astro";
+import Reviews from "@/components/sections/Reviews.astro";
+import Lightbox from "@/components/inparallel/Lightbox.astro";
+---
+
+<Layout
+  theme="light"
+  overlap
+  title="Webflow studio for teams that treat the web as a growth channel"
+>
+  <Hero />
+  <Trusted />
+  <CaseStudies />
+  <VideoTestimonials />
+  <Services />
+  <WaysWeDiffer />
+  <MidCta />
+  <Studio />
+  <Reviews />
+
+  {/* One dialog serves every play button above it. */}
+  <Lightbox />
+</Layout>

@@ -1,0 +1,466 @@
+---
+import { render } from "astro:content";
+import type { GetStaticPaths } from "astro";
+import Layout from "@/layouts/BaseLayout.astro";
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Img from "@/components/Img.astro";
+import Icon from "@/components/Icon.astro";
+import ArrowLink from "@/components/inparallel/ArrowLink.astro";
+import arrowDiagonal from "@/assets/inparallel/icons/arrow-diagonal.svg";
+import MidCta from "@/components/sections/MidCta.astro";
+import heroGlow from "@/assets/inparallel/hero-glow.svg";
+import { getProjects } from "@/utils/content.ts";
+
+export const getStaticPaths = (async () => {
+  const projects = await getProjects();
+  return projects.map((project, index) => ({
+    params: { slug: project.id },
+    /* The next study is worked out here rather than in the template, so the
+       last one wraps to the first instead of dead-ending. */
+    props: { project, next: projects[(index + 1) % projects.length]! },
+  }));
+}) satisfies GetStaticPaths;
+
+const { project, next } = Astro.props;
+const { data } = project;
+
+/**
+ * `render` hands back the write-up's own headings along with its markup, and
+ * markdown gives each one an `id` of its own, so the contents list is read off
+ * the study rather than repeated beside it in the frontmatter. Only the
+ * top-level sections go in it — anything deeper is detail within a section, not
+ * a place to jump to.
+ */
+const { Content, headings } = await render(project);
+const contents = headings.filter(({ depth }) => depth === 2);
+---
+
+<Layout
+  theme="light"
+  overlap
+  title={`${data.client} — ${data.industry}`}
+  description={data.metaDescription ?? data.summary}
+  type="article"
+>
+  {/* ---- header ---------------------------------------------------------- */}
+  <Section
+    theme="dark"
+    paddingTop="navoverlap"
+    paddingBottom="medium"
+    containerClass="container-narrow"
+    class="project_head"
+  >
+    <Img
+      slot="background"
+      src={heroGlow}
+      class="project_glow"
+      loading="eager"
+      fetchPriority="high"
+      transparent
+    />
+
+    <div class="project_intro">
+      {
+        /* Wider than the same chip on a card: here the mark is the first thing
+           on the page rather than one detail of a tile in a grid. */
+      }
+      <span class="logo-chip" style="--_logo-width: 7.5rem;">
+        <Img
+          src={data.logo}
+          alt={data.client}
+          class="logo-chip_mark"
+          transparent
+        />
+      </span>
+
+      <Heading tag="h1" variant="h2" class="heading-split inline">
+        {data.headline}{" "}
+        <em>{data.headlineMuted}</em>
+      </Heading>
+
+      <p class="project_summary">{data.summary}</p>
+
+      {
+        data.liveUrl && (
+          <a
+            class="project_live"
+            href={data.liveUrl}
+            target="_blank"
+            rel="noopener"
+          >
+            See live website
+            <Icon src={arrowDiagonal} class="project_live_arrow" />
+          </a>
+        )
+      }
+    </div>
+
+    <dl class="project_meta">
+      <div>
+        <dt>Client</dt>
+        <dd>{data.client}</dd>
+      </div>
+      <div>
+        <dt>Industry</dt>
+        <dd>{data.industry}</dd>
+      </div>
+      {
+        data.timeline && (
+          <div>
+            <dt>Timeline</dt>
+            <dd>{data.timeline}</dd>
+          </div>
+        )
+      }
+      {
+        data.year && (
+          <div>
+            <dt>Year</dt>
+            <dd>{data.year}</dd>
+          </div>
+        )
+      }
+    </dl>
+  </Section>
+
+  {/* ---- results --------------------------------------------------------- */}
+  <Section
+    theme="light"
+    paddingTop="small"
+    paddingBottom="small"
+    render={data.results.length > 0}
+  >
+    <ul class="project_results">
+      {
+        data.results.map((result) => (
+          <li class="stat project_result">
+            <span class="stat_value">{result.value}</span>
+            <span class="stat_label">{result.label}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </Section>
+
+  {/* ---- write-up -------------------------------------------------------- */}
+  <Section theme="light" paddingTop="small" containerClass="container-narrow">
+    <div class="project_layout">
+      <div class="project_body">
+        <Content />
+      </div>
+
+      <aside class="project_aside" aria-label="About this case study">
+        {
+          contents.length > 1 && (
+            <nav class="project_toc" aria-labelledby="contents-title">
+              <h2 class="project_aside_title" id="contents-title">
+                On this page
+              </h2>
+              <ol class="project_toc_list">
+                {contents.map((heading) => (
+                  <li>
+                    <a href={`#${heading.slug}`}>{heading.text}</a>
+                  </li>
+                ))}
+              </ol>
+            </nav>
+          )
+        }
+
+        <div class="project_aside_block">
+          <h2 class="project_aside_title">Services</h2>
+          <ul class="project_services">
+            {data.services.map((service) => <li>{service}</li>)}
+          </ul>
+        </div>
+
+        <ArrowLink href={`/work/${next.id}`}>
+          Next: {next.data.client}
+        </ArrowLink>
+      </aside>
+    </div>
+  </Section>
+
+  <MidCta />
+</Layout>
+
+<style is:global>
+  @layer components {
+    .project_head {
+      overflow: clip;
+    }
+
+    .project_glow {
+      object-fit: cover;
+      object-position: top right;
+    }
+
+    @media (width < 48rem) {
+      .project_glow {
+        object-position: 20% top;
+      }
+    }
+
+    .project_intro {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: var(--space-5);
+      max-width: 52rem;
+    }
+
+    .project_summary {
+      max-width: 42rem;
+      color: var(--text-muted);
+      font-size: var(--text-large);
+      line-height: var(--line-height-large);
+    }
+
+    /* ---- meta strip ------------------------------------------------------ */
+    .project_meta {
+      width: 100%;
+      display: grid;
+      gap: var(--space-5);
+      grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr));
+      margin: 0;
+      padding-top: var(--space-6);
+      border-top: var(--border-width) solid var(--border);
+
+      & dt {
+        color: var(--text-faded);
+        font-size: var(--text-small);
+      }
+      & dd {
+        margin: 0;
+        font-size: var(--text-main);
+        font-weight: var(--primary-medium);
+      }
+    }
+
+    /* ---- results --------------------------------------------------------- */
+    .project_results {
+      width: 100%;
+      display: grid;
+      gap: var(--space-8);
+      grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .project_result {
+      --_stat-size: var(--h3);
+      padding-left: var(--space-5);
+      border-left: 0.1875rem solid var(--brand-500);
+    }
+
+    /* ---- write-up -------------------------------------------------------- */
+    .project_layout {
+      width: 100%;
+      display: grid;
+      gap: var(--space-8);
+      grid-template-columns: minmax(0, 1fr) minmax(0, 18rem);
+      align-items: start;
+    }
+
+    /* The body is markdown, so it is styled by element rather than by class. */
+    .project_body {
+      max-width: 40rem;
+
+      & h2 {
+        font-size: var(--h4);
+        margin-top: var(--space-8);
+        margin-bottom: var(--space-4);
+      }
+      & h2:first-child {
+        margin-top: 0;
+      }
+      & p {
+        color: var(--text-muted);
+        line-height: var(--line-height-large);
+        margin-bottom: var(--space-4);
+      }
+      & p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* Anchored from the contents list, so a heading landed on has to clear
+         the bar fixed over the page rather than sit under it. */
+      & h2 {
+        scroll-margin-top: calc(var(--nav-height) + var(--space-6));
+      }
+
+      /* The achievements each study closes on. Each one is something that
+         was delivered, so the marker is a check rather than a disc. */
+      & ul {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-4);
+        margin-bottom: var(--space-4);
+        padding: 0;
+        list-style: none;
+      }
+
+      & li {
+        position: relative;
+        padding-left: 2rem;
+        color: var(--text-muted);
+        line-height: var(--line-height-large);
+      }
+
+      /* The check is a mask rather than a character or an inline SVG: the
+         shape comes from the mask and the colour from the box under it, so it
+         takes the brand blue on a light section and would take the theme's own
+         accent anywhere else. Sized and positioned against the line of text
+         beside it, so it stays on the first line however far the item wraps. */
+      & li::before {
+        content: "";
+        position: absolute;
+        top: 0.15em;
+        left: 0;
+        width: 1.25rem;
+        height: 1.25rem;
+        border-radius: var(--radius-round);
+        background-color: color-mix(in srgb, var(--brand-500) 12%, transparent);
+      }
+
+      & li::after {
+        content: "";
+        position: absolute;
+        top: 0.15em;
+        left: 0;
+        width: 1.25rem;
+        height: 1.25rem;
+        background-color: var(--brand-500);
+        mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5 10 16.5 18 8'/%3E%3C/svg%3E");
+        mask-size: 0.875rem;
+        mask-repeat: no-repeat;
+        mask-position: center;
+      }
+    }
+
+    .project_aside {
+      position: sticky;
+      top: calc(var(--nav-height) + var(--space-6));
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: var(--space-5);
+      padding: var(--space-6);
+      background-color: var(--background-2);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: var(--radius-card);
+    }
+
+    .project_aside_title {
+      font-size: var(--text-small);
+      font-weight: var(--primary-regular);
+      color: var(--text-faded);
+    }
+
+    .project_toc,
+    .project_aside_block {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: var(--space-4);
+    }
+
+    /* The section it names is what carries the meaning, so the numbering is
+       drawn rather than read out: a screen reader gets the list's own order
+       from the `<ol>` without hearing a figure repeated before every line. */
+    .project_toc_list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: contents;
+      font-size: var(--text-small);
+
+      & li {
+        counter-increment: contents;
+      }
+
+      & a {
+        display: flex;
+        gap: var(--space-3);
+        color: var(--text-muted);
+        text-decoration: none;
+        transition: color var(--duration-main);
+      }
+
+      & a::before {
+        content: counter(contents, decimal-leading-zero);
+        color: var(--text-faded);
+        font-variant-numeric: tabular-nums;
+      }
+
+      @media (hover: hover) {
+        & a:hover {
+          color: var(--brand-500);
+        }
+      }
+    }
+
+    /* ---- the live site --------------------------------------------------- */
+    .project_live {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: 0.8125rem 1.375rem;
+      border: var(--border-width) solid rgb(255 255 255 / 0.2);
+      border-radius: var(--radius-main);
+      background-color: rgb(255 255 255 / 0.05);
+      color: var(--light-100);
+      font-size: var(--text-small);
+      font-weight: var(--primary-medium);
+      text-decoration: none;
+      transition:
+        background-color var(--duration-main),
+        border-color var(--duration-main);
+
+      @media (hover: hover) {
+        &:hover {
+          background-color: rgb(255 255 255 / 0.12);
+          border-color: rgb(255 255 255 / 0.4);
+        }
+      }
+    }
+
+    .project_live_arrow {
+      --_size: 0.625rem;
+      width: 0.625rem;
+      height: auto;
+      transition: translate var(--duration-main) var(--ease-out);
+    }
+
+    @media (hover: hover) {
+      .project_live:hover .project_live_arrow {
+        translate: 0.2rem -0.2rem;
+      }
+    }
+
+    .project_services {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      font-size: var(--text-small);
+      font-weight: var(--primary-medium);
+    }
+
+    @media (width < 62rem) {
+      .project_layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .project_aside {
+        position: static;
+      }
+    }
+  }
+</style>

@@ -1,0 +1,98 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Img from "@/components/Img.astro";
+import heroGlow from "@/assets/inparallel/hero-glow.svg";
+
+interface Props {
+  /** Small line above the title. */
+  eyebrow?: string;
+  title: string;
+  /** The faded half of the title, on its own line. */
+  titleMuted?: string;
+  lead?: string;
+}
+
+const { eyebrow, title, titleMuted, lead } = Astro.props;
+---
+
+{
+  /* The inner-page counterpart of the home hero: same artwork and dark theme,
+     but sized for a title rather than a full screen. */
+}
+<Section
+  theme="dark"
+  paddingTop="navoverlap"
+  paddingBottom="medium"
+  containerClass="container-narrow"
+  class="page-hero"
+>
+  <Img
+    slot="background"
+    src={heroGlow}
+    class="page-hero_glow"
+    loading="eager"
+    fetchPriority="high"
+    transparent
+  />
+
+  <div class="page-hero_body">
+    {eyebrow && <p class="page-hero_eyebrow">{eyebrow}</p>}
+
+    <Heading tag="h1" variant="h1" class="heading-split">
+      {title}
+      {
+        titleMuted && (
+          <>
+            {" "}
+            <em>{titleMuted}</em>
+          </>
+        )
+      }
+    </Heading>
+
+    {lead && <p class="page-hero_lead">{lead}</p>}
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    .page-hero {
+      overflow: clip;
+    }
+
+    .page-hero_glow {
+      object-fit: cover;
+      object-position: top right;
+    }
+
+    @media (width < 48rem) {
+      .page-hero_glow {
+        object-position: 20% top;
+      }
+    }
+
+    .page-hero_body {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: var(--space-5);
+      max-width: 52rem;
+    }
+
+    .page-hero_eyebrow {
+      color: var(--brand-300);
+      font-size: var(--text-small);
+      font-weight: var(--primary-semibold);
+      letter-spacing: var(--letter-spacing-wide);
+      text-transform: uppercase;
+    }
+
+    .page-hero_lead {
+      max-width: 40rem;
+      color: var(--text-muted);
+      font-size: var(--text-large);
+      line-height: var(--line-height-large);
+    }
+  }
+</style>

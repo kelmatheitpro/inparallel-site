@@ -1,0 +1,43 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import Section from "@/components/Section.astro";
+import PageHero from "@/components/sections/PageHero.astro";
+import ProjectCard from "@/components/inparallel/ProjectCard.astro";
+import MidCta from "@/components/sections/MidCta.astro";
+import { getProjects } from "@/utils/content.ts";
+
+const projects = await getProjects();
+---
+
+<Layout
+  theme="light"
+  overlap
+  title="Our work"
+  description="Case studies from the inparallel studio — what we built, what changed, and the numbers that followed."
+>
+  <PageHero
+    eyebrow="Our work"
+    title="Every project,"
+    titleMuted="measured by its results"
+    lead="Not a portfolio of screenshots. What the brief was, what we pushed back on, and what happened after launch."
+  />
+
+  <Section theme="dark" paddingTop="medium" paddingBottom="medium">
+    <div class="work_grid">
+      {projects.map((project) => <ProjectCard project={project} />)}
+    </div>
+  </Section>
+
+  <MidCta />
+</Layout>
+
+<style is:global>
+  @layer components {
+    .work_grid {
+      width: 100%;
+      display: grid;
+      gap: var(--space-5);
+      grid-template-columns: repeat(auto-fill, minmax(min(22rem, 100%), 1fr));
+    }
+  }
+</style>

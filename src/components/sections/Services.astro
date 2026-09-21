@@ -1,0 +1,196 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import Img from "@/components/Img.astro";
+import Tabs from "@/components/inparallel/Tabs.astro";
+import { activeTab } from "@/utils/tabs.ts";
+import TabPanel from "@/components/inparallel/TabPanel.astro";
+import { SERVICES } from "@/data/home.ts";
+import illustration from "@/assets/inparallel/services-illustration.svg";
+
+interface Props {
+  /**
+   * The services page states this in its own hero, so it turns the section's
+   * heading off rather than saying it twice on one page.
+   */
+  heading?: boolean;
+}
+
+const { heading = true } = Astro.props;
+
+const tabs = SERVICES.map(({ id, label }) => ({ id, label }));
+const active = activeTab(tabs);
+---
+
+<Section
+  id="services"
+  theme="light"
+  paddingTop={heading ? "large" : "medium"}
+  containerClass="container-narrow"
+  align="center"
+>
+  {
+    heading && (
+      <div class="services_intro">
+        <Heading tag="h2" class="services_title">
+          Four ways we move
+          <br />
+          your website forward
+        </Heading>
+        <Paragraph variant="large" class="text-muted">
+          Pick a lane or run the full relay — every service is the same senior
+          crew.
+        </Paragraph>
+      </div>
+    )
+  }
+
+  <Tabs tabs={tabs} label="Services" class="services_tabs">
+    {
+      SERVICES.map((service) => (
+        <TabPanel
+          id={service.id}
+          active={service.id === active}
+          class="services_panel surface theme-dark"
+        >
+          <Img
+            src={illustration}
+            class="surface-glow services_art"
+            transparent
+          />
+
+          <div class="services_body">
+            <p class="services_eyebrow">{service.label}</p>
+            <p class="services_headline">
+              {service.headline}
+              <br />
+              {service.headlineSecond}
+            </p>
+            <p class="services_text">{service.text}</p>
+            <ul class="services_tags">
+              {service.tags.map((tag) => (
+                <li class="pill-tag">{tag}</li>
+              ))}
+            </ul>
+          </div>
+
+          <a class="services_cta" href={service.href}>
+            {service.ctaLabel}
+          </a>
+        </TabPanel>
+      ))
+    }
+  </Tabs>
+</Section>
+
+<style is:global>
+  @layer components {
+    .services_intro {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-5);
+      text-align: center;
+    }
+
+    .services_title {
+      color: var(--ink-900);
+      font-weight: var(--primary-semibold);
+    }
+
+    /* ---- panel ---------------------------------------------------------- */
+    .services_panel {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      justify-content: space-between;
+      gap: var(--space-8);
+      min-height: 31.25rem;
+      padding: var(--space-8);
+      background-color: var(--dark-800);
+      border-radius: var(--radius-huge);
+      text-align: start;
+    }
+
+    /* The concentric arcs bleed off the bottom-right corner in the design, so
+       the art is anchored there and allowed to overflow its box. */
+    .services_art {
+      top: 5.3875rem;
+      left: 50.725rem;
+      width: 53.55rem;
+      height: 51.75rem;
+      max-width: none;
+    }
+
+    .services_body {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: var(--space-5);
+      max-width: 44rem;
+    }
+
+    .services_eyebrow {
+      color: var(--brand-300);
+      font-size: var(--h6);
+      font-weight: var(--primary-semibold);
+      line-height: var(--line-height-medium);
+    }
+
+    .services_headline {
+      font-size: var(--h3);
+      font-weight: var(--primary-semibold);
+      line-height: var(--line-height-small);
+    }
+
+    .services_text {
+      color: var(--text-muted);
+      font-size: var(--text-main);
+      line-height: var(--line-height-large);
+    }
+
+    .services_tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.625rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .services_cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem 2.25rem;
+      background-color: rgb(255 255 255 / 0.05);
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius-main);
+      color: inherit;
+      font-size: 1.3rem;
+      text-align: center;
+      text-decoration: none;
+      transition:
+        background-color var(--duration-main),
+        border-color var(--duration-main);
+      @media (hover: hover) {
+        &:hover {
+          background-color: rgb(255 255 255 / 0.12);
+          border-color: rgb(255 255 255 / 0.4);
+        }
+      }
+    }
+
+    @media (width < 48rem) {
+      .services_panel {
+        padding: var(--space-6);
+        border-radius: var(--radius-large);
+      }
+      .services_cta {
+        width: 100%;
+        font-size: var(--text-main);
+      }
+    }
+  }
+</style>

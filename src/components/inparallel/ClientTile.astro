@@ -1,0 +1,63 @@
+---
+/**
+ * One tile in the logo wall.
+ *
+ * Everything about it is read off the client's own file in
+ * `src/content/clients`: an `href` turns the tile into a link, and `featured`
+ * turns it into the dark one carrying a result.
+ */
+import Img from "@/components/Img.astro";
+import Icon from "@/components/Icon.astro";
+import { logoRatio, type Client } from "@/utils/content.ts";
+import glowVertical from "@/assets/inparallel/glow-vertical.svg";
+import arrowDiagonal from "@/assets/inparallel/icons/arrow-diagonal.svg";
+
+interface Props {
+  client: Client;
+}
+
+const { client } = Astro.props;
+const { data } = client;
+
+/* A client's own site opens in its own tab; a path inside this one doesn't. */
+const external = /^https?:/i.test(data.href ?? "");
+const Tag = data.href ? "a" : "div";
+---
+
+<Tag
+  class:list={[
+    "trusted_tile",
+    data.href && "linked",
+    data.featured && "featured surface theme-dark",
+  ]}
+  href={data.href}
+  target={external ? "_blank" : undefined}
+  rel={external ? "noopener" : undefined}
+>
+  {
+    data.featured && (
+      <Img
+        src={glowVertical}
+        class="surface-glow trusted_tile_glow"
+        transparent
+      />
+    )
+  }
+
+  <Img
+    src={data.logo}
+    alt={data.name}
+    class:list={["trusted_logo", data.featured && "colored"]}
+    style={`--_ratio: ${logoRatio(data.logo)};`}
+    transparent
+  />
+
+  {
+    data.featured && (
+      <span class="trusted_tile_foot">
+        <span>{data.featured.result}</span>
+        <Icon src={arrowDiagonal} class="trusted_tile_arrow" />
+      </span>
+    )
+  }
+</Tag>

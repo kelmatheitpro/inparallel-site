@@ -1,0 +1,279 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import ArrowLink from "@/components/inparallel/ArrowLink.astro";
+import PlayButton from "@/components/inparallel/PlayButton.astro";
+import ClientTile from "@/components/inparallel/ClientTile.astro";
+import VideoLoop from "@/components/inparallel/VideoLoop.astro";
+import { getClients } from "@/utils/content.ts";
+
+const clients = await getClients();
+
+/* The card beside the wall belongs to whichever client carries a story. Which
+   one that is comes from the content, the same as the dark tile does. */
+const storyClient = clients.find(({ data }) => data.story);
+const story = storyClient?.data.story;
+
+/* The claim in the heading is about industries, not logos — two clients can
+   share one — so it counts the distinct ones rather than the tiles. */
+const industries = new Set(
+  clients.map(({ data }) => data.industry).filter(Boolean),
+).size;
+---
+
+<Section id="trusted" theme="light" gap="8">
+  <div class="section-head">
+    <Heading tag="h2" class="heading-split">
+      Trusted by ambitious teams <em>across {industries} industries</em>
+    </Heading>
+    <ArrowLink href="/work">See the case studies</ArrowLink>
+  </div>
+
+  <div class="trusted_grid">
+    {
+      storyClient && story && (
+        <article class="trusted_feature surface theme-dark">
+          {/* The clip is landscape and the card is upright, so it takes the top
+              of it at its own shape rather than being cropped to fit. The whole
+              of it is the button: the frame underneath takes no clicks, which
+              leaves anywhere on the video opening the clip in full. */}
+          <span class="trusted_feature_tag">{storyClient.data.name}</span>
+
+          <div class="trusted_feature_media">
+            <VideoLoop youtube={story.youtube} fill="118.96%" />
+            <PlayButton
+              label={`Play ${story.speaker}'s story`}
+              youtube={story.youtube}
+              caption={`${story.speaker} · ${storyClient.data.name}`}
+              class="trusted_feature_play"
+            />
+          </div>
+
+          <p class="trusted_feature_by">
+            <span class="trusted_feature_speaker">{story.speaker}</span>
+            <span class="trusted_feature_line">{story.line}</span>
+          </p>
+        </article>
+      )
+    }
+
+    <div class="trusted_logos">
+      {clients.map((client) => <ClientTile client={client} />)}
+    </div>
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    /* One grid across the whole thing rather than a card beside a wall of its
+       own: five columns, the story taking two of them and two rows, the six
+       tiles filling what is left. Everything lines up on one module, and the
+       story card comes out nearly square — which is what a landscape clip
+       wanted all along. */
+    .trusted_grid {
+      width: 100%;
+      display: grid;
+      gap: var(--space-5);
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+
+    .trusted_logos {
+      display: contents;
+    }
+
+    /* ---- featured card -------------------------------------------------- */
+    .trusted_feature {
+      grid-column: span 2;
+      grid-row: span 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: var(--space-5);
+      /* The floor the design sets. The card grows past it if the clip needs the
+         room, and the two rows it spans grow with it. */
+      min-height: 28.125rem;
+      padding: var(--space-5);
+      background-color: var(--dark-850);
+    }
+
+    /* The clip takes the middle of the card, where the play button sat on its
+       own before: landscape, at its own shape, with the room left over split
+       evenly above and below it. */
+    .trusted_feature_media {
+      position: relative;
+      width: 100%;
+      /* The picture's shape rather than the upload's. The recording sits
+         pillarboxed inside a 16:9 frame — 1076 of its 1280 columns carry
+         anything, the rest is black band — so the box takes 1076 × 720 and the
+         bands fall outside it. */
+      aspect-ratio: 269 / 180;
+      margin-block: auto;
+      border-radius: var(--radius-main);
+      overflow: clip;
+    }
+
+    .trusted_feature_tag {
+      align-self: start;
+      padding: 0.625rem;
+      border-radius: 0.5rem;
+      background-color: rgb(0 0 0 / 0.8);
+      font-size: var(--text-small);
+      line-height: var(--line-height-medium);
+    }
+
+    .trusted_feature_play {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .trusted_feature_play .play-button_icon {
+      transition:
+        transform var(--duration-main) var(--ease-out),
+        filter var(--duration-main);
+    }
+
+    @media (hover: hover) {
+      /* The disc grows on hover, not the invisible box around it. */
+      .trusted_feature_play:hover {
+        transform: none;
+        filter: none;
+      }
+
+      .trusted_feature_play:hover .play-button_icon {
+        transform: scale(1.06);
+        filter: drop-shadow(0 8px 20px rgb(0 0 0 / 0.35));
+      }
+    }
+
+    .trusted_feature_by {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    .trusted_feature_speaker {
+      font-size: var(--text-large);
+      font-weight: var(--primary-medium);
+    }
+
+    .trusted_feature_line {
+      font-size: var(--text-small);
+      color: var(--text-muted);
+    }
+
+    /* ---- logo tiles ----------------------------------------------------- */
+    .trusted_tile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-5) var(--space-7);
+      background-color: var(--light-100);
+      border-radius: var(--radius-card);
+      overflow: clip;
+    }
+
+    /* Each logo keeps the ratio it was drawn at and fills the tile's width,
+       so a wide wordmark and a square mark both sit on the same optical line.
+
+       The ink is the tile's to decide, not the file's. These marks arrive black
+       or white depending on which tile they were once drawn for, and flattening
+       them here is what stops a white logo vanishing into a white tile the day
+       its client stops being the highlighted one. */
+    .trusted_logo {
+      width: 100%;
+      height: auto;
+      aspect-ratio: var(--_ratio, auto);
+      opacity: 0.4;
+      filter: brightness(0);
+      transition: opacity var(--duration-main);
+    }
+
+    /* The highlighted tile takes the same mark the other way up, at a fixed
+       width so it doesn't grow to the tile the way the greyed ones do. */
+    .trusted_logo.colored {
+      width: 8.90625rem;
+      opacity: 1;
+      filter: brightness(0) invert(1);
+    }
+
+    @media (hover: hover) {
+      .trusted_tile:hover .trusted_logo {
+        opacity: 0.7;
+      }
+    }
+
+    /* ---- the highlighted tile ------------------------------------------- */
+    .trusted_tile.featured {
+      justify-content: end;
+      gap: 0.625rem;
+      padding: var(--space-3);
+      background-color: var(--dark-900);
+      text-decoration: none;
+    }
+
+    .trusted_tile.featured .trusted_logo {
+      margin-block: auto;
+    }
+
+    /* The vertical bloom the design hangs off the top edge of this tile. */
+    .trusted_tile_glow {
+      top: -8.3125rem;
+      left: 2.5rem;
+      width: 9.0625rem;
+      height: 27rem;
+      max-width: none;
+    }
+
+    .trusted_tile_foot {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-3);
+      font-size: var(--text-small);
+      font-weight: var(--primary-medium);
+      line-height: var(--line-height-medium);
+    }
+
+    .trusted_tile_arrow {
+      --_size: 0.625rem;
+      width: 0.625rem;
+      height: auto;
+      transition: translate var(--duration-main) var(--ease-out);
+    }
+
+    /* The artwork is a straight arrow pointing right, so the nudge on hover is
+       to the right. It used to travel up and to the right, which read as the
+       arrow sliding off its own line. */
+    @media (hover: hover) {
+      .trusted_tile.featured:hover .trusted_tile_arrow {
+        translate: 0.25rem 0;
+      }
+    }
+
+    /* ---- narrower ------------------------------------------------------- */
+    /* Narrower, the story goes back to being a block of its own above a wall
+       that fits as many tiles across as it can. */
+    @media (width < 75rem) {
+      .trusted_grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .trusted_feature {
+        grid-column: auto;
+        grid-row: auto;
+        min-height: 0;
+      }
+      .trusted_logos {
+        display: grid;
+        gap: var(--space-5);
+        grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr));
+      }
+      .trusted_tile {
+        aspect-ratio: 4 / 3;
+      }
+    }
+  }
+</style>

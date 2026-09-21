@@ -1,0 +1,21 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="1440" height="914" viewBox="0 0 1440 914" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="bloom" clip-path="url(#hero-bloom-clip)">
+<g id="Rectangle 1" filter="url(#hero-bloom-blur)">
+<path d="M1095 0H1440L1332.5 828.5H599L1095 0Z" fill="url(#hero-bloom-fill)"/>
+</g>
+</g>
+<defs>
+<filter id="hero-bloom-blur" x="399" y="-200" width="1241" height="1228.5" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="100" result="effect1_foregroundBlur"/>
+</filter>
+<linearGradient id="hero-bloom-fill" x1="1240.5" y1="-1.83214e-05" x2="963.5" y2="861" gradientUnits="userSpaceOnUse">
+<stop stop-color="#2A6DDA" stop-opacity="0.75"/>
+<stop offset="1" stop-color="#2A6DDA" stop-opacity="0"/>
+</linearGradient>
+<clipPath id="hero-bloom-clip">
+<rect width="1440" height="914" fill="white"/>
+</clipPath>
+</defs>
+</svg>

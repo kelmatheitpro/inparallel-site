@@ -1,0 +1,143 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Img from "@/components/Img.astro";
+import ProjectCard from "@/components/inparallel/ProjectCard.astro";
+import { getProjects } from "@/utils/content.ts";
+import caseTexture from "@/assets/inparallel/case-texture.png";
+
+/* The home page shows the first two case studies; the rest live on /work. */
+const projects = (await getProjects()).slice(0, 2);
+---
+
+<Section id="work" theme="dark">
+  <div class="section-head centered">
+    <Heading tag="h2" class="heading-split">
+      Every project, <em>measured by its results</em>
+    </Heading>
+  </div>
+
+  {
+    projects.map((project, index) => (
+      /* The design alternates which side the wide panel sits on, so the row
+         reverses on every second study rather than being written out twice. */
+      <div class:list={["case_row", index % 2 === 1 && "reversed"]}>
+        <div class="case_panel surface">
+          <Img
+            src={caseTexture}
+            alt=""
+            class="surface-glow case_texture"
+            width={256}
+            height={256}
+          />
+          <span class="case_chip">
+            <span>{project.data.client}</span>
+            <span aria-hidden="true">·</span>
+            <span>{project.data.industry}</span>
+          </span>
+          {/* The design's three-up shot strip, still to be filled with the
+              screens for this project. */}
+          <span class="case_shots" aria-hidden="true">
+            <span /> <span /> <span />
+          </span>
+        </div>
+
+        <ProjectCard project={project} />
+      </div>
+    ))
+  }
+</Section>
+
+<style is:global>
+  @layer components {
+    .case_row {
+      width: 100%;
+      display: grid;
+      gap: var(--space-5);
+      grid-template-columns: minmax(0, 915fr) minmax(0, 400fr);
+    }
+
+    .case_row.reversed {
+      grid-template-columns: minmax(0, 400fr) minmax(0, 915fr);
+    }
+
+    /* Source order is panel-then-card; the reversed row swaps the columns
+       rather than the markup, so the reading order stays the same. */
+    .case_row.reversed .case_panel {
+      order: 2;
+    }
+
+    /* ---- the wide panel ------------------------------------------------- */
+    .case_panel {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      justify-content: space-between;
+      gap: var(--space-5);
+      height: 31.25rem;
+      padding: var(--space-5);
+      border: var(--border-width) solid var(--border);
+    }
+
+    /* A 256px tile repeated across the panel at a tenth strength, which is
+       how the design's backdrop is built. */
+    .case_texture {
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      opacity: 0.1;
+      border-radius: inherit;
+    }
+
+    .case_chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.625rem;
+      padding: 0.9375rem 1.25rem;
+      background-color: var(--dark-900);
+      border: var(--border-width) solid var(--border);
+      border-radius: 0.625rem;
+      font-size: var(--text-small);
+      font-weight: var(--primary-medium);
+      white-space: nowrap;
+    }
+
+    .case_shots {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.9375rem;
+      padding: 0.9375rem 1.25rem;
+      background-color: var(--dark-900);
+      border: var(--border-width) solid var(--border);
+      border-radius: 0.625rem;
+
+      & > span {
+        display: block;
+        width: 6.25rem;
+        height: 4.6875rem;
+        background-color: var(--light-100);
+        border-radius: var(--radius-main);
+      }
+    }
+
+    /* ---- narrower ------------------------------------------------------- */
+    @media (width < 64rem) {
+      .case_row,
+      .case_row.reversed {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .case_row.reversed .case_panel {
+        order: 0;
+      }
+      .case_panel {
+        height: auto;
+        min-height: 22rem;
+      }
+      .case_shots > span {
+        width: 4.5rem;
+        height: 3.375rem;
+      }
+    }
+  }
+</style>

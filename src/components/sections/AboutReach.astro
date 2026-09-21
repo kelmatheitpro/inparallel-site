@@ -1,0 +1,192 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import DotMap from "@/components/inparallel/DotMap.astro";
+import { ORIGIN, DESTINATIONS, REACH_STATS } from "@/data/about.ts";
+---
+
+<Section
+  id="reach"
+  theme="dark"
+  paddingTop="large"
+  paddingBottom="large"
+  align="center"
+  class="about-reach"
+  containerClass="about-reach_container"
+>
+  <div class="about-reach_head" data-reveal>
+    <Heading tag="h2" variant="h2" class="about-reach_title">
+      Born in Serbia. <span class="about-reach_title_line">
+        Working everywhere.
+      </span>
+    </Heading>
+    <p class="about-reach_lead">
+      From early-stage startups to established teams, we partner with ambitious
+      companies building thoughtful digital experiences across markets.
+    </p>
+  </div>
+
+  <DotMap
+    origin={ORIGIN}
+    destinations={DESTINATIONS}
+    class="about-reach_map"
+  />
+
+  <dl class="about-reach_stats" data-reveal>
+    {
+      REACH_STATS.map((stat) => (
+        <div class="about-reach_stat">
+          <dt class="about-reach_stat_value" data-count>
+            {stat.value}
+          </dt>
+          <dd class="about-reach_stat_label">{stat.label}</dd>
+        </div>
+      ))
+    }
+  </dl>
+</Section>
+
+<style is:global>
+  @layer components {
+    /* The other half of the seam — see `AboutStory`. Its top edge runs
+       parallel to that section's bottom one, so what shows between the two is
+       a band of even width rather than a wedge. */
+    .about-reach {
+      clip-path: polygon(0 0, 100% var(--about-seam), 100% 100%, 0 100%);
+      padding-top: calc(var(--section-space-large) + var(--about-seam));
+      overflow: clip;
+    }
+
+    .about-reach_container {
+      gap: var(--space-7);
+    }
+
+    .about-reach_head {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-5);
+      text-align: center;
+    }
+
+    /* The resting state every reveal starts from, set only where there is a
+       script to bring it out of one. A reader without JavaScript — or a
+       renderer that isn't running it — gets the page already arrived rather
+       than a section that never does. */
+    @media (scripting: enabled) {
+      .about-reach_head {
+        opacity: 0;
+        translate: 0 1.25rem;
+        transition:
+          opacity var(--duration-slow) ease-out,
+          translate var(--duration-slow) var(--ease-out);
+      }
+
+      .about-reach_stat {
+        opacity: 0;
+        translate: 0 0.75rem;
+        transition:
+          opacity var(--duration-slow) calc(var(--_i, 0) * 110ms) ease-out,
+          translate var(--duration-slow) calc(var(--_i, 0) * 110ms)
+            var(--ease-out);
+      }
+    }
+
+    .about-reach_head.is-revealed {
+      opacity: 1;
+      translate: none;
+    }
+
+    .about-reach_title {
+      letter-spacing: var(--letter-spacing-tight);
+    }
+
+    /* The design breaks the heading between its two sentences. A phone has no
+       room to honour that and wrap what is left sensibly, so below the width
+       where both lines fit it lets the text find its own breaks — the same
+       call `.heading-split.inline` makes about the accent line. */
+    @media (width >= 48rem) {
+      .about-reach_title_line {
+        display: block;
+      }
+    }
+
+    .about-reach_lead {
+      max-width: 36rem;
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+
+    .about-reach_map {
+      width: min(100%, 68rem);
+    }
+
+    /* The map is wider than the text it sits under, so on a wide screen it is
+       pulled into the gap either side of it and the arcs get room to climb.
+       Narrower, that gap is what keeps the chip on Belgrade clear of the line
+       of copy above the map — the chip is lifted off the city it names, and
+       the city sits near the map's own top edge. */
+    @media (width >= 48rem) {
+      .about-reach_map {
+        margin-block: calc(var(--space-6) * -1);
+      }
+    }
+
+    /* ---- the figures ---------------------------------------------------- */
+    .about-reach_stats {
+      width: 100%;
+      max-width: 60rem;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: var(--space-6) var(--space-5);
+      margin: 0;
+    }
+
+    @media (width < 48rem) {
+      .about-reach_stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    .about-reach_stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-2);
+      text-align: center;
+    }
+
+    .about-reach_stat:nth-child(2) {
+      --_i: 1;
+    }
+    .about-reach_stat:nth-child(3) {
+      --_i: 2;
+    }
+    .about-reach_stat:nth-child(4) {
+      --_i: 3;
+    }
+
+    .about-reach_stats.is-revealed .about-reach_stat {
+      opacity: 1;
+      translate: none;
+    }
+
+    .about-reach_stat_value {
+      font-size: var(--h2);
+      font-weight: var(--primary-semibold);
+      line-height: var(--line-height-small);
+      letter-spacing: var(--letter-spacing-tight);
+      /* The figure is rewritten every frame while it climbs. Tabular digits
+         keep it from twitching as the widths change under it. */
+      font-variant-numeric: tabular-nums;
+    }
+
+    .about-reach_stat_label {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+  }
+</style>

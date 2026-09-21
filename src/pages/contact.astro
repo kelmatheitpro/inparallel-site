@@ -1,0 +1,365 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import Section from "@/components/Section.astro";
+import PageHero from "@/components/sections/PageHero.astro";
+import RatingBadge from "@/components/inparallel/RatingBadge.astro";
+import { CONTACT_EMAIL } from "@/consts.ts";
+import { SERVICES } from "@/data/home.ts";
+
+const BUDGETS = [
+  "Under €10k",
+  "€10k – €25k",
+  "€25k – €50k",
+  "€50k+",
+  "Not sure yet",
+];
+---
+
+<Layout
+  theme="light"
+  overlap
+  title="Contact"
+  description="Tell us what you're building. Same-day estimate, no strings — or book a call with the crew directly."
+>
+  <PageHero
+    eyebrow="Contact"
+    title="Every great website"
+    titleMuted="starts with a conversation"
+    lead="Tell us what you're building and what's in the way. You'll hear back the same day, from one of the people who'd do the work."
+  />
+
+  <Section theme="light" containerClass="container-narrow">
+    <div class="contact_layout">
+      {
+        /* ---- the form ----------------------------------------------------- */
+      }
+      <form class="contact_form" data-contact novalidate>
+        <div class="contact_row">
+          <div class="field">
+            <label class="field_label" for="name">Your name</label>
+            <input
+              class="field_input"
+              id="name"
+              name="name"
+              type="text"
+              autocomplete="name"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label class="field_label" for="email">Email</label>
+            <input
+              class="field_input"
+              id="email"
+              name="email"
+              type="email"
+              inputmode="email"
+              autocomplete="email"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="contact_row">
+          <div class="field">
+            <label class="field_label" for="company">Company</label>
+            <input
+              class="field_input"
+              id="company"
+              name="company"
+              type="text"
+              autocomplete="organization"
+            />
+          </div>
+
+          <div class="field">
+            <label class="field_label" for="service">What do you need?</label>
+            <select class="field_input" id="service" name="service">
+              <option value="">Not sure yet</option>
+              {
+                SERVICES.map((service) => (
+                  <option value={service.label}>{service.label}</option>
+                ))
+              }
+            </select>
+          </div>
+        </div>
+
+        <fieldset class="field">
+          <legend class="field_label">Budget</legend>
+          <div class="contact_choices">
+            {
+              BUDGETS.map((budget, index) => (
+                <label class="choice">
+                  <input
+                    type="radio"
+                    name="budget"
+                    value={budget}
+                    checked={index === BUDGETS.length - 1}
+                  />
+                  <span>{budget}</span>
+                </label>
+              ))
+            }
+          </div>
+        </fieldset>
+
+        <div class="field">
+          <label class="field_label" for="brief">
+            What are you building, and what's in the way?
+          </label>
+          <textarea
+            class="field_input"
+            id="brief"
+            name="brief"
+            rows="5"
+            required></textarea>
+        </div>
+
+        <div class="contact_actions">
+          <button class="contact_submit" type="submit">Send it over</button>
+          {
+            /* Announced rather than just shown, so the outcome reaches someone
+               who isn't looking at the button. */
+          }
+          <p
+            class="contact_status"
+            data-contact-status
+            role="status"
+            aria-live="polite"
+          >
+          </p>
+        </div>
+      </form>
+
+      {
+        /* ---- the aside ---------------------------------------------------- */
+      }
+      <aside class="contact_aside">
+        <div class="contact_block">
+          <h2 class="contact_block_title">Rather just talk?</h2>
+          <p class="contact_block_text">
+            Thirty minutes with the people who'd do the work. No deck, no
+            discovery invoice.
+          </p>
+          <a class="contact_mail" href={`mailto:${CONTACT_EMAIL}`}>
+            {CONTACT_EMAIL}
+          </a>
+        </div>
+
+        <div class="contact_block">
+          <h2 class="contact_block_title">What happens next</h2>
+          <ol class="contact_steps">
+            <li>We read it properly — same day, by a person.</li>
+            <li>A short reply with a rough range and a yes or a no.</li>
+            <li>If it's a yes, a call and a one-page scope.</li>
+          </ol>
+        </div>
+
+        <RatingBadge variant="outline" />
+      </aside>
+    </div>
+  </Section>
+</Layout>
+
+<style is:global>
+  @layer components {
+    .contact_layout {
+      width: 100%;
+      display: grid;
+      gap: var(--space-8);
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      align-items: start;
+    }
+
+    /* ---- form ------------------------------------------------------------ */
+    .contact_form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-5);
+    }
+
+    .contact_row {
+      display: grid;
+      gap: var(--space-5);
+      grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      min-width: 0;
+      margin: 0;
+      padding: 0;
+      border: 0;
+    }
+
+    .field_label {
+      font-size: var(--text-small);
+      font-weight: var(--primary-medium);
+      padding: 0;
+    }
+
+    .field_input {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      background-color: var(--background-2);
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius-main);
+      color: var(--text);
+      font-size: var(--text-small);
+      transition:
+        border-color var(--duration-main),
+        background-color var(--duration-main);
+
+      &:focus-visible {
+        border-color: var(--brand-500);
+        outline: none;
+      }
+      /* The browser marks a field invalid only once it has been interacted
+         with, so this can't fire on an untouched form. */
+      &:user-invalid {
+        border-color: #d33;
+      }
+    }
+
+    textarea.field_input {
+      resize: vertical;
+      min-height: 8rem;
+    }
+
+    .contact_choices {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+    }
+
+    /* The radio itself is hidden from sight but not from the keyboard — the
+       label is the visible control and takes the focus ring. */
+    .choice {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.5rem 1rem;
+      background-color: var(--background-2);
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius-round);
+      font-size: var(--text-small);
+      cursor: pointer;
+      transition:
+        background-color var(--duration-main),
+        border-color var(--duration-main),
+        color var(--duration-main);
+
+      & input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+      }
+      &:has(input:checked) {
+        background-color: var(--brand-500);
+        border-color: var(--brand-500);
+        color: var(--light-100);
+      }
+      &:has(input:focus-visible) {
+        outline: var(--focus-width) solid var(--text);
+        outline-offset: var(--focus-offset);
+      }
+    }
+
+    .contact_actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-5);
+    }
+
+    .contact_submit {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem 2.25rem;
+      background-color: var(--brand-500);
+      border: 0;
+      border-radius: var(--radius-main);
+      box-shadow: var(--shadow-button-inset);
+      color: var(--light-100);
+      font-size: var(--text-main);
+      font-weight: var(--primary-medium);
+      transition: background-color var(--duration-main);
+      @media (hover: hover) {
+        &:hover {
+          background-color: var(--brand-700);
+        }
+      }
+    }
+
+    .contact_status {
+      font-size: var(--text-small);
+      &:empty {
+        display: none;
+      }
+      &[data-ok] {
+        color: var(--brand-700);
+      }
+      &[data-error] {
+        color: #c22;
+      }
+    }
+
+    /* ---- aside ----------------------------------------------------------- */
+    .contact_aside {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: var(--space-5);
+    }
+
+    .contact_block {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      padding: var(--space-6);
+      background-color: var(--background-2);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: var(--radius-card);
+    }
+
+    .contact_block_title {
+      font-size: var(--h6);
+      font-weight: var(--primary-medium);
+    }
+
+    .contact_block_text {
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+
+    .contact_mail {
+      color: var(--brand-700);
+      font-weight: var(--primary-medium);
+      font-size: var(--text-small);
+      text-underline-offset: 0.3em;
+    }
+
+    .contact_steps {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      margin: 0;
+      padding-left: 1.1rem;
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+
+    @media (width < 62rem) {
+      .contact_layout {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  }
+</style>

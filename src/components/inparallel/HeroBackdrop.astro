@@ -1,0 +1,365 @@
+---
+import Img from "@/components/Img.astro";
+import heroBloom from "@/assets/inparallel/hero-bloom.svg";
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+
+/**
+ * The beams raked across the hero, and how each one moves.
+ *
+ * `--_x` is where a beam crosses the section's half-height, as a share of its
+ * width. The artwork draws two — at 60.5% and 84.3%, the thin one and the
+ * thick one — and the pair of hairlines is new, there to give the drift
+ * something to read against without crowding the design.
+ *
+ * The cycles are deliberately mismatched lengths: four beams on 19, 23, 27 and
+ * 31 seconds never come back into step, so the drift stays irregular instead of
+ * pulsing in unison. Negative delays start each one part-way through, so the
+ * group is already mid-drift on the first frame rather than lurching off from
+ * a standstill.
+ */
+const beams: Record<string, string>[] = [
+  {
+    "--_x": "60.5%",
+    "--_thickness": "0.125rem",
+    "--_opacity": "0.7",
+    "--_drift": "1.75rem",
+    "--_sway": "0.4deg",
+    "--_cycle": "23s",
+    "--_delay": "-6s",
+    "--_sheen": "13s",
+    "--_sheen-delay": "-5s",
+  },
+  {
+    "--_x": "84.3%",
+    "--_thickness": "0.25rem",
+    "--_opacity": "0.7",
+    "--_drift": "-2.25rem",
+    "--_sway": "-0.5deg",
+    "--_cycle": "31s",
+    "--_delay": "-11s",
+    "--_sheen": "17s",
+    "--_sheen-delay": "-13s",
+  },
+  {
+    "--_x": "45%",
+    "--_thickness": "0.0625rem",
+    "--_opacity": "0.22",
+    "--_drift": "3rem",
+    "--_sway": "0.8deg",
+    "--_cycle": "27s",
+    "--_delay": "-3s",
+    "--_sheen": "21s",
+    "--_sheen-delay": "-8s",
+  },
+  {
+    "--_x": "72%",
+    "--_thickness": "0.0625rem",
+    "--_opacity": "0.3",
+    "--_drift": "-2.5rem",
+    "--_sway": "-0.7deg",
+    "--_cycle": "19s",
+    "--_delay": "-14s",
+    "--_sheen": "11s",
+    "--_sheen-delay": "-2s",
+  },
+];
+
+const beamStyle = (beam: Record<string, string>) =>
+  Object.entries(beam)
+    .map(([property, value]) => `${property}: ${value};`)
+    .join(" ");
+---
+
+<div class:list={["hero-backdrop", className]} data-hero-backdrop>
+  <Img
+    src={heroBloom}
+    class="hero-backdrop_bloom"
+    loading="eager"
+    fetchPriority="high"
+    transparent
+  />
+
+  <span class="hero-backdrop_torch"></span>
+
+  {
+    /* The beams are drawn twice from the one list: once as the design has
+       them, and once more as `lit` — the same geometry running the same
+       animation on the same clock, so the copy sits exactly on the original,
+       screened over it and masked down to a disc under the pointer. */
+  }
+  {
+    [false, true].map((lit) => (
+      <span class:list={["hero-backdrop_beams", lit && "lit"]}>
+        {beams.map((beam) => (
+          <span class="hero-backdrop_beam" style={beamStyle(beam)} />
+        ))}
+      </span>
+    ))
+  }
+</div>
+
+<style is:global>
+  @layer components {
+    .hero-backdrop {
+      /* Where the light sits, in the section's own pixels. `hero-backdrop.ts`
+         writes over these as the pointer moves; with no pointer to follow they
+         stay put and the light never comes on at all. */
+      --_pointer-x: 50%;
+      --_pointer-y: 35%;
+      --_reach: 22rem;
+
+      /* How far the pointer sits from the section's centre, -0.5 to 0.5 on
+         each axis. Each layer multiplies it by a travel of its own, which is
+         what separates them into depths. */
+      --_lean-x: 0;
+      --_lean-y: 0;
+
+      /* The site's rake, off the same artwork these beams come from. */
+      --_rake: var(--rake);
+
+      /* The light comes up in a step and goes out over a long one. */
+      --duration-light-in: var(--duration-slow);
+      --duration-light-out: 1200ms;
+
+      /* Blending is between the layers of the backdrop, not with the page
+         behind it. */
+      isolation: isolate;
+    }
+
+    /* The artwork is authored at 1440 × 914, with the bloom in its top-right
+       corner. Anchoring there keeps the design's framing on a wide screen. */
+    .hero-backdrop_bloom {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top right;
+      transform-origin: 80% 0;
+      translate: calc(var(--_lean-x) * -1.25rem) calc(var(--_lean-y) * -0.75rem);
+      animation: hero-bloom-breathe 18s ease-in-out infinite alternate;
+    }
+
+    /* A tall, narrow viewport crops to a slice of that artwork, and the
+       right-hand slice is its brightest part — which would put the headline
+       on top of the bloom. Narrow screens take the dark side instead. */
+    @media (width < 48rem) {
+      .hero-backdrop_bloom {
+        object-position: 20% top;
+      }
+    }
+
+    @keyframes hero-bloom-breathe {
+      from {
+        opacity: 0.82;
+        scale: 1;
+      }
+      to {
+        opacity: 1;
+        scale: 1.06;
+      }
+    }
+
+    /* The light the pointer carries. Screened rather than laid over, so it
+       adds to the bloom where the two meet instead of washing it flat. */
+    .hero-backdrop_torch {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(
+        circle var(--_reach) at var(--_pointer-x) var(--_pointer-y),
+        color-mix(in srgb, var(--brand-300) 26%, transparent),
+        color-mix(in srgb, var(--brand-500) 16%, transparent) 45%,
+        transparent 72%
+      );
+      opacity: 0;
+      mix-blend-mode: screen;
+      transition: opacity var(--duration-light-out) var(--ease-out);
+    }
+
+    .hero-backdrop_beams {
+      position: absolute;
+      inset: 0;
+      translate: calc(var(--_lean-x) * 1.5rem) calc(var(--_lean-y) * 0.9rem);
+    }
+
+    /* The disc follows the pointer by its top-left corner, so half its own
+       width comes back off each axis to leave it centred on the light.
+
+       Hidden rather than only transparent while the pointer is away: the copy
+       is a screen-blended layer the size of the section, and a browser that
+       isn't painting it has nothing to composite on a page nobody is pointing
+       at. Visibility flips to visible as soon as the fade starts and back only
+       once it has finished, so neither end of it is ever seen. */
+    .hero-backdrop_beams.lit {
+      opacity: 0;
+      visibility: hidden;
+      mix-blend-mode: screen;
+      mask-image: radial-gradient(
+        circle closest-side,
+        #000,
+        rgb(0 0 0 / 0.35) 45%,
+        transparent 90%
+      );
+      mask-size: calc(var(--_reach) * 2) calc(var(--_reach) * 2);
+      mask-repeat: no-repeat;
+      mask-position: calc(var(--_pointer-x) - var(--_reach))
+        calc(var(--_pointer-y) - var(--_reach));
+      transition:
+        opacity var(--duration-light-out) var(--ease-out),
+        visibility var(--duration-light-out);
+    }
+
+    /* Slower going out than coming in. The light arriving is a response to the
+       pointer and wants to keep up with it; the light leaving has nothing to
+       keep up with, and a long fade is what stops the section blinking as the
+       pointer crosses its edge. `hero-backdrop.ts` holds the same figure, to
+       decide whether a pointer coming back finds the old light still up. */
+    .hero-backdrop[data-lit]
+      :is(.hero-backdrop_torch, .hero-backdrop_beams.lit) {
+      opacity: 1;
+      visibility: visible;
+      transition-duration: var(--duration-light-in);
+    }
+
+    .hero-backdrop_beam {
+      position: absolute;
+      top: 50%;
+      left: var(--_x);
+      width: var(--_thickness);
+      /* Twice the section's height: the ends stay well outside the frame
+         however far the beam drifts or leans, so it never shows a tip. */
+      height: 200%;
+      opacity: var(--_opacity);
+      /* Which leaves the middle 55% of it on screen, and the stops are placed
+         against that stretch rather than the beam's full length: dark where it
+         enters at the top, brightest a third of the way down, navy before it
+         leaves at the bottom. */
+      background-image: linear-gradient(
+        to bottom,
+        transparent 24%,
+        color-mix(in srgb, var(--brand-300) 40%, transparent) 32%,
+        color-mix(in srgb, var(--brand-300), var(--light-100) 70%) 42%,
+        var(--brand-300) 48%,
+        var(--navy-900) 63%,
+        transparent 76%
+      );
+      translate: -50% -50%;
+      rotate: var(--_rake);
+      animation: hero-beam-drift var(--_cycle) var(--_delay) infinite
+        ease-in-out;
+    }
+
+    /* The artwork lays a soft dark band along each beam, which is what keeps
+       them reading as edges cut into the bloom rather than lines drawn over
+       it. A blur would cost a filter pass every frame the beam moves; a
+       gradient across the band's width paints the same picture for nothing. */
+    .hero-backdrop_beam::before {
+      content: "";
+      position: absolute;
+      inset-block: 0;
+      left: 50%;
+      width: calc(var(--_thickness) + 3.125rem);
+      translate: -50% 0;
+      background-image: linear-gradient(
+        to bottom,
+        var(--dark-900) 26%,
+        transparent 55%
+      );
+      mask-image: linear-gradient(to right, transparent, #000 50%, transparent);
+      opacity: 0.4;
+    }
+
+    /* A glint travelling the length of the beam, fading in and out inside the
+       frame so it never starts or stops on screen.
+
+       It rests transparent and is lit by the animation rather than the other
+       way round: a reader who has asked for less motion has the animation
+       taken off it, and what is left has to be nothing at all rather than a
+       glint parked a fifth of the way down the beam. */
+    .hero-backdrop_beam::after {
+      content: "";
+      position: absolute;
+      top: 20%;
+      left: 50%;
+      width: calc(var(--_thickness) + 0.375rem);
+      height: 13%;
+      opacity: 0;
+      translate: -50% 0;
+      background-image: linear-gradient(
+        to bottom,
+        transparent,
+        var(--light-100),
+        transparent
+      );
+      mask-image: linear-gradient(to right, transparent, #000 50%, transparent);
+      animation: hero-beam-sheen var(--_sheen) var(--_sheen-delay) infinite
+        linear;
+    }
+
+    /* In the lit copy the dark band turns into the glow the pointer casts, and
+       the beam doubles up on the one underneath — screened, so the two add
+       together rather than the copy simply covering the original. */
+    /* A step brighter rather than flat out, so the two the design draws still
+       lead the hairlines when the light is on them. */
+    .hero-backdrop_beams.lit .hero-backdrop_beam {
+      opacity: calc(var(--_opacity) + 0.25);
+    }
+
+    .hero-backdrop_beams.lit .hero-backdrop_beam::before {
+      width: calc(var(--_thickness) + 6.25rem);
+      background-image: linear-gradient(
+        to bottom,
+        transparent 24%,
+        var(--brand-500) 42%,
+        color-mix(in srgb, var(--brand-500) 35%, transparent) 60%,
+        transparent 74%
+      );
+      opacity: 0.55;
+    }
+
+    /* The hairlines are there to give the drift something to read against on a
+       wide screen. A phone hasn't the room for four beams across it, so it
+       keeps the two the design draws. */
+    @media (width < 48rem) {
+      .hero-backdrop_beam:nth-child(n + 3) {
+        display: none;
+      }
+    }
+
+    @keyframes hero-beam-drift {
+      from,
+      to {
+        translate: -50% -50%;
+        rotate: var(--_rake);
+      }
+      50% {
+        translate: calc(-50% + var(--_drift)) -50%;
+        rotate: calc(var(--_rake) + var(--_sway));
+      }
+    }
+
+    /* 430% of its own 13% height carries it across the 56% of the beam that
+       the frame shows. */
+    @keyframes hero-beam-sheen {
+      from {
+        translate: -50% 0;
+        opacity: 0;
+      }
+      12% {
+        opacity: 0.85;
+      }
+      88% {
+        opacity: 0.85;
+      }
+      to {
+        translate: -50% 430%;
+        opacity: 0;
+      }
+    }
+  }
+</style>

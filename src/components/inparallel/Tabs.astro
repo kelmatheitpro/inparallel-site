@@ -1,0 +1,164 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { activeTab, type TabItem } from "@/utils/tabs.ts";
+
+interface Props extends HTMLAttributes<"div"> {
+  tabs: TabItem[];
+  /** Names the tablist for screen readers. */
+  label: string;
+  /**
+   * - `underline` — dark chip with a brand rule under the active tab
+   * - `pill` — bordered pill that fills in when active
+   */
+  variant?: "underline" | "pill";
+  /** Which tab opens first. Defaults to the first in the list. */
+  initial?: string;
+}
+
+const {
+  tabs,
+  label,
+  variant = "underline",
+  initial,
+  class: className,
+  ...rest
+} = Astro.props;
+
+const active = activeTab(tabs, initial);
+---
+
+<div class:list={["tabs", `tabs-${variant}`, className]} data-tabs {...rest}>
+  <div class="tabs_list" role="tablist" aria-label={label}>
+    {
+      tabs.map((tab) => (
+        <button
+          class="tabs_tab"
+          type="button"
+          role="tab"
+          id={`tab-${tab.id}`}
+          aria-controls={`panel-${tab.id}`}
+          aria-selected={tab.id === active ? "true" : "false"}
+          tabindex={tab.id === active ? 0 : -1}
+        >
+          <span class="tabs_label">{tab.label}</span>
+          <span class="tabs_rule" aria-hidden="true" />
+        </button>
+      ))
+    }
+  </div>
+
+  <slot />
+</div>
+
+{
+  /* Without scripting only one panel would ever be reachable, so show them
+     all and drop the tab strip that can no longer do anything. */
+}
+<noscript>
+  <style>
+    .tabs_list {
+      display: none;
+    }
+    .tabs_panel[hidden] {
+      display: block;
+    }
+  </style>
+</noscript>
+
+<style is:global>
+  @layer components {
+    .tabs {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-5);
+    }
+
+    .tabs_list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: var(--space-5);
+    }
+
+    .tabs_tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-3);
+      padding: 0.8125rem 1.625rem;
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius-main);
+      color: inherit;
+      font-size: var(--text-main);
+      font-weight: var(--primary-medium);
+      line-height: 1.2;
+      white-space: nowrap;
+      transition:
+        background-color var(--duration-main),
+        border-color var(--duration-main),
+        color var(--duration-main);
+    }
+
+    /* The rule under an active tab. It always occupies its row so selecting a
+       tab doesn't change how tall the strip is. */
+    .tabs_rule {
+      width: 3.125rem;
+      height: 0.25rem;
+      border-radius: var(--radius-round);
+      background-color: transparent;
+      transition: background-color var(--duration-main);
+    }
+
+    /* `hidden` is a UA style, so any `display` a panel sets for itself would
+       beat it. This restates it as an author rule that outranks the class. */
+    .tabs_panel[hidden] {
+      display: none;
+    }
+
+    .tabs_panel:focus-visible {
+      outline-color: var(--text);
+      outline-offset: var(--focus-offset);
+      outline-width: var(--focus-width);
+      outline-style: solid;
+    }
+
+    /* ---- underline ------------------------------------------------------ */
+    .tabs-underline .tabs_tab[aria-selected="true"] {
+      background-color: var(--dark-800);
+      border-color: var(--dark-800);
+      color: var(--light-100);
+    }
+
+    .tabs-underline .tabs_tab[aria-selected="true"] .tabs_rule {
+      background-color: var(--brand-300);
+    }
+
+    /* ---- pill ----------------------------------------------------------- */
+    .tabs-pill .tabs_tab {
+      padding: 0.6875rem 1.25rem;
+      font-size: var(--text-small);
+    }
+
+    .tabs-pill .tabs_rule {
+      width: 1.75rem;
+      height: 0.1875rem;
+    }
+
+    .tabs-pill .tabs_tab[aria-selected="true"] {
+      background-color: var(--navy-900);
+      border-color: var(--navy-900);
+      color: var(--light-100);
+    }
+
+    .tabs-pill .tabs_tab[aria-selected="true"] .tabs_rule {
+      background-color: var(--brand-500);
+    }
+
+    @media (hover: hover) {
+      .tabs_tab:not([aria-selected="true"]):hover {
+        border-color: color-mix(in srgb, var(--text) 45%, transparent);
+      }
+    }
+  }
+</style>

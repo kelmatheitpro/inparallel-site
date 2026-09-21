@@ -1,0 +1,402 @@
+/* ==========================================================================
+   inparallel patterns
+
+   Multi-property shapes the design repeats across sections. They sit in the
+   `patterns` layer beside Lumos's own, so components can still override them
+   and single-property utilities still win last.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Container widths
+
+   Most sections run to the site width (1440 − 2 × 50). Hero and services are
+   inset a further 50 either side in the design, which is what `narrow` is.
+   -------------------------------------------------------------------------- */
+.container-narrow {
+  max-width: var(--max-width-narrow);
+}
+
+/* --------------------------------------------------------------------------
+   Two-tone headings
+
+   Every section heading in the design states a claim and then fades the back
+   half of it. `<em>` carries the faded half so the emphasis survives without
+   styles, and the italics the tag would otherwise bring are dropped.
+   -------------------------------------------------------------------------- */
+.heading-split em {
+  color: var(--heading-accent);
+  font-style: normal;
+  /* The design breaks the line where the claim hands over to the faded half,
+     so the emphasis starts its own line rather than needing a `<br>`. */
+  display: block;
+}
+
+/* Headings the design keeps on one line, or breaks somewhere else. */
+.heading-split.inline em {
+  display: inline;
+}
+
+/* --------------------------------------------------------------------------
+   Section header row — heading left, a link or badge right, baselines aligned.
+   Stacks once there isn't room for both.
+   -------------------------------------------------------------------------- */
+.section-head {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-5) var(--space-8);
+}
+
+.section-head.centered {
+  justify-content: center;
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   Surfaces
+   -------------------------------------------------------------------------- */
+.surface {
+  position: relative;
+  border-radius: var(--radius-card);
+  overflow: clip;
+}
+
+.surface-raised {
+  background-color: var(--background-raised);
+  border: var(--border-width) solid var(--border);
+}
+
+.surface-solid {
+  background-color: var(--background-2);
+}
+
+/* A decorative layer inside a surface: never interactive, never in the way. */
+.surface-glow {
+  position: absolute;
+  pointer-events: none;
+  z-index: 0;
+  user-select: none;
+}
+
+/* Everything that isn't a glow sits above one. */
+.surface > :not(.surface-glow) {
+  position: relative;
+  z-index: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Pills & badges
+   -------------------------------------------------------------------------- */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-small);
+  font-size: var(--text-small);
+  font-weight: var(--primary-medium);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* The lit translucent chip the design puts on dark sections. Two stacked
+   whites rather than one flat tint: the chip is lit along its top edge, which
+   a single background colour can't carry. */
+.pill-glass {
+  background-image: linear-gradient(to bottom, rgb(255 255 255 / 0.1), rgb(255 255 255 / 0.05));
+  box-shadow:
+    inset 0 2px 2px 0 rgb(255 255 255 / 0.25),
+    inset 0 -1px 2px 0 rgb(255 255 255 / 0.25);
+}
+
+.pill-tag {
+  padding: 0.4375rem 0.875rem;
+  border: var(--border-width) solid var(--border);
+  border-radius: var(--radius-round);
+  font-size: var(--text-tiny);
+  font-weight: var(--primary-regular);
+  color: color-mix(in srgb, var(--text) 80%, transparent);
+}
+
+/* --------------------------------------------------------------------------
+   Stat block — a headline number over its label. Used in five places at three
+   sizes, so the size is a variable rather than three near-identical rules.
+   -------------------------------------------------------------------------- */
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.stat_value {
+  font-size: var(--_stat-size, 3rem);
+  font-weight: var(--primary-semibold);
+  line-height: var(--line-height-medium);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+.stat_label {
+  font-size: var(--text-small);
+  line-height: var(--line-height-large);
+  color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Grids
+
+   `auto-fit` collapses these to one column on small screens without a media
+   query, and the `--_min` per grid is what decides when.
+   -------------------------------------------------------------------------- */
+.grid-cards {
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--_min, 17rem), 100%), 1fr));
+}
+
+/* --------------------------------------------------------------------------
+   Muted body copy — the design's 60% body text, on either theme.
+   -------------------------------------------------------------------------- */
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-faded {
+  color: var(--text-faded);
+}
+
+/* --------------------------------------------------------------------------
+   Seams
+
+   Where one section hands over to the next on a slope rather than a straight
+   edge. Both sections either side of a seam clip themselves by this figure —
+   one off its bottom, one off its top — so what shows between them is a band
+   of the page at an even width, raked the way everything else here is.
+
+   It lives here rather than in either section because a seam is a property of
+   the join, and two sections disagreeing about it is the one way it can go
+   wrong.
+   -------------------------------------------------------------------------- */
+:root {
+  --about-seam: 5rem;
+}
+
+/* --------------------------------------------------------------------------
+   Logo chip
+
+   A client's mark on a dark surface, in the tinted box the design sets it in.
+   It is drawn on the case study cards and again at the top of the study
+   itself. It lives here rather than beside either of them because it was
+   written beside one: the study page carried the class names and none of the
+   rules, so on a page with no card on it the mark fell back to whatever size
+   the artwork happened to be drawn at — which for two of the logos is a
+   thousand pixels.
+
+   `--_logo-width` is how wide the mark is set; the chip grows around it.
+   -------------------------------------------------------------------------- */
+.logo-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.9375rem 1.25rem;
+  background-color: color-mix(in srgb, var(--dark-900) 95%, white);
+  border: var(--border-width) solid var(--border);
+  border-radius: 0.625rem;
+}
+
+.logo-chip_mark {
+  width: var(--_logo-width, 5.6rem);
+  height: auto;
+}
+
+/* --------------------------------------------------------------------------
+   Partner pages
+
+   /extended-team and /upwork-extended-team are long sales pages built from the
+   same handful of shapes: a pair of buttons, a ticked list, a row of things we
+   don't do, and a stack of questions. They live here rather than in either
+   page so the two can't drift apart.
+   -------------------------------------------------------------------------- */
+/* The hero buttons, borrowed for a page that has two of its own. */
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: 1.25rem 2.25rem;
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-main);
+  background-color: var(--brand-500);
+  box-shadow: var(--shadow-button-inset);
+  color: var(--light-100);
+  font-size: var(--text-main);
+  font-weight: var(--primary-medium);
+  text-decoration: none;
+  filter: drop-shadow(var(--shadow-brand));
+  transition:
+    background-color var(--duration-main),
+    border-color var(--duration-main),
+    translate var(--duration-main) var(--ease-out);
+
+  &.secondary {
+    background-color: rgb(255 255 255 / 0.05);
+    border-color: rgb(255 255 255 / 0.2);
+    box-shadow: none;
+    filter: none;
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      translate: 0 -2px;
+      background-color: color-mix(in srgb, var(--brand-500), white 12%);
+    }
+    &.secondary:hover {
+      background-color: rgb(255 255 255 / 0.12);
+      border-color: rgb(255 255 255 / 0.4);
+    }
+  }
+}
+
+.cta_arrow {
+  --_size: 0.9375rem;
+  width: 0.9375rem;
+  height: auto;
+}
+
+.ticks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ticks li {
+  position: relative;
+  padding-left: var(--space-6);
+  line-height: var(--line-height-large);
+}
+
+/* The mark is drawn rather than set, so it doesn't depend on a font. */
+.ticks li::before {
+  content: "";
+  position: absolute;
+  top: 0.45em;
+  left: 0;
+  width: 0.75rem;
+  height: 0.4rem;
+  border-left: 2px solid var(--brand-500);
+  border-bottom: 2px solid var(--brand-500);
+  rotate: -45deg;
+}
+
+.theme-dark .ticks li::before {
+  border-color: var(--brand-300);
+}
+
+.ticks-wide {
+  width: 100%;
+  display: grid;
+  gap: var(--space-4) var(--space-8);
+  grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+}
+
+.nots {
+  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+}
+
+.faq {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.faq_item {
+  border-bottom: var(--border-width) solid var(--border-soft);
+}
+
+.faq_question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding: var(--space-5) 0;
+  font-size: var(--text-large);
+  font-weight: var(--primary-medium);
+  cursor: pointer;
+  list-style: none;
+  &::-webkit-details-marker {
+    display: none;
+  }
+  /* Drawn rather than set, and turned when the answer is open. */
+  &::after {
+    content: "";
+    flex: none;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-right: 2px solid currentcolor;
+    border-bottom: 2px solid currentcolor;
+    rotate: 45deg;
+    translate: 0 -0.15em;
+    transition: rotate var(--duration-main) var(--ease-out);
+  }
+}
+
+.faq_item[open] .faq_question::after {
+  rotate: 225deg;
+  translate: 0 0.15em;
+}
+
+.faq_answer {
+  max-width: var(--max-width-small);
+  padding-bottom: var(--space-5);
+  line-height: var(--line-height-large);
+}
+
+/* ---- hero foot ------------------------------------------------------ */
+.facts_row {
+  width: 100%;
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: repeat(auto-fit, minmax(min(14rem, 100%), 1fr));
+  padding-top: var(--space-7);
+  border-top: var(--border-width) solid var(--border-soft);
+}
+
+.facts_stat {
+  --_stat-size: var(--h5);
+}
+
+.facts_actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.scenarios {
+  width: 100%;
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+  list-style: none;
+  padding: 0;
+}
+
+.scenario_title {
+  font-size: var(--h5);
+  font-weight: var(--primary-medium);
+  line-height: var(--line-height-medium);
+  letter-spacing: var(--letter-spacing-tight);
+}

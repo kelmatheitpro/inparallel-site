@@ -1,0 +1,159 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Img from "@/components/Img.astro";
+import RatingBadge from "@/components/inparallel/RatingBadge.astro";
+import PlayButton from "@/components/inparallel/PlayButton.astro";
+import { VIDEO_TESTIMONIALS } from "@/data/home.ts";
+---
+
+<Section id="testimonials" theme="light">
+  <div class="section-head">
+    <Heading tag="h2" class="heading-split">
+      The inparallel experience, <em>told by our clients</em>
+    </Heading>
+    <RatingBadge variant="outline" />
+  </div>
+
+  <div class="video_grid">
+    {
+      VIDEO_TESTIMONIALS.map((item) => (
+        <figure class="video_item">
+          <div class="video_frame">
+            <Img
+              src={item.poster}
+              alt={`${item.role} at ${item.client}`}
+              class="video_poster"
+              variant="constrained"
+              sizes="(width >= 64rem) 42vw, 92vw"
+            />
+            <span class="video_stat stat">
+              <span class="stat_value">{item.stat}</span>
+              <span class="stat_label">{item.statLabel}</span>
+            </span>
+            <PlayButton
+              size="small"
+              label={`Play the ${item.client} testimonial`}
+              video={item.video}
+              poster={item.poster.src}
+              caption={`${item.role} · ${item.client}`}
+              class="video_play"
+            />
+          </div>
+
+          <blockquote class="video_quote">“{item.quote}”</blockquote>
+
+          <figcaption class="video_by">
+            <span class="video_role">{item.role}</span>
+            <span class="video_meta">
+              <span>{item.client}</span>
+              <span aria-hidden="true">·</span>
+              <span>{item.industry}</span>
+            </span>
+          </figcaption>
+        </figure>
+      ))
+    }
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    .video_grid {
+      width: 100%;
+      display: grid;
+      gap: var(--space-8);
+      grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
+    }
+
+    .video_item {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-5);
+      margin: 0;
+    }
+
+    /* The still is cropped to a fixed 400px band and darkened towards the
+       bottom, which is what keeps the white stat chip legible over it. */
+    .video_frame {
+      position: relative;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: var(--space-4);
+      height: 25rem;
+      padding: var(--space-5);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: var(--radius-card);
+      overflow: clip;
+      color: var(--light-100);
+    }
+
+    .video_poster {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .video_frame::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(
+        to bottom,
+        rgb(244 243 241 / 0),
+        var(--dark-900)
+      );
+    }
+
+    /* Above the wash the ::after lays down. */
+    .video_stat,
+    .video_play {
+      position: relative;
+      z-index: 1;
+    }
+
+    .video_stat {
+      --_stat-size: 2.25rem;
+      padding: 0.9375rem 1.25rem;
+      background-color: rgb(255 255 255 / 0.05);
+      backdrop-filter: blur(5px);
+      border: var(--border-width) solid rgb(255 255 255 / 0.4);
+      border-radius: var(--radius-main);
+      white-space: nowrap;
+    }
+
+    .video_stat .stat_label {
+      color: rgb(255 255 255 / 0.6);
+      font-size: var(--text-large);
+    }
+
+    .video_quote {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: var(--text-large);
+      line-height: var(--line-height-large);
+    }
+
+    .video_by {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    .video_role {
+      font-size: var(--text-large);
+      font-weight: var(--primary-medium);
+    }
+
+    .video_meta {
+      display: flex;
+      align-items: center;
+      gap: 0.625rem;
+      color: var(--text-faded);
+      font-size: var(--text-small);
+    }
+  }
+</style>

@@ -1,0 +1,41 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import Icon from "@/components/Icon.astro";
+import star from "@/assets/inparallel/icons/star.svg";
+
+interface Props extends HTMLAttributes<"span"> {
+  /** How many stars are filled. The row is always five wide. */
+  rating?: number;
+}
+
+const { rating = 5, class: className, ...rest } = Astro.props;
+
+const stars = Array.from({ length: 5 }, (_, index) => index < rating);
+---
+
+<span class:list={["stars", className]} {...rest}>
+  {
+    stars.map((filled) => (
+      <Icon src={star} variant="small" class:list={[!filled && "empty"]} />
+    ))
+  }
+</span>
+
+<style is:global>
+  @layer components {
+    .stars {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.125rem;
+      /* The artwork is magenta already; an unfilled star drops to the
+         surrounding text color at low opacity rather than changing shape. */
+      & .icon {
+        --_size: 0.875em;
+      }
+      & .empty {
+        opacity: 0.25;
+        filter: grayscale(1);
+      }
+    }
+  }
+</style>

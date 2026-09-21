@@ -1,0 +1,24 @@
+---
+import type { HTMLAttributes } from "astro/types";
+
+interface Props extends HTMLAttributes<"div"> {
+  /** Matches the `id` of the tab in the `<Tabs>` list above. */
+  id: string;
+  /** Whether this is the panel the set opens on. */
+  active?: boolean;
+}
+
+const { id, active = false, class: className, ...rest } = Astro.props;
+---
+
+<div
+  class:list={["tabs_panel", className]}
+  role="tabpanel"
+  id={`panel-${id}`}
+  aria-labelledby={`tab-${id}`}
+  hidden={!active}
+  tabindex="0"
+  {...rest}
+>
+  <slot />
+</div>

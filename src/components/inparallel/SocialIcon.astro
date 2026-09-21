@@ -1,0 +1,97 @@
+---
+/**
+ * The four social marks in the footer.
+ *
+ * These weren't part of the Figma export, so they are drawn here rather than
+ * imported from `src/assets`. Swap any of them for the exported artwork when
+ * it lands — the wrapper sizes whatever it is given.
+ */
+
+interface Props {
+  name: "linkedin" | "instagram" | "x" | "dribbble";
+}
+
+const { name } = Astro.props;
+---
+
+<svg
+  class="social-icon"
+  viewBox="0 0 24 24"
+  width="18"
+  height="18"
+  aria-hidden="true"
+  focusable="false"
+>
+  {
+    name === "linkedin" && (
+      <path
+        fill="currentColor"
+        d="M4.98 3.5A2.5 2.5 0 1 1 5 8.5a2.5 2.5 0 0 1-.02-5ZM3 9.75h4v11.5H3V9.75Zm6.5 0h3.83v1.57h.05a4.2 4.2 0 0 1 3.78-2.08c4.04 0 4.79 2.66 4.79 6.12v5.89h-4v-5.22c0-1.25-.02-2.85-1.74-2.85-1.74 0-2.01 1.36-2.01 2.76v5.31h-4V9.75Z"
+      />
+    )
+  }
+  {
+    name === "instagram" && (
+      <>
+        <rect
+          x="3"
+          y="3"
+          width="18"
+          height="18"
+          rx="5"
+          stroke="currentColor"
+          stroke-width="1.7"
+          fill="none"
+        />
+        <circle
+          cx="12"
+          cy="12"
+          r="4"
+          stroke="currentColor"
+          stroke-width="1.7"
+          fill="none"
+        />
+        <circle cx="17.2" cy="6.8" r="1.2" fill="currentColor" />
+      </>
+    )
+  }
+  {
+    name === "x" && (
+      <path
+        fill="currentColor"
+        d="M17.53 3h3.14l-6.86 7.84L21.9 21h-6.3l-4.94-6.45L4.99 21H1.85l7.34-8.39L2.1 3h6.46l4.46 5.9L17.53 3Zm-1.1 16.13h1.74L7.65 4.78H5.78l10.65 14.35Z"
+      />
+    )
+  }
+  {
+    name === "dribbble" && (
+      <>
+        <circle
+          cx="12"
+          cy="12"
+          r="9"
+          stroke="currentColor"
+          stroke-width="1.7"
+          fill="none"
+        />
+        <path
+          d="M5.2 7.4c3.9 2 8.4 2.6 12.9 1.6M3.4 14.2c4.5-1.4 9.1-.4 12.4 2.9M9 3.6c3 3.6 4.9 8.1 5.4 12.9"
+          stroke="currentColor"
+          stroke-width="1.7"
+          fill="none"
+          stroke-linecap="round"
+        />
+      </>
+    )
+  }
+</svg>
+
+<style is:global>
+  @layer components {
+    .social-icon {
+      display: block;
+      width: 1.125rem;
+      height: 1.125rem;
+    }
+  }
+</style>

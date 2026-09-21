@@ -1,0 +1,359 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Img from "@/components/Img.astro";
+import Icon from "@/components/Icon.astro";
+import HeroBackdrop from "@/components/inparallel/HeroBackdrop.astro";
+import RatingBadge from "@/components/inparallel/RatingBadge.astro";
+import webflowBadge from "@/assets/inparallel/webflow-badge.png";
+import arrowRight from "@/assets/inparallel/icons/arrow-right.svg";
+import arrowLine from "@/assets/inparallel/icons/arrow-line.svg";
+import glowDiagonal from "@/assets/inparallel/glow-diagonal.svg";
+import founders from "@/assets/inparallel/founders.webp";
+---
+
+<Section
+  id="hero"
+  theme="dark"
+  paddingTop="navoverlap"
+  paddingBottom="even"
+  containerClass="container-narrow hero_container"
+  class="hero"
+>
+  {
+    /* The backdrop goes in the background slot — Lumos pins that to the section
+       box and takes it out of the pointer path, which is what lets the beams
+       overhang the frame and the content sit over them untouched. */
+  }
+  <HeroBackdrop slot="background" />
+
+  <div class="hero_intro">
+    <div class="hero_badges">
+      <span class="pill hero_partner">
+        <Img
+          src={webflowBadge}
+          class="hero_partner_mark"
+          width={1080}
+          height={674}
+          variant="densities"
+          loading="eager"
+          transparent
+        />
+        Webflow Professional Partner
+      </span>
+      <RatingBadge />
+    </div>
+
+    <Heading tag="h1" variant="display" class="heading-split inline">
+      We design, build &amp; grow websites <em>your team can run</em>
+    </Heading>
+
+    <div class="hero_actions">
+      <a class="hero_cta" href="/contact">Book a call</a>
+      <a class="hero_cta secondary" href="/work">
+        Explore our work
+        <Icon src={arrowRight} class="hero_cta_arrow" />
+      </a>
+    </div>
+  </div>
+  {
+    /* Who picks up the work. The pair is a cut-out with nothing behind it, so
+      the panel gives them something to stand on: a raised surface, a diagonal
+      glow inside it running at the same rake as the beams behind, and a scrim
+      across the bottom that takes the photograph's cropped edge out of the
+      picture. */
+  }
+  <figure class="hero_team surface surface-raised">
+    <Img src={glowDiagonal} class="surface-glow hero_team_glow" transparent />
+    <Img
+      src={founders}
+      class="hero_team_photo"
+      alt="Aleksandar and Darko"
+      variant="constrained"
+      sizes="(min-width: 48rem) 20rem, 100vw"
+      loading="eager"
+      transparent
+    />
+    <figcaption class="hero_team_caption">
+      <span class="hero_team_names">Aleksandar &amp; Darko</span>
+      <span class="hero_team_role">
+        The two you brief, and the two who build it
+      </span>
+    </figcaption>
+  </figure>
+
+  <div class="hero_foot">
+    <p class="hero_summary">
+      Webflow studio with a business-first approach. Designed from scratch,
+      built in code that lasts, growing long after launch.
+    </p>
+    <a
+      class="hero_scroll"
+      href="#trusted"
+      aria-label="Scroll to the next section"
+    >
+      <Icon src={arrowLine} class="hero_scroll_icon" />
+    </a>
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    .hero {
+      overflow: clip;
+    }
+
+    .hero_container {
+      gap: clamp(var(--space-8), 10vw, 9.375rem);
+    }
+
+    /* Room enough for the pair to stand beside the headline rather than under
+       it. The headline sets to about 70% of the container at every size it is
+       given, so the column left over tracks the viewport and stops at 20rem —
+       wide enough to read two faces, and on a wide screen narrow enough to
+       leave the headline the two lines the design gives it. Further down it
+       takes a third line, which is the better trade for keeping the pair
+       beside the words. Below this the panel drops into the column with
+       everything else. */
+    @media (width >= 64rem) {
+      .hero_container {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) clamp(16rem, 22vw, 20rem);
+        grid-template-areas:
+          "intro team"
+          "foot foot";
+        column-gap: var(--space-8);
+        align-items: end;
+      }
+
+      .hero_intro {
+        grid-area: intro;
+      }
+
+      .hero_team {
+        grid-area: team;
+        width: 100%;
+      }
+
+      .hero_foot {
+        grid-area: foot;
+      }
+    }
+
+    /* The panel. `surface surface-raised` carries the tint, the border and the
+       clipping; what is left here is the shape of it and what sits inside. */
+    .hero_team {
+      --_crop: 50% 6%;
+      /* The photograph's own 1555 × 2000, so the pair is never stretched and
+         the crop only ever takes from the top and the bottom. */
+      aspect-ratio: 311 / 400;
+      display: flex;
+      align-items: end;
+      background-image: linear-gradient(
+        to bottom,
+        rgb(255 255 255 / 0.07),
+        transparent 55%
+      );
+    }
+
+    /* The same bar the case study cards are raked with, at the site's angle. */
+    .hero_team_glow {
+      top: -12%;
+      left: 20%;
+      width: 62%;
+      height: 130%;
+      max-width: none;
+      rotate: var(--rake);
+    }
+
+    .hero_team_photo {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: var(--_crop);
+    }
+
+    /* The scrim runs far above the words it sits behind: the cut-out ends at
+       the shins, and this is what turns that edge into a fade. */
+    .hero_team_caption {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+      padding: 5rem var(--space-5) var(--space-5);
+      background-image: linear-gradient(
+        to top,
+        var(--dark-900) 32%,
+        color-mix(in srgb, var(--dark-900) 55%, transparent) 62%,
+        transparent
+      );
+    }
+
+    .hero_team_names {
+      font-size: var(--text-main);
+      font-weight: var(--primary-medium);
+    }
+
+    .hero_team_role {
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+      color: var(--text-muted);
+    }
+
+    /* Stacked under the headline, a tablet keeps the upright panel it has
+       beside the headline, capped so it doesn't run the width of the page as a
+       wall of photograph. */
+    @media (width < 64rem) {
+      .hero_team {
+        width: min(100%, 22rem);
+      }
+    }
+
+    /* A phone turns it on its side: width is the scarce thing there, so the
+       pair take all of it and the crop holds them from the head down. */
+    @media (width < 48rem) {
+      .hero_team {
+        --_crop: 50% 3%;
+        width: 100%;
+        aspect-ratio: 4 / 3;
+      }
+    }
+
+    .hero_intro {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: var(--space-8);
+    }
+
+    .hero_badges {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-5);
+    }
+
+    /* Webflow blue, lit from the top edge, as the design's chip is. */
+    .hero_partner {
+      background-image: linear-gradient(
+        to right,
+        var(--webflow-500),
+        var(--webflow-600)
+      );
+      border-radius: var(--radius-small);
+      box-shadow:
+        inset 0 2px 2px 0 rgb(255 255 255 / 0.5),
+        inset 0 -1px 2px 0 rgb(255 255 255 / 0.5);
+    }
+
+    /* Fixed leaf inside the chip: the mark keeps its own 1080 × 674 ratio and
+       is sized off the line of text beside it. */
+    .hero_partner_mark {
+      width: 1.375rem;
+      height: auto;
+      aspect-ratio: 1080 / 674;
+    }
+
+    .hero_actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-5);
+    }
+
+    .hero_cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-3);
+      padding: 1.25rem 2.25rem;
+      border: var(--border-width) solid transparent;
+      border-radius: var(--radius-main);
+      background-color: var(--brand-500);
+      box-shadow: var(--shadow-button-inset);
+      color: var(--light-100);
+      font-size: var(--text-main);
+      font-weight: var(--primary-medium);
+      text-align: center;
+      text-decoration: none;
+      /* The magenta bloom under the primary button. `filter` rather than
+         `box-shadow` so it follows the rounded box, not a rectangle. */
+      filter: drop-shadow(var(--shadow-brand));
+      transition:
+        background-color var(--duration-main),
+        border-color var(--duration-main),
+        translate var(--duration-main) var(--ease-out);
+
+      &.secondary {
+        background-color: rgb(255 255 255 / 0.05);
+        border-color: rgb(255 255 255 / 0.2);
+        box-shadow: none;
+        filter: none;
+      }
+
+      @media (hover: hover) {
+        &:hover {
+          translate: 0 -2px;
+          background-color: color-mix(in srgb, var(--brand-500), white 12%);
+        }
+        &.secondary:hover {
+          background-color: rgb(255 255 255 / 0.12);
+          border-color: rgb(255 255 255 / 0.4);
+        }
+      }
+    }
+
+    .hero_cta_arrow {
+      --_size: 0.9375rem;
+      width: 0.9375rem;
+      height: auto;
+    }
+
+    .hero_foot {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      justify-content: space-between;
+      gap: var(--space-5);
+      padding-top: var(--space-8);
+      border-top: var(--border-width) solid rgb(255 255 255 / 0.1);
+    }
+
+    .hero_summary {
+      max-width: 34rem;
+      color: var(--text-muted);
+      font-size: var(--text-large);
+      line-height: var(--line-height-large);
+    }
+
+    .hero_scroll {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.75rem;
+      height: 2.75rem;
+      color: var(--light-100);
+      /* The arrow artwork is a horizontal line; the design turns it to point
+         down the page. */
+      rotate: 90deg;
+      transition: translate var(--duration-main) var(--ease-out);
+      @media (hover: hover) {
+        &:hover {
+          /* `translate` lands before `rotate`, so this is read on the screen's
+             axes, not the arrow's: down the page is y, however the glyph is
+             turned. */
+          translate: 0 0.25rem;
+        }
+      }
+    }
+
+    .hero_scroll_icon {
+      --_size: 1.5625rem;
+      width: 1.5625rem;
+      height: auto;
+    }
+  }
+</style>

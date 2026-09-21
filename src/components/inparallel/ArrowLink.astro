@@ -1,0 +1,58 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import Icon from "@/components/Icon.astro";
+import arrowCircle from "@/assets/inparallel/icons/arrow-circle.svg";
+
+interface Props extends HTMLAttributes<"a"> {
+  href?: string;
+  /** Rotates the arrow to point up-right, as the card links in the design do. */
+  diagonal?: boolean;
+}
+
+const { href = "#", diagonal = false, class: className, ...rest } = Astro.props;
+---
+
+<a
+  class:list={["arrow-link", diagonal && "diagonal", className]}
+  href={href}
+  {...rest}
+>
+  <span class="arrow-link_label"><slot /></span>
+  <Icon src={arrowCircle} class="arrow-link_icon" />
+</a>
+
+<style is:global>
+  @layer components {
+    .arrow-link {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-3);
+      color: inherit;
+      font-size: var(--text-main);
+      font-weight: var(--primary-semibold);
+      line-height: var(--line-height-medium);
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .arrow-link_icon {
+      --_size: 2.5rem;
+      transition: transform var(--duration-main) var(--ease-out);
+    }
+
+    .arrow-link.diagonal .arrow-link_icon {
+      rotate: -45deg;
+    }
+
+    /* The arrow leans the way it points, so hover reads as travel rather
+       than as a colour change. */
+    @media (hover: hover) {
+      .arrow-link:hover .arrow-link_icon {
+        transform: translateX(0.25rem);
+      }
+      .arrow-link.diagonal:hover .arrow-link_icon {
+        transform: translate(0.2rem, -0.2rem);
+      }
+    }
+  }
+</style>

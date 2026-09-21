@@ -1,0 +1,224 @@
+---
+import Section from "@/components/Section.astro";
+import Img from "@/components/Img.astro";
+import Icon from "@/components/Icon.astro";
+import { STORY } from "@/data/about.ts";
+import mark from "@/assets/inparallel/mark.svg";
+import glowDiagonal from "@/assets/inparallel/glow-diagonal.svg";
+
+/**
+ * Both halves of a block's claim, as one run of words.
+ *
+ * The index carries on across the halves rather than restarting, because what
+ * it drives is a single sweep of light crossing the whole sentence — where the
+ * stated half hands over to the muted one is a change of colour, not a break
+ * in the timing.
+ */
+const words = (block: (typeof STORY)[number]) => [
+  ...block.lead.split(" ").map((text) => ({ text, muted: false })),
+  ...block.rest.split(" ").map((text) => ({ text, muted: true })),
+];
+---
+
+<Section
+  theme="dark"
+  paddingTop="large"
+  paddingBottom="large"
+  containerClass="container-narrow about-story_container"
+  class="about-story"
+>
+  {
+    STORY.map((block) => (
+      <div class:list={["about-story_row", `media-${block.side}`]} data-reveal>
+        <p class="about-story_claim">
+          {words(block).map((word, index) => (
+            <>
+              <span
+                class:list={["about-story_word", word.muted && "muted"]}
+                style={`--_i: ${index};`}
+              >
+                {word.text}
+              </span>{" "}
+            </>
+          ))}
+        </p>
+
+        <figure class="about-story_media surface surface-raised">
+          {block.image ? (
+            <Img
+              src={block.image}
+              alt={block.alt}
+              class="about-story_photo"
+              variant="constrained"
+              sizes="(min-width: 60rem) 30rem, 92vw"
+            />
+          ) : (
+            /* No photograph yet. Rather than a hole in the page, the frame
+               takes the same raked glow the hero panel carries and the mark
+               sits in it — a plate waiting for a picture, not a broken one. */
+            <span class="about-story_plate">
+              <Img
+                src={glowDiagonal}
+                class="surface-glow about-story_plate_glow"
+                transparent
+              />
+              <Icon src={mark} class="about-story_plate_mark" />
+            </span>
+          )}
+        </figure>
+      </div>
+    ))
+  }
+</Section>
+
+<style is:global>
+  @layer components {
+    /* The section hands over to the one below it on a slope rather than a
+       straight edge, and the section below takes the same slope off its own
+       top — which leaves a ribbon of the page showing between them at a
+       constant thickness, running at the angle everything else here does.
+       Clipping the sections rather than drawing the ribbon means it is
+       whatever the page is, with no second colour to keep in step. */
+    .about-story {
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 calc(100% - var(--about-seam)));
+      padding-bottom: calc(var(--section-space-large) + var(--about-seam));
+    }
+
+    .about-story_container {
+      gap: clamp(var(--space-8), 9vw, 7.5rem);
+    }
+
+    .about-story_row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      align-items: center;
+      gap: clamp(var(--space-6), 6vw, 5rem);
+    }
+
+    /* Which column the picture takes. The claim is always first in the markup
+       so it is always first in the reading order, whichever side it is drawn
+       on. */
+    .about-story_row.media-start .about-story_claim {
+      order: 2;
+    }
+
+    @media (width < 60rem) {
+      .about-story_row {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .about-story_row.media-start .about-story_claim {
+        order: 0;
+      }
+    }
+
+    /* ---- the claim ------------------------------------------------------ */
+    .about-story_claim {
+      font-size: var(--h3);
+      font-weight: var(--primary-medium);
+      line-height: var(--line-height-medium);
+      letter-spacing: var(--letter-spacing-tight);
+      text-wrap: pretty;
+    }
+
+    /* Where the sentence ends up: the stated half in full, the half behind it
+       quiet. This is what the markup says on its own, so a reader with no
+       script to light the words gets the design's two tones rather than a wall
+       of one. */
+    .about-story_word.muted {
+      color: var(--text-muted);
+    }
+
+    /* The resting state every reveal starts from, set only where there is a
+       script to bring it out of one. Every word waits at the faded weight and
+       is lit in turn, left to right, at reading pace — which is why the muted
+       half has to be named here too, or it would never go out in the first
+       place. */
+    @media (scripting: enabled) {
+      .about-story_word,
+      .about-story_word.muted {
+        color: var(--text-faded);
+        transition: color var(--duration-slow) calc(var(--_i) * 38ms) ease-out;
+      }
+    }
+
+    .about-story_row.is-revealed .about-story_word {
+      color: var(--text);
+    }
+
+    .about-story_row.is-revealed .about-story_word.muted {
+      color: var(--text-muted);
+    }
+
+    /* ---- the picture ---------------------------------------------------- */
+    .about-story_media {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      margin: 0;
+    }
+
+    /* Swept in along the site's rake: a slab leaning at the same angle as the
+       mark, crossing the frame from the left. The two figures are that lean
+       measured across the frame's height. */
+    @media (scripting: enabled) {
+      .about-story_media {
+        clip-path: polygon(-40% 0, -40% 0, -80% 100%, -80% 100%);
+        transition: clip-path 1000ms var(--ease-out);
+      }
+    }
+
+    .about-story_row.is-revealed .about-story_media {
+      clip-path: polygon(-40% 0, 180% 0, 140% 100%, -80% 100%);
+    }
+
+    .about-story_photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Settles out of a slight push as the wipe passes over it, so the picture
+       arrives rather than simply being uncovered. */
+    @media (scripting: enabled) {
+      .about-story_photo {
+        scale: 1.12;
+        transition: scale 1400ms var(--ease-out);
+      }
+    }
+
+    .about-story_row.is-revealed .about-story_photo {
+      scale: 1;
+    }
+
+    .about-story_plate {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-image: linear-gradient(
+        to bottom,
+        rgb(255 255 255 / 0.06),
+        transparent 60%
+      );
+    }
+
+    .about-story_plate_glow {
+      top: -15%;
+      left: 15%;
+      width: 70%;
+      height: 130%;
+      max-width: none;
+      rotate: var(--rake);
+    }
+
+    .about-story_plate_mark {
+      --_size: 3rem;
+      width: 3rem;
+      height: auto;
+      position: relative;
+      color: var(--light-100);
+      opacity: 0.12;
+    }
+  }
+</style>

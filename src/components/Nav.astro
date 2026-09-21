@@ -1,0 +1,535 @@
+---
+import Icon from "@/components/Icon.astro";
+import logo from "@/assets/inparallel/logo.svg";
+import chevron from "@/assets/inparallel/icons/chevron-down.svg";
+import { SITE_NAME, CONTACT_EMAIL, NAV_LINKS } from "@/consts.ts";
+
+interface Props {
+  /**
+   * Fix the nav over the page rather than letting it stick in flow, so the
+   * first section starts underneath it. Give that section
+   * `paddingTop="navoverlap"` to clear the bar.
+   */
+  overlap?: boolean;
+}
+
+const { overlap = false } = Astro.props;
+
+/** Marks the link for the page being viewed. Trailing slashes are ignored. */
+const isCurrent = (href: string) =>
+  Astro.url.pathname.replace(/\/+$/, "") === href.replace(/\/+$/, "")
+    ? "page"
+    : undefined;
+---
+
+<header class:list={["nav_wrap", overlap && "overlap"]} data-nav>
+  <div class="nav_inner">
+    <a class="nav_logo" href="/" aria-label={SITE_NAME}>
+      <Icon src={logo} variant="full-width" />
+    </a>
+
+    <button
+      class="nav_toggle"
+      type="button"
+      aria-label="Menu"
+      aria-expanded="false"
+      aria-controls="nav-menu"
+    >
+      <span class="nav_toggle_icon"></span>
+    </button>
+
+    <nav class="nav_menu" id="nav-menu" aria-label="Main">
+      <div class="nav_menu_inner">
+        <ul class="nav_links">
+          {
+            NAV_LINKS.map((link) =>
+              link.children ? (
+                /* The label is a real link to the section's own page, and the
+                   chevron beside it is a separate control that opens the menu.
+                   One element can't be both a destination and a disclosure. */
+                <li class="nav_item has-menu" data-dropdown>
+                  <span class="nav_group">
+                    <a
+                      class="nav_link"
+                      href={link.href}
+                      aria-current={isCurrent(link.href!)}
+                    >
+                      {link.label}
+                    </a>
+                    <button
+                      class="nav_disclosure"
+                      type="button"
+                      aria-expanded="false"
+                      aria-controls={`menu-${link.id}`}
+                      aria-label={`${link.label} menu`}
+                    >
+                      <Icon src={chevron} class="nav_chevron" />
+                    </button>
+                  </span>
+
+                  <ul class="nav_submenu" id={`menu-${link.id}`}>
+                    {link.children.map((child) => (
+                      <li>
+                        <a class="nav_sublink" href={child.href}>
+                          <span class="nav_sublink_label">{child.label}</span>
+                          <span class="nav_sublink_text">
+                            {child.description}
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ) : (
+                <li class="nav_item">
+                  <a
+                    class="nav_link"
+                    href={link.href}
+                    aria-current={isCurrent(link.href!)}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ),
+            )
+          }
+        </ul>
+
+        <div class="nav_actions">
+          <a class="nav_email" href={`mailto:${CONTACT_EMAIL}`}>
+            {CONTACT_EMAIL}
+          </a>
+          <a class="nav_cta" href="/contact">Book a call</a>
+        </div>
+      </div>
+    </nav>
+  </div>
+</header>
+
+{
+  /* Without scripting the button can't do anything, so show the links instead. */
+}
+<noscript>
+  <style>
+    .nav_toggle {
+      display: none;
+    }
+    .nav_menu {
+      grid-template-rows: 1fr;
+      visibility: visible;
+    }
+    .nav_menu_inner {
+      opacity: 1;
+    }
+    .nav_submenu {
+      display: block;
+    }
+  </style>
+</noscript>
+
+<style is:global>
+  @layer components {
+    .nav_wrap {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      justify-content: center;
+      padding-inline: var(--site-margin);
+      background-color: var(--dark-900);
+      color: var(--light-100);
+      border-bottom: var(--border-width) solid rgb(255 255 255 / 0.1);
+
+      /* Out of flow, so the page starts at the top of the viewport instead
+         of below the bar. */
+      &.overlap {
+        position: fixed;
+        inset-inline: 0;
+        background-color: transparent;
+        border-bottom-color: transparent;
+        transition:
+          background-color var(--duration-main),
+          border-color var(--duration-main);
+      }
+
+      &.overlap[data-scrolled],
+      &.overlap[data-open] {
+        background-color: color-mix(in srgb, var(--dark-900) 85%, transparent);
+        backdrop-filter: blur(12px);
+        border-bottom-color: rgb(255 255 255 / 0.1);
+      }
+    }
+
+    .nav_inner {
+      width: 100%;
+      max-width: var(--max-width-main);
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      /* No row gap: a closed menu would still hold the bar open by it. The
+         panel spaces itself from inside instead. */
+      gap: 0 var(--space-8);
+    }
+
+    /* The bar row carries `--nav-height` rather than the header, so the bar
+       stays that tall when the mobile menu grows the header beneath it. */
+    .nav_logo,
+    .nav_toggle {
+      min-height: var(--nav-height);
+    }
+
+    /* The logo is a wordmark, so it is sized by width and keeps its ratio.
+       The width is set so the lettering lands on the same optical height the
+       bar was drawn around — the lockup is far wider than it is tall, so
+       matching the old width would have shrunk the name to nothing. */
+    .nav_logo {
+      display: flex;
+      align-items: center;
+      width: 8.75rem;
+      color: inherit;
+      transition: opacity var(--duration-main);
+      @media (hover: hover) {
+        &:hover {
+          opacity: 0.7;
+        }
+      }
+    }
+
+    .nav_toggle {
+      --_icon-width: 1.5rem;
+      --_bar-gap: 0.5rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2.75rem;
+      margin-right: calc((2.75rem - var(--_icon-width)) / -2);
+      color: inherit;
+      border: 0;
+      border-radius: var(--radius-small);
+      transition: opacity var(--duration-main);
+      @media (hover: hover) {
+        &:hover {
+          opacity: 0.7;
+        }
+      }
+    }
+
+    .nav_toggle_icon {
+      position: relative;
+      display: block;
+      width: var(--_icon-width);
+      height: calc(var(--_bar-gap) + var(--border-width));
+      &::before,
+      &::after {
+        content: "";
+        position: absolute;
+        inset-inline: 0;
+        height: var(--border-width);
+        background-color: currentcolor;
+        transition: transform var(--duration-main);
+      }
+      &::before {
+        top: 0;
+      }
+      &::after {
+        top: var(--_bar-gap);
+      }
+    }
+
+    /* Open: each bar moves to the middle of the box and crosses the other. */
+    .nav_wrap[data-open] .nav_toggle_icon {
+      &::before {
+        transform: translateY(calc(var(--_bar-gap) / 2)) rotate(45deg);
+      }
+      &::after {
+        transform: translateY(calc(var(--_bar-gap) / -2)) rotate(-45deg);
+      }
+    }
+
+    /* A 0fr → 1fr row is what slides: the panel takes the height its content
+       asks for and animates back down to nothing. */
+    .nav_menu {
+      order: 3;
+      flex-basis: 100%;
+      display: grid;
+      grid-template-rows: 0fr;
+      visibility: hidden;
+      transition:
+        grid-template-rows var(--duration-main) ease,
+        visibility var(--duration-main);
+    }
+
+    .nav_menu_inner {
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity var(--duration-main) ease;
+    }
+
+    .nav_wrap[data-open] .nav_menu {
+      grid-template-rows: 1fr;
+      visibility: visible;
+    }
+
+    .nav_wrap[data-open] .nav_menu_inner {
+      opacity: 1;
+    }
+
+    /* Padding sits inside the box that collapses, so a closed menu measures
+       zero and the bar stays exactly `--nav-height`. */
+    .nav_links {
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      padding: var(--space-2) 0 var(--space-4);
+      list-style: none;
+      font-size: var(--text-main);
+    }
+
+    .nav_link {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      width: 100%;
+      padding-block: var(--space-3);
+      /* One of these is a <button>, which would otherwise carry the UA
+         border and sit in the bar inside a box. */
+      border: 0;
+      background: none;
+      color: rgb(255 255 255 / 0.8);
+      font-size: var(--text-small);
+      text-decoration: none;
+      transition: color var(--duration-main);
+      &[aria-current="page"] {
+        color: var(--light-100);
+      }
+      @media (hover: hover) {
+        &:hover {
+          /* The bar is dark whatever theme the page under it runs, so this
+             takes the light end of the brand rather than the theme's own
+             hover colour. */
+          color: var(--brand-300);
+        }
+      }
+    }
+
+    /* Link and chevron read as one item, but stay two controls. */
+    .nav_group {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      width: 100%;
+    }
+
+    .nav_disclosure {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+      width: 1.75rem;
+      height: 1.75rem;
+      margin-left: auto;
+      border: 0;
+      border-radius: var(--radius-small);
+      color: rgb(255 255 255 / 0.8);
+      transition:
+        background-color var(--duration-main),
+        color var(--duration-main);
+      @media (hover: hover) {
+        &:hover {
+          background-color: rgb(255 255 255 / 0.08);
+          color: var(--light-100);
+        }
+      }
+    }
+
+    .nav_chevron {
+      --_size: 0.4375rem;
+      width: 0.4375rem;
+      height: auto;
+      transition: rotate var(--duration-main);
+    }
+
+    [data-dropdown][data-open] .nav_chevron {
+      rotate: 180deg;
+    }
+
+    .nav_submenu {
+      display: none;
+      margin: 0;
+      padding: 0 0 var(--space-3) var(--space-3);
+      list-style: none;
+    }
+
+    [data-dropdown][data-open] .nav_submenu {
+      display: block;
+    }
+
+    .nav_sublink {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+      padding: var(--space-3);
+      border-radius: var(--radius-small);
+      color: var(--light-100);
+      text-decoration: none;
+      transition: background-color var(--duration-main);
+      @media (hover: hover) {
+        &:hover {
+          background-color: rgb(255 255 255 / 0.06);
+        }
+      }
+    }
+
+    .nav_sublink_label {
+      font-size: var(--text-small);
+      font-weight: var(--primary-medium);
+    }
+
+    .nav_sublink_text {
+      font-size: var(--text-tiny);
+      color: rgb(255 255 255 / 0.6);
+    }
+
+    .nav_actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-5);
+      padding-bottom: var(--space-5);
+    }
+
+    .nav_email {
+      color: rgb(255 255 255 / 0.6);
+      font-size: var(--text-small);
+      text-decoration: none;
+      transition: color var(--duration-main);
+      @media (hover: hover) {
+        &:hover {
+          color: var(--light-100);
+        }
+      }
+    }
+
+    /* The one magenta control in the bar, so it keeps the button treatment
+       from the design rather than the themed Lumos button. */
+    .nav_cta {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 2.8125rem;
+      padding: 0.75rem 1.125rem;
+      border-radius: var(--radius-main);
+      background-color: var(--brand-500);
+      box-shadow: var(--shadow-button-inset);
+      color: var(--light-100);
+      font-size: var(--text-small);
+      font-weight: var(--primary-medium);
+      text-align: center;
+      text-decoration: none;
+      transition: background-color var(--duration-main);
+      @media (hover: hover) {
+        &:hover {
+          background-color: color-mix(in srgb, var(--brand-500), white 12%);
+        }
+      }
+    }
+
+    /* Wide enough for the links to sit in the bar itself. */
+    @media (width >= 62rem) {
+      .nav_toggle {
+        display: none;
+      }
+
+      .nav_menu {
+        order: initial;
+        flex: 1 0 0;
+        min-width: 0;
+        display: block;
+        visibility: visible;
+      }
+
+      .nav_menu_inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: var(--space-8);
+        overflow: visible;
+        opacity: 1;
+      }
+
+      .nav_links {
+        flex-direction: row;
+        align-items: center;
+        padding: 0;
+        gap: var(--space-5);
+      }
+
+      .nav_item {
+        position: relative;
+      }
+
+      .nav_link {
+        width: auto;
+        padding-block: 0;
+        white-space: nowrap;
+      }
+
+      .nav_group {
+        width: auto;
+      }
+
+      .nav_disclosure {
+        width: 1.25rem;
+        height: 1.25rem;
+        margin-left: 0;
+      }
+
+      /* Anchored to its own item so the panel opens under its trigger. */
+      .nav_submenu {
+        display: block;
+        position: absolute;
+        top: calc(100% + 1.125rem);
+        left: calc(var(--space-2) * -1);
+        z-index: 10;
+        width: max-content;
+        min-width: 15rem;
+        padding: var(--space-2);
+        background-color: var(--dark-800);
+        border: var(--border-width) solid rgb(255 255 255 / 0.12);
+        border-radius: var(--radius-main);
+        box-shadow: 0 20px 40px rgb(0 0 0 / 0.45);
+        opacity: 0;
+        visibility: hidden;
+        translate: 0 -0.375rem;
+        transition:
+          opacity var(--duration-main) var(--ease-out),
+          translate var(--duration-main) var(--ease-out),
+          visibility var(--duration-main);
+      }
+
+      /* A gap between trigger and panel would drop the hover, so the item
+         bridges it with a strip of its own. */
+      .nav_item.has-menu::after {
+        content: "";
+        position: absolute;
+        inset-inline: 0;
+        top: 100%;
+        height: 1.25rem;
+      }
+
+      [data-dropdown][data-open] .nav_submenu,
+      .nav_item.has-menu:hover .nav_submenu,
+      .nav_item.has-menu:focus-within .nav_submenu {
+        opacity: 1;
+        visibility: visible;
+        translate: 0 0;
+      }
+
+      .nav_actions {
+        padding-bottom: 0;
+        flex-wrap: nowrap;
+      }
+    }
+  }
+</style>

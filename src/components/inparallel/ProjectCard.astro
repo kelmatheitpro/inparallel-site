@@ -1,0 +1,112 @@
+---
+import Img from "@/components/Img.astro";
+import Icon from "@/components/Icon.astro";
+import type { Project } from "@/utils/content.ts";
+import glowDiagonal from "@/assets/inparallel/glow-diagonal.svg";
+import arrowCircle from "@/assets/inparallel/icons/arrow-circle.svg";
+
+interface Props {
+  project: Project;
+}
+
+const { project } = Astro.props;
+const { data } = project;
+---
+
+<a class="case_card surface" href={`/work/${project.id}`}>
+  <Img src={glowDiagonal} class="surface-glow case_glow" transparent />
+
+  <div class="case_card_top">
+    <span class="logo-chip">
+      <Img
+        src={data.logo}
+        alt={data.client}
+        class="logo-chip_mark"
+        transparent
+      />
+    </span>
+    <p class="case_headline heading-split inline">
+      {data.headline}{" "}
+      <em>{data.headlineMuted}</em>
+    </p>
+  </div>
+
+  <div class="case_card_foot">
+    <span class="stat">
+      <span class="stat_value">{data.stat}</span>
+      <span class="stat_label">{data.statLabel}</span>
+    </span>
+    <Icon src={arrowCircle} class="case_arrow" />
+  </div>
+</a>
+
+<style is:global>
+  @layer components {
+    .case_card {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      justify-content: space-between;
+      gap: var(--space-5);
+      height: 31.25rem;
+      padding: var(--space-5);
+      background-color: rgb(255 255 255 / 0.03);
+      border: var(--border-width) solid var(--border);
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* The bar the design rakes across the card at 15°. */
+    .case_glow {
+      top: -3.33rem;
+      left: 31.6%;
+      width: 18.86rem;
+      height: 45.34rem;
+      max-width: none;
+      rotate: 15deg;
+    }
+
+    .case_card_top {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-5);
+    }
+
+    .case_headline {
+      font-size: var(--h5);
+      font-weight: var(--primary-medium);
+      line-height: var(--line-height-medium);
+      letter-spacing: var(--letter-spacing-tight);
+    }
+
+    .case_card_foot {
+      width: 100%;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: var(--space-4);
+      padding-top: var(--space-5);
+      border-top: var(--border-width) solid var(--border);
+      --_stat-size: 3rem;
+    }
+
+    .case_arrow {
+      --_size: 2.5rem;
+      rotate: -45deg;
+      transition: transform var(--duration-main) var(--ease-out);
+    }
+
+    @media (hover: hover) {
+      .case_card:hover .case_arrow {
+        transform: translate(0.2rem, -0.2rem);
+      }
+    }
+
+    @media (width < 64rem) {
+      .case_card {
+        height: auto;
+        min-height: 22rem;
+      }
+    }
+  }
+</style>

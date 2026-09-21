@@ -1,0 +1,77 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import Icon from "@/components/Icon.astro";
+import play from "@/assets/inparallel/icons/play.svg";
+
+interface Props extends HTMLAttributes<"button"> {
+  /** Names what is being played, for screen readers. */
+  label: string;
+  /** Video file to play. Without one the dialog shows the still instead. */
+  video?: string;
+  /** A YouTube id, for a clip that lives there rather than in the project. */
+  youtube?: string;
+  /** Still shown in the dialog, and as the video's poster. */
+  poster?: string;
+  /** Line printed under the player. */
+  caption?: string;
+  /** `small` is the 40px button on the video cards; `large` the 64px one. */
+  size?: "small" | "large";
+}
+
+const {
+  label,
+  video,
+  youtube,
+  poster,
+  caption,
+  size = "large",
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<button
+  class:list={["play-button", size, className]}
+  type="button"
+  aria-label={label}
+  data-lightbox-open
+  data-video={video}
+  data-youtube={youtube}
+  data-poster={poster}
+  data-caption={caption}
+  {...rest}
+>
+  <Icon src={play} class="play-button_icon" />
+</button>
+
+<style is:global>
+  @layer components {
+    .play-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      border-radius: var(--radius-round);
+      transition:
+        transform var(--duration-main) var(--ease-out),
+        filter var(--duration-main);
+
+      @media (hover: hover) {
+        &:hover {
+          transform: scale(1.06);
+          filter: drop-shadow(0 8px 20px rgb(0 0 0 / 0.35));
+        }
+      }
+    }
+
+    /* The artwork is a 64px disc; `small` is the same disc drawn smaller
+       rather than a second asset. */
+    .play-button_icon {
+      --_size: 4rem;
+    }
+
+    .play-button.small .play-button_icon {
+      --_size: 2.5rem;
+    }
+  }
+</style>

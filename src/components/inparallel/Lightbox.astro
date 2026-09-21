@@ -1,0 +1,131 @@
+---
+/**
+ * One dialog serves every play button on the page. Buttons carry the details
+ * on `data-` attributes and the dialog reads them when it opens, so adding a
+ * video is a data change rather than another dialog.
+ *
+ * A button with `data-video` plays that file and one with `data-youtube` opens
+ * the frame; with neither, the dialog shows the still and its attribution.
+ */
+---
+
+<dialog class="lightbox" data-lightbox aria-label="Video">
+  <button
+    class="lightbox_close"
+    type="button"
+    data-lightbox-close
+    aria-label="Close"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true" width="20" height="20">
+      <path
+        d="M5 5l14 14M19 5L5 19"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linecap="round"></path>
+    </svg>
+  </button>
+
+  <div class="lightbox_stage">
+    <iframe
+      class="lightbox_frame"
+      data-lightbox-frame
+      title="Video"
+      allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
+      allowfullscreen
+      hidden></iframe>
+    <video
+      class="lightbox_video"
+      data-lightbox-video
+      controls
+      playsinline
+      hidden></video>
+    <img class="lightbox_poster" data-lightbox-poster alt="" hidden />
+  </div>
+
+  <figcaption class="lightbox_caption" data-lightbox-caption></figcaption>
+</dialog>
+
+<style is:global>
+  @layer components {
+    .lightbox {
+      width: min(64rem, 92vw);
+      max-width: none;
+      /* A modal dialog centres itself on `margin: auto`, and the reset's
+         `* { margin: 0 }` takes that away — without this it opens in the top
+         left corner of the screen. */
+      margin: auto;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: var(--light-100);
+      overflow: visible;
+
+      &::backdrop {
+        background-color: rgb(11 10 12 / 0.85);
+        backdrop-filter: blur(6px);
+      }
+
+      &[open] {
+        animation: lightbox-in var(--duration-main) var(--ease-out);
+      }
+    }
+
+    @keyframes lightbox-in {
+      from {
+        opacity: 0;
+        scale: 0.98;
+      }
+    }
+
+    .lightbox_stage {
+      position: relative;
+      border-radius: var(--radius-card);
+      overflow: clip;
+      background-color: var(--dark-900);
+      aspect-ratio: 16 / 9;
+    }
+
+    .lightbox_video,
+    .lightbox_poster,
+    .lightbox_frame {
+      /* The reset gives images and video `display: block`; a frame is inline
+         unless it is told otherwise, and inline leaves a strip of the stage
+         showing under it. */
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      object-fit: cover;
+    }
+
+    .lightbox_caption {
+      padding-top: var(--space-4);
+      font-size: var(--text-small);
+      color: rgb(255 255 255 / 0.7);
+      text-align: center;
+    }
+
+    .lightbox_close {
+      position: absolute;
+      top: calc(var(--space-5) * -1 - 1.5rem);
+      right: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 2.5rem;
+      height: 2.5rem;
+      border: var(--border-width) solid rgb(255 255 255 / 0.3);
+      border-radius: var(--radius-round);
+      color: var(--light-100);
+      transition:
+        background-color var(--duration-main),
+        border-color var(--duration-main);
+      @media (hover: hover) {
+        &:hover {
+          background-color: rgb(255 255 255 / 0.12);
+          border-color: rgb(255 255 255 / 0.6);
+        }
+      }
+    }
+  }
+</style>

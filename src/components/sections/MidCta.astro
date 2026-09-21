@@ -1,0 +1,104 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Img from "@/components/Img.astro";
+import ArrowLink from "@/components/inparallel/ArrowLink.astro";
+import heroGlow from "@/assets/inparallel/hero-glow.svg";
+---
+
+{
+  /* A band rather than a full-width section: the design insets the dark panel
+     by the site margin on all four sides. */
+}
+<Section
+  theme="light"
+  paddingTop="even"
+  paddingBottom="even"
+  containerClass="mid-cta_container"
+>
+  <div class="mid-cta surface theme-dark">
+    <Img src={heroGlow} class="surface-glow mid-cta_glow" transparent />
+
+    <div class="mid-cta_body">
+      <Heading tag="h2" variant="h3" class="heading-split mid-cta_title">
+        Your business evolves. <em>Your website should too.</em>
+      </Heading>
+
+      <div class="mid-cta_actions">
+        <a class="mid-cta_button" href="/contact">Talk to the crew</a>
+        <ArrowLink href="/work">Explore our work</ArrowLink>
+      </div>
+    </div>
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    .mid-cta_container {
+      gap: 0;
+    }
+
+    .mid-cta {
+      width: 100%;
+      display: flex;
+      align-items: end;
+      padding: var(--space-8) clamp(var(--space-6), 7vw, 6.25rem);
+      min-height: 21.25rem;
+      background-color: var(--dark-900);
+      border-radius: var(--radius-large);
+    }
+
+    /* Same artwork as the hero, pulled left so the bright half lands on the
+       right of the panel the way the design has it. */
+    .mid-cta_glow {
+      top: 0;
+      left: -6.25rem;
+      width: 90rem;
+      height: 57.125rem;
+      max-width: none;
+    }
+
+    .mid-cta_body {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: var(--space-8);
+      max-width: 60rem;
+    }
+
+    .mid-cta_title {
+      letter-spacing: var(--letter-spacing-tighter);
+    }
+
+    .mid-cta_actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-5);
+    }
+
+    .mid-cta_button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.25rem 2.25rem;
+      background-color: var(--brand-500);
+      border-radius: var(--radius-main);
+      box-shadow: var(--shadow-button-inset);
+      color: var(--light-100);
+      font-size: var(--text-main);
+      font-weight: var(--primary-medium);
+      text-decoration: none;
+      filter: drop-shadow(var(--shadow-brand));
+      transition:
+        background-color var(--duration-main),
+        translate var(--duration-main) var(--ease-out);
+      @media (hover: hover) {
+        &:hover {
+          translate: 0 -2px;
+          background-color: color-mix(in srgb, var(--brand-500), white 12%);
+        }
+      }
+    }
+  }
+</style>

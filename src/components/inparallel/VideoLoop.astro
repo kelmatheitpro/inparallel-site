@@ -1,0 +1,92 @@
+---
+/**
+ * The muted clip that plays behind a card.
+ *
+ * The player is only built once the card is near the viewport, and it is paused
+ * again when the card leaves: an autoplaying YouTube frame is the best part of a
+ * megabyte and a decoder running, neither of which is worth spending on a card
+ * nobody has scrolled to. `src/scripts/video-loop.ts` does that part. What is
+ * here is the still shown until then — which is also all a reader who has asked
+ * for less motion ever sees.
+ *
+ * It takes no clicks of its own. Whatever sits over it, a play button as a rule,
+ * is what opens the clip in full.
+ */
+import type { HTMLAttributes } from "astro/types";
+
+interface Props extends HTMLAttributes<"div"> {
+  /** The id out of the watch URL — `HSKTT5Ig2RE` in `watch?v=HSKTT5Ig2RE`. */
+  youtube: string;
+  /**
+   * How wide the frame runs against its box, for a clip that arrives
+   * pillarboxed — a recording letterboxed inside a 16:9 upload, say. `100%`
+   * leaves it alone; more than that pushes the black bands out of view either
+   * side. The still beside it is cropped by `object-fit` and needs no figure of
+   * its own.
+   */
+  fill?: string;
+}
+
+const { youtube, fill = "100%", class: className, ...rest } = Astro.props;
+---
+
+<div
+  class:list={["video-loop", className]}
+  data-video-loop
+  data-youtube={youtube}
+  style={`--_fill: ${fill};`}
+  aria-hidden="true"
+  {...rest}
+>
+  <img
+    class="video-loop_still"
+    src={`https://i.ytimg.com/vi/${youtube}/maxresdefault.jpg`}
+    alt=""
+    width="1280"
+    height="720"
+    loading="lazy"
+    decoding="async"
+  />
+</div>
+
+<style is:global>
+  @layer components {
+    .video-loop {
+      position: absolute;
+      inset: 0;
+      overflow: clip;
+      background-color: var(--dark-850);
+      pointer-events: none;
+    }
+
+    .video-loop_still,
+    .video-loop iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      object-fit: cover;
+    }
+
+    /* Widened from the middle, so what goes off the edges is the same sliver
+       either side. */
+    .video-loop iframe {
+      left: 50%;
+      right: auto;
+      width: var(--_fill, 100%);
+      translate: -50% 0;
+    }
+
+    /* The frame fades up over the still rather than replacing it in a step,
+       since it arrives whenever the network says so. */
+    .video-loop iframe {
+      opacity: 0;
+      transition: opacity var(--duration-slow);
+    }
+
+    .video-loop[data-playing] iframe {
+      opacity: 1;
+    }
+  }
+</style>

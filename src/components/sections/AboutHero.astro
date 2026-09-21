@@ -1,0 +1,191 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Icon from "@/components/Icon.astro";
+import HeroBackdrop from "@/components/inparallel/HeroBackdrop.astro";
+import mark from "@/assets/inparallel/mark.svg";
+
+/**
+ * Two curves running the width of the hero, the second held a fixed distance
+ * off the first. They are the mark's own idea at the scale of a page: whatever
+ * the pair is doing, they do it side by side and never meet.
+ */
+const SWEEPS = [
+  { d: "M -60 300 C 300 150, 780 330, 1500 660", delay: "450ms" },
+  { d: "M -60 356 C 300 206, 780 386, 1500 716", delay: "700ms" },
+];
+---
+
+<Section
+  id="about-hero"
+  theme="dark"
+  paddingTop="navoverlap"
+  paddingBottom="large"
+  containerClass="container-narrow"
+  class="about-hero"
+>
+  <HeroBackdrop slot="background" />
+
+  {
+    /* Stretched to the section rather than fitted to it: the curves are a
+       gesture across the frame, so they should follow the frame's shape
+       instead of keeping their own. */
+  }
+  <svg
+    slot="background"
+    class="about-hero_sweep"
+    viewBox="0 0 1440 640"
+    preserveAspectRatio="none"
+    aria-hidden="true"
+  >
+    <defs>
+      <linearGradient id="about-hero-sweep" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="var(--brand-300)" stop-opacity="0" />
+        <stop offset="0.35" stop-color="var(--brand-300)" stop-opacity="0.85" />
+        <stop offset="0.7" stop-color="var(--brand-500)" stop-opacity="0.5" />
+        <stop offset="1" stop-color="var(--brand-500)" stop-opacity="0" />
+      </linearGradient>
+    </defs>
+
+    {
+      SWEEPS.map((sweep) => (
+        <path
+          class="about-hero_sweep_line"
+          d={sweep.d}
+          pathLength="1"
+          style={`--_delay: ${sweep.delay};`}
+        />
+      ))
+    }
+  </svg>
+
+  <div class="about-hero_body" data-reveal>
+    <span class="pill pill-glass about-hero_eyebrow">
+      <Icon src={mark} class="about-hero_mark" />
+      Our story
+    </span>
+
+    <Heading tag="h1" variant="display" class="heading-split about-hero_title">
+      Everything you need, <em>working as one team.</em>
+    </Heading>
+
+    <p class="about-hero_lead">
+      Designers, developers and strategists moving together, with one clear
+      direction and nobody in the middle to lose it.
+    </p>
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    .about-hero {
+      overflow: clip;
+    }
+
+    .about-hero_sweep {
+      /* The section pins every background child to its box; what is left to
+         say is that this one may paint outside it, since both curves leave the
+         frame at either end rather than stopping in it. */
+      overflow: visible;
+    }
+
+    /* The curves are drawn for a frame wider than it is tall and stretched to
+       whatever they are given. A phone gives them the opposite of that, and
+       what was a sweep across the page stands up into a pair of near-vertical
+       lines crossing the beams. There is no version of them worth keeping at
+       that shape, so they go and the beams carry the section alone — the same
+       call the backdrop makes about its own hairlines. */
+    @media (width < 48rem) {
+      .about-hero_sweep {
+        display: none;
+      }
+    }
+
+    .about-hero_sweep_line {
+      fill: none;
+      stroke: url(#about-hero-sweep);
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      /* `preserveAspectRatio: none` stretches the stroke with the box, which
+         on a wide screen would draw one curve fatter than the other. */
+      vector-effect: non-scaling-stroke;
+      animation: about-hero-draw 2200ms var(--_delay) var(--ease-out) forwards;
+    }
+
+    @keyframes about-hero-draw {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    .about-hero_body {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: var(--space-6);
+      max-width: 52rem;
+    }
+
+    /* Each line arrives a beat after the one above it. The delay is counted
+       off the child's own position, so adding a line to the stack doesn't mean
+       rewriting the timings under it. */
+    /* The resting state every reveal starts from, set only where there is a
+       script to bring it out of one. A reader without JavaScript — or a
+       renderer that isn't running it — gets the page already arrived rather
+       than a section that never does. */
+    @media (scripting: enabled) {
+      .about-hero_body > * {
+        opacity: 0;
+        translate: 0 1.25rem;
+        transition:
+          opacity var(--duration-slow) calc(var(--_i, 0) * 130ms) ease-out,
+          translate var(--duration-slow) calc(var(--_i, 0) * 130ms)
+            var(--ease-out);
+      }
+    }
+
+    .about-hero_body > :nth-child(2) {
+      --_i: 1;
+    }
+    .about-hero_body > :nth-child(3) {
+      --_i: 2;
+    }
+
+    .about-hero_body.is-revealed > * {
+      opacity: 1;
+      translate: none;
+    }
+
+    .about-hero_eyebrow {
+      gap: var(--space-3);
+      padding: 0.5rem 1rem 0.5rem 0.75rem;
+      border-radius: var(--radius-round);
+      background-color: rgb(0 0 0 / 0.45);
+    }
+
+    /* The mark is two bars leaning at the site's rake; at this size it reads
+       as a monogram beside the words. */
+    .about-hero_mark {
+      --_size: 0.8125rem;
+      width: 0.8125rem;
+      height: auto;
+      color: var(--light-100);
+    }
+
+    /* The design gives the second line the accent rather than the fade every
+       other split heading takes, so the hook is swapped instead of the rule. */
+    .about-hero_title {
+      --heading-accent: var(--brand-300);
+      letter-spacing: var(--letter-spacing-tighter);
+    }
+
+    .about-hero_lead {
+      max-width: 32rem;
+      color: var(--text-muted);
+      font-size: var(--text-large);
+      line-height: var(--line-height-large);
+    }
+  }
+</style>

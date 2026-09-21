@@ -1,0 +1,511 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import PageHero from "@/components/sections/PageHero.astro";
+import MidCta from "@/components/sections/MidCta.astro";
+import Icon from "@/components/Icon.astro";
+import arrowRight from "@/assets/inparallel/icons/arrow-right.svg";
+import {
+  DETAILS,
+  HERO_FACTS,
+  SCENARIOS,
+  MODELS,
+  MODEL_TABLE,
+  ARRANGEMENTS,
+  DELIVERABLES,
+  PROCESS_FIT,
+  RULES,
+  STANDARD,
+  COVERAGE,
+  PRICING,
+  NOT_DOING,
+  FAQ,
+} from "@/data/extended-team.ts";
+---
+
+<Layout
+  theme="light"
+  overlap
+  title="Extended team for agencies"
+  description="Two Webflow developers inside your team, from Monday. White-label, in your workspace, under your name — no hiring and no bench cost."
+>
+  <PageHero
+    eyebrow="For agencies"
+    title="Two Webflow developers"
+    titleMuted="in your team, from Monday"
+    lead="No hiring, no bench cost, and no mention of us in front of your client. You keep the relationship, the invoice and the credit."
+  />
+
+  {
+    /* Reads as the foot of the hero rather than a section of its own: an
+       agency scans for these three numbers before it reads a word. */
+  }
+  <Section theme="dark" paddingTop="none" paddingBottom="medium" class="facts">
+    <div class="facts_row">
+      {
+        HERO_FACTS.map((fact) => (
+          <div class="stat facts_stat">
+            <span class="stat_value">{fact.value}</span>
+            <span class="stat_label">{fact.label}</span>
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="facts_actions">
+      <a class="cta" href={DETAILS.callHref}>Book 20 minutes</a>
+      <a class="cta secondary" href="/contact">
+        Send a brief instead
+        <Icon src={arrowRight} class="cta_arrow" />
+      </a>
+    </div>
+  </Section>
+
+  {/* ---- 2. who it's for ------------------------------------------------- */}
+  <Section theme="light" containerClass="container-narrow">
+    <div class="section-head">
+      <Heading tag="h2" class="heading-split">
+        You're here because <em>one of these is true</em>
+      </Heading>
+    </div>
+
+    <ul class="scenarios">
+      {
+        SCENARIOS.map((item) => (
+          <li class="scenario surface surface-raised">
+            <h3 class="scenario_title">{item.title}</h3>
+            <p class="scenario_text text-muted">{item.text}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </Section>
+
+  {/* ---- 3. the two models ----------------------------------------------- */}
+  <Section theme="light" paddingTop="none" containerClass="container-narrow">
+    <div class="section-head">
+      <Heading tag="h2" class="heading-split">
+        Two ways to run it, <em>and the rest on request</em>
+      </Heading>
+    </div>
+
+    <div class="models">
+      {
+        MODELS.map((model) => (
+          <article class="model surface surface-raised">
+            <h3 class="model_name">{model.name}</h3>
+            <p class="model_text text-muted">{model.text}</p>
+            <p class="model_billing">{model.billing}</p>
+          </article>
+        ))
+      }
+    </div>
+
+    {
+      /* The table exists to settle the choice between them, which is the one
+         question every agency asks on the first call. */
+    }
+    <table class="compare">
+      <thead>
+        <tr>
+          <th scope="col"><span class="sr-only">Question</span></th>
+          {MODELS.map((model) => <th scope="col">{model.name}</th>)}
+        </tr>
+      </thead>
+      <tbody>
+        {
+          MODEL_TABLE.map((row) => (
+            <tr>
+              <th scope="row">{row.question}</th>
+              <td>{row.capacity}</td>
+              <td>{row.fixed}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </Section>
+
+  {/* ---- the rest of the menu -------------------------------------------- */}
+  <Section theme="dark" containerClass="container-narrow">
+    <div class="section-head">
+      <Heading tag="h2" class="heading-split">
+        Other shapes this takes, <em>when those two don't fit</em>
+      </Heading>
+    </div>
+
+    <ul class="arrangements">
+      {
+        ARRANGEMENTS.map((item) => (
+          <li class="arrangement">
+            <h3 class="arrangement_name">{item.name}</h3>
+            <p class="arrangement_text text-muted">{item.text}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </Section>
+
+  {
+    /* ---- 4 + 5. what you get, and how we fit ------------------------------ */
+  }
+  <Section theme="light" containerClass="container-narrow">
+    <div class="columns">
+      <div class="column">
+        <Heading tag="h2" variant="h3" class="column_title">
+          What you actually get
+        </Heading>
+        <Paragraph class="text-muted">
+          “Senior developers” means nothing. These are countable.
+        </Paragraph>
+        <ul class="ticks">
+          {DELIVERABLES.map((item) => <li>{item}</li>)}
+        </ul>
+      </div>
+
+      <div class="column">
+        <Heading tag="h2" variant="h3" class="column_title">
+          How we fit your process
+        </Heading>
+        <Paragraph class="text-muted">
+          You shouldn't have to train the help. You won't.
+        </Paragraph>
+        <ul class="ticks">
+          {PROCESS_FIT.map((item) => <li>{item}</li>)}
+        </ul>
+      </div>
+    </div>
+  </Section>
+
+  {/* ---- 6. rules of the game -------------------------------------------- */}
+  <Section theme="dark" containerClass="container-narrow">
+    <div class="section-head">
+      <Heading tag="h2" class="heading-split">
+        The rules, <em>written down before you ask</em>
+      </Heading>
+    </div>
+
+    <ol class="rules">
+      {RULES.map((rule) => <li class="rule">{rule}</li>)}
+    </ol>
+
+    <p class="rules_note">
+      The NDA and the subcontractor agreement are written and ready to sign —
+      <a href={DETAILS.ndaHref}>read them before you write to us</a>.
+    </p>
+  </Section>
+
+  {
+    /* ---- 7 + 8. the standard, and the ground it covers -------------------- */
+  }
+  <Section theme="light" containerClass="container-narrow">
+    <div class="section-head">
+      <Heading tag="h2" class="heading-split">
+        What “built properly” <em>means here, exactly</em>
+      </Heading>
+    </div>
+
+    <ul class="ticks ticks-wide">
+      {STANDARD.map((item) => <li>{item}</li>)}
+    </ul>
+
+    <p class="standard_proof">
+      <a href={DETAILS.cloneHref}>Clone one of our builds</a> and look inside. It
+      is a better argument than any case study, because you know what you're looking
+      at.
+    </p>
+
+    <div class="coverage">
+      <h3 class="coverage_title">What we cover</h3>
+      <ul class="coverage_list">
+        {COVERAGE.map((item) => <li class="pill-tag">{item}</li>)}
+      </ul>
+    </div>
+  </Section>
+
+  {
+    /* ---- 9 + 10. price, availability, and a week to try it ---------------- */
+  }
+  <Section theme="light" paddingTop="none" containerClass="container-narrow">
+    <div class="section-head">
+      <Heading tag="h2" class="heading-split">
+        Price, <em>before you have to ask for it</em>
+      </Heading>
+    </div>
+
+    <div class="pricing">
+      {
+        PRICING.map((tier) => (
+          <article class="tier surface surface-raised">
+            <h3 class="tier_name">{tier.name}</h3>
+            <p class="tier_price">{tier.price}</p>
+            <p class="tier_text text-muted">{tier.text}</p>
+          </article>
+        ))
+      }
+    </div>
+
+    <p class="pricing_note">
+      What you charge your client is your business, and our price doesn't move
+      with it. <strong>{DETAILS.availability}</strong>
+    </p>
+
+    <aside class="trial surface theme-dark">
+      <div class="trial_body">
+        <h3 class="trial_title">Try it for a week first</h3>
+        <p class="trial_text">
+          One week, fixed price, deliverables agreed before it starts, and no
+          obligation to carry on. You're deciding about a week, not about a
+          partnership.
+        </p>
+      </div>
+      <p class="trial_price">{DETAILS.trialPrice}</p>
+    </aside>
+  </Section>
+
+  {
+    /* ---- 11 + 12. what we don't do, and the questions --------------------- */
+  }
+  <Section theme="light" paddingTop="none" containerClass="container-narrow">
+    <ul class="nots">
+      {NOT_DOING.map((item) => <li class="not">{item}</li>)}
+    </ul>
+
+    <div class="section-head faq_head">
+      <Heading tag="h2" class="heading-split">
+        The six questions <em>every agency asks</em>
+      </Heading>
+    </div>
+
+    <ul class="faq">
+      {
+        FAQ.map((item) => (
+          <li>
+            <details class="faq_item">
+              <summary class="faq_question">{item.question}</summary>
+              <p class="faq_answer text-muted">{item.answer}</p>
+            </details>
+          </li>
+        ))
+      }
+    </ul>
+  </Section>
+
+  <MidCta />
+</Layout>
+
+<style is:global>
+  @layer components {
+    /* ---- scenarios ------------------------------------------------------ */
+    .models,
+    .pricing {
+      width: 100%;
+      display: grid;
+      gap: var(--space-5);
+      grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+    }
+
+    .scenario,
+    .model,
+    .tier {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      padding: var(--space-6);
+    }
+
+    .model_name,
+    .tier_name,
+    .arrangement_name,
+    .coverage_title {
+      font-size: var(--h5);
+      font-weight: var(--primary-medium);
+      line-height: var(--line-height-medium);
+      letter-spacing: var(--letter-spacing-tight);
+    }
+
+    .model_billing {
+      margin-top: auto;
+      padding-top: var(--space-4);
+      border-top: var(--border-width) solid var(--border-soft);
+      font-size: var(--text-small);
+      color: var(--text-muted);
+    }
+
+    /* ---- the comparison ------------------------------------------------- */
+    .compare {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--text-small);
+      text-align: start;
+    }
+
+    .compare :is(th, td) {
+      padding: var(--space-4) var(--space-4) var(--space-4) 0;
+      border-bottom: var(--border-width) solid var(--border-soft);
+      vertical-align: top;
+      text-align: start;
+    }
+
+    .compare thead th {
+      font-weight: var(--primary-medium);
+    }
+
+    .compare tbody th {
+      width: 12rem;
+      color: var(--text-muted);
+      font-weight: var(--primary-regular);
+    }
+
+    @media (width < 48rem) {
+      .compare tbody th {
+        width: 8rem;
+      }
+    }
+
+    /* ---- the longer menu ------------------------------------------------ */
+    .arrangements {
+      width: 100%;
+      display: grid;
+      gap: var(--space-5) var(--space-8);
+      grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
+      list-style: none;
+      padding: 0;
+    }
+
+    .arrangement {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+      padding-top: var(--space-5);
+      border-top: var(--border-width) solid var(--border);
+    }
+
+    /* ---- two columns of lists ------------------------------------------- */
+    .columns {
+      width: 100%;
+      display: grid;
+      gap: var(--space-8);
+      grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
+    }
+
+    .column {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    /* ---- rules ---------------------------------------------------------- */
+    .rules {
+      width: 100%;
+      display: grid;
+      gap: var(--space-4);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: rule;
+    }
+
+    .rule {
+      position: relative;
+      padding: var(--space-5) 0 var(--space-5) var(--space-8);
+      border-top: var(--border-width) solid var(--border);
+      counter-increment: rule;
+    }
+
+    .rule::before {
+      content: counter(rule, decimal-leading-zero);
+      position: absolute;
+      top: var(--space-5);
+      left: 0;
+      color: var(--text-faded);
+      font-size: var(--text-small);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .rules_note,
+    .standard_proof,
+    .pricing_note {
+      max-width: var(--max-width-small);
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+
+    .pricing_note strong {
+      display: block;
+      margin-top: var(--space-2);
+      color: var(--text);
+      font-weight: var(--primary-medium);
+    }
+
+    /* ---- coverage ------------------------------------------------------- */
+    .coverage {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-5);
+      padding-top: var(--space-7);
+      border-top: var(--border-width) solid var(--border-soft);
+    }
+
+    .coverage_list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-3);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    /* ---- price and the trial week --------------------------------------- */
+    .tier_price {
+      font-size: var(--h4);
+      font-weight: var(--primary-medium);
+      letter-spacing: var(--letter-spacing-tight);
+    }
+
+    .trial {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-5) var(--space-8);
+      padding: var(--space-7);
+      background-color: var(--dark-900);
+    }
+
+    .trial_body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      max-width: 34rem;
+    }
+
+    .trial_title {
+      font-size: var(--h4);
+      font-weight: var(--primary-medium);
+      letter-spacing: var(--letter-spacing-tight);
+    }
+
+    .trial_text {
+      color: var(--text-muted);
+      line-height: var(--line-height-large);
+    }
+
+    .trial_price {
+      font-size: var(--h4);
+      font-weight: var(--primary-medium);
+      white-space: nowrap;
+    }
+
+    /* ---- the nots and the questions ------------------------------------- */
+    .faq_head {
+      padding-top: var(--space-7);
+      border-top: var(--border-width) solid var(--border-soft);
+    }
+  }
+</style>
