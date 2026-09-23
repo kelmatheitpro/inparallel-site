@@ -1,9 +1,13 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import Stars from "@/components/inparallel/Stars.astro";
+import Icon from "@/components/Icon.astro";
+import { SOCIAL_PROOF } from "@/consts.ts";
+import jobSuccess from "@/assets/inparallel/icons/upwork-job-success.svg";
 
 interface Props extends HTMLAttributes<"div"> {
+  /** The figure itself. Defaults to the site-wide proof in `consts.ts`. */
   score?: string;
+  /** Where the figure comes from — a claim is worth nothing unattributed. */
   source?: string;
   /**
    * - `glass` — the translucent chip used on the hero (default)
@@ -13,8 +17,8 @@ interface Props extends HTMLAttributes<"div"> {
 }
 
 const {
-  score = "5.0",
-  source = "Clutch",
+  score = SOCIAL_PROOF.score,
+  source = SOCIAL_PROOF.source,
   variant = "glass",
   class: className,
   ...rest
@@ -29,10 +33,10 @@ const {
     className,
   ]}
   {...rest}
-  aria-label={`Rated ${score} out of 5 on ${source}`}
+  aria-label={`${score} ${source}`}
 >
+  <Icon src={jobSuccess} class="rating-badge_mark" aria-hidden="true" />
   <span class="rating-badge_score" aria-hidden="true">{score}</span>
-  <Stars aria-hidden="true" />
   <span class="rating-badge_source" aria-hidden="true">{source}</span>
 </div>
 
@@ -53,6 +57,17 @@ const {
         border: var(--border-width) solid var(--border);
         border-radius: var(--radius-main);
       }
+    }
+
+    /* Upwork draws the ring for a white card, so on a dark chip it takes the
+       palette's light blue through `currentColor` instead. */
+    .rating-badge_mark {
+      --_size: 1.125rem;
+      color: var(--brand-300);
+    }
+
+    .rating-badge.outline .rating-badge_mark {
+      color: var(--brand-500);
     }
 
     .rating-badge_score {

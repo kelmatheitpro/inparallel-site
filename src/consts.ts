@@ -18,6 +18,16 @@ export const CONTACT_EMAIL = "hello@inparallel.agency";
  */
 export const NOINDEX_ROUTES: string[] = ["/404", "/example-components"];
 
+/**
+ * The proof chip the site repeats — in the hero, on the contact page and above
+ * the testimonials. Stated once here because it is a claim, and a claim that
+ * disagrees with itself in three places is worse than no claim at all.
+ */
+export const SOCIAL_PROOF = {
+  score: "100%",
+  source: "Job Success on Upwork",
+} as const;
+
 export interface NavChild {
   label: string;
   href: string;

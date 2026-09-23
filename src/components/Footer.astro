@@ -2,14 +2,14 @@
 import Icon from "@/components/Icon.astro";
 import Img from "@/components/Img.astro";
 import Heading from "@/components/Heading.astro";
-import Stars from "@/components/inparallel/Stars.astro";
+import jobSuccess from "@/assets/inparallel/icons/upwork-job-success.svg";
 import SocialIcon from "@/components/inparallel/SocialIcon.astro";
 import logo from "@/assets/inparallel/logo.svg";
 import footerGlow from "@/assets/inparallel/footer-glow.svg";
 import glowLine from "@/assets/inparallel/glow-line.svg";
 import arrowCircle from "@/assets/inparallel/icons/arrow-circle.svg";
 import arrowDiagonal from "@/assets/inparallel/icons/arrow-diagonal.svg";
-import { SITE_NAME, CONTACT_EMAIL } from "@/consts.ts";
+import { SITE_NAME, CONTACT_EMAIL, SOCIAL_PROOF } from "@/consts.ts";
 import { FOOTER_COLUMNS, SOCIALS, LOCATIONS } from "@/data/home.ts";
 
 const year = new Date().getFullYear();
@@ -63,9 +63,13 @@ const year = new Date().getFullYear();
         </p>
 
         <p class="footer_rating">
-          <span>Clutch</span>
-          <Stars aria-hidden="true" />
-          <span>5.0</span>
+          <Icon
+            src={jobSuccess}
+            class="footer_rating_mark"
+            aria-hidden="true"
+          />
+          <span class="footer_rating_score">{SOCIAL_PROOF.score}</span>
+          <span>{SOCIAL_PROOF.source}</span>
         </p>
 
         <ul class="footer_socials">
@@ -365,6 +369,15 @@ const year = new Date().getFullYear();
     .footer_blurb {
       color: rgb(255 255 255 / 0.7);
       line-height: var(--line-height-large);
+    }
+
+    .footer_rating_mark {
+      --_size: 1.125rem;
+      color: var(--brand-300);
+    }
+
+    .footer_rating_score {
+      font-weight: var(--primary-medium);
     }
 
     .footer_rating {
