@@ -13,7 +13,9 @@ import { initTabs } from "@/scripts/tabs.ts";
 import { initReveal } from "@/scripts/reveal.ts";
 import { initLightbox } from "@/scripts/lightbox.ts";
 import { initVideoLoops } from "@/scripts/video-loop.ts";
+import { initCursorMedia } from "@/scripts/cursor-media.ts";
 import { initMarginCalculator } from "@/scripts/margin-calculator.ts";
+import { initQuoteCalculator } from "@/scripts/quote-calculator.ts";
 import { initBriefForm } from "@/scripts/brief-form.ts";
 import { initContactForm } from "@/scripts/contact-form.ts";
 
@@ -23,6 +25,8 @@ initTabs();
 initReveal();
 initLightbox();
 initVideoLoops();
+initCursorMedia();
 initMarginCalculator();
+initQuoteCalculator();
 initBriefForm();
 initContactForm();

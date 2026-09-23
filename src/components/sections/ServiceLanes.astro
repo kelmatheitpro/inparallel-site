@@ -1,0 +1,214 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import { LANES } from "@/data/services.ts";
+---
+
+<Section id="services" theme="light" containerClass="container-narrow">
+  <div class="section-head centered" data-reveal>
+    <div class="lanes_intro">
+      <Heading tag="h2" class="heading-split">
+        Four ways to work with us. <em>Pick where your site is today.</em>
+      </Heading>
+      <Paragraph class="text-muted">
+        Every lane is the same two people. What changes is how much of the job
+        is ours.
+      </Paragraph>
+    </div>
+  </div>
+
+  <div class="lanes grid-cards" data-reveal>
+    {
+      LANES.map((lane) => (
+        <article
+          class:list={[
+            "lane",
+            lane.featured ? "surface theme-dark featured" : "surface-solid",
+          ]}
+        >
+          <div class="lane_head">
+            <h3 class="lane_name">{lane.name}</h3>
+            <p class="lane_promise">{lane.promise}</p>
+          </div>
+
+          <div class="lane_for">
+            <p class="lane_label">For you if</p>
+            <ul class="lane_list bare">
+              {lane.forYou.map((line) => (
+                <li>{line}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div class="lane_get">
+            <p class="lane_label">What you get</p>
+            <ul class="lane_list ticks">
+              {lane.whatYouGet.map((line) => (
+                <li>{line}</li>
+              ))}
+            </ul>
+          </div>
+
+          <div class="lane_foot">
+            <p class="lane_meta">
+              <span class="lane_timing">{lane.timing}</span>
+              {/* No figure is printed until there is one to stand behind, so
+                  the price points at the estimator instead of inventing a
+                  number the quote would then have to contradict. */}
+              <a class="lane_price" href="#estimate">
+                Price it below
+              </a>
+            </p>
+            <a class="cta" href={lane.href}>
+              {lane.ctaLabel}
+            </a>
+            {lane.note && <p class="lane_note">{lane.note}</p>}
+          </div>
+        </article>
+      ))
+    }
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    .lanes_intro {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-4);
+      margin-inline: auto;
+      max-width: var(--max-width-small);
+      text-align: center;
+    }
+
+    /* The shared `.grid-cards`, told to hold two. A 28rem minimum can't fit
+       three inside `.container-narrow`, so four cards land two-up rather than
+       three and a stray — and the stray is the one we most want read. */
+    .lanes {
+      --_min: 28rem;
+      width: 100%;
+      align-items: stretch;
+    }
+
+    .lane {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+      padding: var(--space-7);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: var(--radius-card);
+    }
+
+    /* The retainer is the work worth winning, so it is the one card that
+       inverts rather than the one with a louder label. */
+    .lane.featured {
+      background-color: var(--dark-800);
+      border-color: transparent;
+    }
+
+    .lane_head {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .lane_name {
+      font-size: var(--h5);
+      font-weight: var(--primary-semibold);
+      color: var(--brand-500);
+    }
+
+    .lane.featured .lane_name {
+      color: var(--brand-300);
+    }
+
+    .lane_promise {
+      font-size: var(--text-large);
+      font-weight: var(--primary-medium);
+      line-height: var(--line-height-large);
+    }
+
+    .lane_label {
+      margin-bottom: var(--space-3);
+      font-size: var(--text-tiny);
+      font-weight: var(--primary-semibold);
+      letter-spacing: var(--letter-spacing-wide);
+      text-transform: uppercase;
+      color: var(--text-faded);
+    }
+
+    .lane_list {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+
+    /* Two markers, because the lists say different things: the situation you
+       might be in, and the thing that lands in your hands. */
+    .lane_list.bare li {
+      padding-left: var(--space-5);
+      border-left: 2px solid var(--border);
+    }
+
+    /* The tick itself is the shared `.ticks` pattern in `inparallel.css`,
+       which draws the mark from two borders and already knows what to do on a
+       dark card. Only the spacing is this block's business. */
+    .lane_list.ticks {
+      gap: var(--space-3);
+    }
+
+    /* Pinned to the bottom so the four calls to action line up across cards
+       that hold different amounts of copy. */
+    .lane_foot {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      margin-top: auto;
+      padding-top: var(--space-5);
+      border-top: var(--border-width) solid var(--border-soft);
+    }
+
+    .lane_meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: var(--space-3);
+      font-size: var(--text-small);
+    }
+
+    .lane_timing {
+      font-weight: var(--primary-semibold);
+    }
+
+    .lane_price {
+      color: var(--text-muted);
+      text-decoration-color: var(--border);
+      text-underline-offset: 0.25em;
+      @media (hover: hover) {
+        &:hover {
+          color: var(--link-text-hover);
+        }
+      }
+    }
+
+    .lane_note {
+      color: var(--text-faded);
+      font-size: var(--text-tiny);
+      line-height: var(--line-height-large);
+    }
+
+    @media (width < 48rem) {
+      .lane {
+        padding: var(--space-6);
+      }
+    }
+  }
+</style>

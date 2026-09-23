@@ -66,13 +66,11 @@ const LIFTS = ["4.5rem", "2.25rem", "0rem"];
             </span>
           )}
 
-          {
-            /* Two scrims rather than one: the title reads off the top of the
+          {/* Two scrims rather than one: the title reads off the top of the
                picture and the copy off the bottom, and a single wash dark
-               enough for both would leave no picture in between. */
-          }
-          <span class="about-crew_scrim"></span>
-          <span class="about-crew_sheen"></span>
+               enough for both would leave no picture in between. */}
+          <span class="about-crew_scrim" />
+          <span class="about-crew_sheen" />
 
           <h3 class="about-crew_card_title">{card.title}</h3>
           <p class="about-crew_card_text">{card.text}</p>
@@ -167,8 +165,7 @@ const LIFTS = ["4.5rem", "2.25rem", "0rem"];
         translate: 0 2rem;
         transition:
           opacity var(--duration-slow) calc(var(--_i) * 140ms) ease-out,
-          translate var(--duration-slow) calc(var(--_i) * 140ms)
-            var(--ease-out);
+          translate var(--duration-slow) calc(var(--_i) * 140ms) var(--ease-out);
       }
     }
 
@@ -311,8 +308,7 @@ const LIFTS = ["4.5rem", "2.25rem", "0rem"];
       .about-crew_card {
         transition:
           opacity var(--duration-slow) calc(var(--_i) * 140ms) ease-out,
-          translate var(--duration-slow) calc(var(--_i) * 140ms)
-            var(--ease-out);
+          translate var(--duration-slow) calc(var(--_i) * 140ms) var(--ease-out);
       }
 
       .about-crew_grid.is-revealed .about-crew_card:hover {

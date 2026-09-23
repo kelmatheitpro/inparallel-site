@@ -1,0 +1,145 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import {
+  AUTOMATION_LEAD,
+  FLOWS,
+  AUTOMATION_TOOLS,
+  AUTOMATION_NOTE,
+} from "@/data/services.ts";
+---
+
+{
+  /* The second leg of the business, and the thing most Webflow studios do not
+     do at all — so it gets a section with its own shape rather than a line in
+     the retainer card. */
+}
+<Section id="automations" theme="dark" containerClass="container-narrow">
+  <div class="section-head" data-reveal>
+    <Heading tag="h2" class="heading-split">
+      Your site shouldn't stop <em>at the form.</em>
+    </Heading>
+    <Paragraph class="text-muted flows_lead">{AUTOMATION_LEAD}</Paragraph>
+  </div>
+
+  <div class="flows grid-cards" data-reveal>
+    {
+      FLOWS.map((flow) => (
+        <article class="flow surface surface-raised">
+          <ol class="flow_chain" aria-label={`${flow.title} steps`}>
+            {flow.steps.map((step) => (
+              <li class="flow_step">{step}</li>
+            ))}
+          </ol>
+          <div class="flow_body">
+            <h3 class="flow_title">{flow.title}</h3>
+            <p class="flow_text">{flow.text}</p>
+          </div>
+        </article>
+      ))
+    }
+  </div>
+
+  <div class="flows_foot" data-reveal>
+    <ul class="flows_tools" aria-label="Tools we build these with">
+      {AUTOMATION_TOOLS.map((tool) => <li class="pill-tag">{tool}</li>)}
+    </ul>
+    <p class="flows_note">{AUTOMATION_NOTE}</p>
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    .flows_lead {
+      max-width: 30rem;
+      font-size: var(--text-small);
+    }
+
+    /* Two up, so a chain has room to stay on one line. */
+    .flows {
+      --_min: 28rem;
+      width: 100%;
+    }
+
+    .flow {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-5);
+      padding: var(--space-6);
+    }
+
+    /* The chain is the point of the card, so it is read before the words:
+       each step is a stop and the rule between them is the handover. */
+    .flow_chain {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: var(--space-3);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .flow_step {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.4375rem 0.75rem;
+      background-color: rgb(255 255 255 / 0.06);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: var(--radius-small);
+      font-size: var(--text-tiny);
+      font-weight: var(--primary-medium);
+      white-space: nowrap;
+    }
+
+    .flow_step:not(:last-child)::after {
+      content: "";
+      width: var(--space-3);
+      height: var(--border-width);
+      margin-left: var(--space-3);
+      margin-right: calc(var(--space-3) * -1);
+      background-color: var(--brand-500);
+    }
+
+    .flow_body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+    }
+
+    .flow_title {
+      font-size: var(--h6);
+      font-weight: var(--primary-medium);
+    }
+
+    .flow_text {
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+
+    .flows_foot {
+      width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4) var(--space-6);
+    }
+
+    .flows_tools {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.625rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .flows_note {
+      color: var(--text-faded);
+      font-size: var(--text-small);
+    }
+  }
+</style>

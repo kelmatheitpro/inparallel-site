@@ -1,0 +1,99 @@
+---
+import { PROOF_ITEMS } from "@/data/services.ts";
+
+/* The strip reads as one continuous line, so the list is rendered twice and
+   the track slides exactly half its width — the second copy is under the
+   cursor at the moment the first leaves, and the seam never shows. */
+const runs = [0, 1];
+---
+
+<div class="proof theme-dark">
+  <div class="proof_track">
+    {
+      runs.map((run) => (
+        <ul class="proof_run" aria-hidden={run === 1 ? "true" : undefined}>
+          {PROOF_ITEMS.map((item) => (
+            <li class="proof_item">{item}</li>
+          ))}
+        </ul>
+      ))
+    }
+  </div>
+</div>
+
+<style is:global>
+  @layer components {
+    .proof {
+      padding-block: var(--space-5);
+      border-block: var(--border-width) solid var(--border-soft);
+      overflow: clip;
+    }
+
+    .proof_track {
+      display: flex;
+      width: max-content;
+      animation: proof-slide 38s linear infinite;
+    }
+
+    /* The dot reads as a separator rather than as a bullet, so the space on
+       each side of it has to match — `.proof_item` sets the same step between
+       the dot and its own text. Anything else and the dot visibly belongs to
+       the item on its right. */
+    .proof_run {
+      display: flex;
+      align-items: center;
+      gap: var(--space-6);
+      margin: 0;
+      /* Both sides, not just the right: a `<ul>` carries a 40px
+         `padding-inline-start` from the user agent, and leaving it in place put
+         that much extra space at the seam between the two copies — visible as
+         one wider gap, and enough to stop `translateX(-50%)` from landing the
+         loop exactly where it started. */
+      padding-inline: 0 var(--space-6);
+      list-style: none;
+    }
+
+    .proof_item {
+      display: flex;
+      align-items: center;
+      gap: var(--space-6);
+      white-space: nowrap;
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      font-weight: var(--primary-medium);
+      letter-spacing: var(--letter-spacing-wide);
+    }
+
+    .proof_item::before {
+      content: "";
+      width: 0.3125rem;
+      height: 0.3125rem;
+      border-radius: var(--radius-round);
+      background-color: var(--brand-500);
+      flex-shrink: 0;
+    }
+
+    @keyframes proof-slide {
+      to {
+        transform: translateX(-50%);
+      }
+    }
+
+    /* Motion with no resting state, so it simply stops rather than being
+       slowed down. The second copy goes with it; one full list is enough. */
+    @media (prefers-reduced-motion: reduce) {
+      .proof_track {
+        width: 100%;
+        animation: none;
+      }
+      .proof_run {
+        flex-wrap: wrap;
+        gap: var(--space-5);
+        justify-content: center;
+      }
+      .proof_run[aria-hidden="true"] {
+        display: none;
+      }
+    }
+  }
+</style>

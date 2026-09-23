@@ -1,0 +1,501 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Icon from "@/components/Icon.astro";
+import arrowRight from "@/assets/inparallel/icons/arrow-right.svg";
+import Img from "@/components/Img.astro";
+import HeroBackdrop from "@/components/inparallel/HeroBackdrop.astro";
+import arcs from "@/assets/inparallel/services-illustration.svg";
+import { HERO } from "@/data/services.ts";
+import { SITE_NAME } from "@/consts.ts";
+/**
+ * Which backdrop the hero wears. Kept as a prop while we choose one — the
+ * losers come out afterwards rather than living on as dead branches.
+ *
+ * - `bands`  flowing bands mixed from the brand ramp
+ * - `beams`  the site's own `HeroBackdrop`, as the home page wears it
+ * - `both`   the bands with those beams raked over them
+ * - `arcs`      the concentric artwork the services panels already use
+ * - `grid`      a drawn grid under a brand bloom
+ * - `aurora`    soft blooms with no edges at all
+ * - `contour`   the band curve drawn as lines rather than filled
+ * - `spotlight` near-black, with one light behind the headline
+ * - `split`     a hard diagonal between two fields
+ * - `dots`      a dot matrix thinning out from the corner
+ */
+interface Props {
+  /** Overrides the page's own copy. Defaults to the hub's. */
+  mark?: string;
+  title?: string;
+  titleMuted?: string;
+  lead?: string;
+  variant?:
+    | "bands"
+    | "beams"
+    | "both"
+    | "arcs"
+    | "grid"
+    | "aurora"
+    | "contour"
+    | "spotlight"
+    | "split"
+    | "dots";
+}
+
+const {
+  mark = "services",
+  title = HERO.title,
+  titleMuted = HERO.titleMuted,
+  lead = HERO.lead,
+  variant = "bands",
+} = Astro.props;
+const hasBands = variant === "bands" || variant === "both";
+const hasBeams = variant === "beams" || variant === "both";
+---
+
+{
+  /* The artwork is the section rather than something placed inside it: one
+     gradient field with a handful of overlapping blades cut out of it, drawn in
+     the brand's own blues. It is a single inline SVG so the shapes scale with
+     the box and cost no request. */
+}
+<Section
+  theme="dark"
+  paddingTop="none"
+  paddingBottom="none"
+  fullHeight
+  align="center"
+  containerClass="svchero_container"
+  class="svchero"
+>
+  <div
+    slot="background"
+    class:list={["svchero_art", `is-${variant}`]}
+    aria-hidden="true"
+  >
+    {
+      hasBands && (
+        <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice">
+          <defs>
+            {/* `fill` and `stop-color` are presentation attributes, which don't
+            read `var()` — so every colour here is set from the stylesheet
+            instead, where the brand tokens can reach it. */}
+            <radialGradient id="svchero-bloom" cx="0.5" cy="0.42" r="0.6">
+              <stop class="svchero_bloom-in" offset="0" />
+              <stop class="svchero_bloom-out" offset="1" />
+            </radialGradient>
+          </defs>
+
+          {/* Every band is the same bowed curve offset sideways, dark on the left
+          and opening up to the right. All of them run off the top and the
+          bottom, so the eye reads one flow rather than a set of shapes. */}
+          <path
+            class="svchero_band-1"
+            d="M-820 980 C-580 740 -520 420 -520 -60 L-80 -60 C-80 420 -140 740 -380 980 Z"
+          />
+          <path
+            class="svchero_band-2"
+            d="M-380 980 C-140 740 -80 420 -80 -60 L280 -60 C280 420 220 740 -20 980 Z"
+          />
+          <path
+            class="svchero_band-3"
+            d="M-20 980 C220 740 280 420 280 -60 L720 -60 C720 420 660 740 420 980 Z"
+          />
+          <path
+            class="svchero_band-4"
+            d="M420 980 C660 740 720 420 720 -60 L1060 -60 C1060 420 1000 740 760 980 Z"
+          />
+          <path
+            class="svchero_band-5"
+            d="M760 980 C1000 740 1060 420 1060 -60 L1380 -60 C1380 420 1320 740 1080 980 Z"
+          />
+          <path
+            class="svchero_band-6"
+            d="M1080 980 C1320 740 1380 420 1380 -60 L1520 -60 C1520 420 1460 740 1220 980 Z"
+          />
+          <path
+            class="svchero_band-7"
+            d="M1220 980 C1460 740 1520 420 1520 -60 L1720 -60 C1720 420 1660 740 1420 980 Z"
+          />
+          <path
+            class="svchero_band-8"
+            d="M1420 980 C1660 740 1720 420 1720 -60 L2700 -60 C2700 420 2640 740 2400 980 Z"
+          />
+
+          {/* One band laid back over the light, so the right edge has a blade
+          across it rather than an even wash. */}
+          <path
+            class="svchero_blade"
+            d="M1300 980 C1540 740 1600 420 1600 -60 L1860 -60 C1860 420 1800 740 1560 980 Z"
+          />
+
+          <rect width="1440" height="900" fill="url(#svchero-bloom)" />
+        </svg>
+      )
+    }
+
+    {variant === "arcs" && <Img src={arcs} class="svchero_arcs" transparent />}
+
+    {variant === "grid" && <span class="svchero_grid" />}
+
+    {variant === "dots" && <span class="svchero_dots" />}
+
+    {variant === "split" && <span class="svchero_split" />}
+
+    {
+      /* Lines rather than fills: the same curve the bands are cut from, so
+         both variants are recognisably the same drawing. */
+      variant === "contour" && (
+        <svg
+          class="svchero_contour"
+          viewBox="0 0 1440 900"
+          preserveAspectRatio="xMidYMid slice"
+        >
+          <path d="M-700 980 C-460 740 -400 420 -400 -60" style={`--_i:0`} />
+          <path d="M-622 980 C-382 740 -322 420 -322 -60" style={`--_i:1`} />
+          <path d="M-544 980 C-304 740 -244 420 -244 -60" style={`--_i:2`} />
+          <path d="M-466 980 C-226 740 -166 420 -166 -60" style={`--_i:3`} />
+          <path d="M-388 980 C-148 740 -88 420 -88 -60" style={`--_i:4`} />
+          <path d="M-310 980 C-70 740 -10 420 -10 -60" style={`--_i:5`} />
+          <path d="M-232 980 C8 740 68 420 68 -60" style={`--_i:6`} />
+          <path d="M-154 980 C86 740 146 420 146 -60" style={`--_i:7`} />
+          <path d="M-76 980 C164 740 224 420 224 -60" style={`--_i:8`} />
+          <path d="M2 980 C242 740 302 420 302 -60" style={`--_i:9`} />
+          <path d="M80 980 C320 740 380 420 380 -60" style={`--_i:10`} />
+          <path d="M158 980 C398 740 458 420 458 -60" style={`--_i:11`} />
+          <path d="M236 980 C476 740 536 420 536 -60" style={`--_i:12`} />
+          <path d="M314 980 C554 740 614 420 614 -60" style={`--_i:13`} />
+          <path d="M392 980 C632 740 692 420 692 -60" style={`--_i:14`} />
+          <path d="M470 980 C710 740 770 420 770 -60" style={`--_i:15`} />
+          <path d="M548 980 C788 740 848 420 848 -60" style={`--_i:16`} />
+          <path d="M626 980 C866 740 926 420 926 -60" style={`--_i:17`} />
+          <path d="M704 980 C944 740 1004 420 1004 -60" style={`--_i:18`} />
+          <path d="M782 980 C1022 740 1082 420 1082 -60" style={`--_i:19`} />
+          <path d="M860 980 C1100 740 1160 420 1160 -60" style={`--_i:20`} />
+          <path d="M938 980 C1178 740 1238 420 1238 -60" style={`--_i:21`} />
+          <path d="M1016 980 C1256 740 1316 420 1316 -60" style={`--_i:22`} />
+          <path d="M1094 980 C1334 740 1394 420 1394 -60" style={`--_i:23`} />
+          <path d="M1172 980 C1412 740 1472 420 1472 -60" style={`--_i:24`} />
+          <path d="M1250 980 C1490 740 1550 420 1550 -60" style={`--_i:25`} />
+          <path d="M1328 980 C1568 740 1628 420 1628 -60" style={`--_i:26`} />
+          <path d="M1406 980 C1646 740 1706 420 1706 -60" style={`--_i:27`} />
+          <path d="M1484 980 C1724 740 1784 420 1784 -60" style={`--_i:28`} />
+          <path d="M1562 980 C1802 740 1862 420 1862 -60" style={`--_i:29`} />
+        </svg>
+      )
+    }
+  </div>
+
+  {hasBeams && <HeroBackdrop slot="background" />}
+
+  <div class="svchero_body" data-reveal>
+    <p class="svchero_mark">
+      <span class="svchero_mark_strong">{SITE_NAME}</span>{mark}
+    </p>
+
+    <Heading tag="h1" variant="h1" class="svchero_title heading-split">
+      {title}
+      <em>{titleMuted}</em>
+    </Heading>
+
+    <p class="svchero_lead">{lead}</p>
+
+    {/* `.cta` is the site's own button, shadows and hover lift included. */}
+    <div class="svchero_actions">
+      <a class="cta" href={HERO.cta.href}>{HERO.cta.label}</a>
+      <a class="cta secondary" href={HERO.secondary.href}>
+        {HERO.secondary.label}
+        <Icon src={arrowRight} class="cta_arrow" />
+      </a>
+    </div>
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    .svchero {
+      overflow: clip;
+      /* The nav sits on the artwork rather than on a bar of its own. */
+      isolation: isolate;
+    }
+
+    /* The ramp is mixed from the palette rather than written out, so the
+       artwork follows `--brand-500` and `--navy-900` instead of drifting away
+       from them the first time the blue is retuned. */
+    .svchero_art {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+
+      --_band-1: color-mix(in srgb, var(--navy-900) 55%, var(--dark-900));
+      --_band-2: color-mix(in srgb, var(--brand-700) 30%, var(--navy-900));
+      --_band-3: color-mix(in srgb, var(--brand-500) 45%, var(--navy-900));
+      --_band-4: color-mix(in srgb, var(--brand-500) 75%, var(--brand-700));
+      --_band-5: var(--brand-500);
+      --_band-6: color-mix(in srgb, var(--brand-300) 55%, var(--brand-500));
+      --_band-7: color-mix(in srgb, var(--brand-300) 70%, var(--light-100));
+      --_band-8: color-mix(in srgb, var(--brand-300) 22%, var(--light-100));
+      --_blade: color-mix(in srgb, var(--navy-900) 70%, var(--dark-900));
+    }
+
+    .svchero_band-1 {
+      fill: var(--_band-1);
+    }
+    .svchero_band-2 {
+      fill: var(--_band-2);
+    }
+    .svchero_band-3 {
+      fill: var(--_band-3);
+    }
+    .svchero_band-4 {
+      fill: var(--_band-4);
+    }
+    .svchero_band-5 {
+      fill: var(--_band-5);
+    }
+    .svchero_band-6 {
+      fill: var(--_band-6);
+    }
+    .svchero_band-7 {
+      fill: var(--_band-7);
+    }
+    .svchero_band-8 {
+      fill: var(--_band-8);
+    }
+
+    .svchero_blade {
+      fill: var(--_blade);
+      opacity: 0.55;
+    }
+
+    .svchero_bloom-in {
+      stop-color: var(--brand-300);
+      stop-opacity: 0.22;
+    }
+
+    .svchero_bloom-out {
+      stop-color: var(--brand-300);
+      stop-opacity: 0;
+    }
+
+    /* Variants that are not the band drawing get their field from the ramp
+       directly, so the section is never a flat panel behind the type. */
+    .svchero_art.is-arcs,
+    .svchero_art.is-grid,
+    .svchero_art.is-dots,
+    .svchero_art.is-beams {
+      background-image:
+        radial-gradient(70% 90% at 78% 18%, var(--_band-5), transparent 68%),
+        linear-gradient(
+          120deg,
+          var(--_band-1),
+          var(--_band-3) 55%,
+          var(--_band-4)
+        );
+    }
+
+    /* The concentric artwork the services panels already wear, blown up and
+       hung off the corner the design bleeds it from. */
+    .svchero_arcs {
+      position: absolute;
+      top: -30%;
+      right: -25%;
+      width: 115%;
+      height: 155%;
+      max-width: none;
+      opacity: 0.55;
+      object-fit: contain;
+    }
+
+    /* Two rules crossed and faded out at the edges — a drawn grid rather than
+       an image, so it costs nothing and follows the palette. */
+    .svchero_grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--_rule) var(--border-width), transparent 0),
+        linear-gradient(90deg, var(--_rule) var(--border-width), transparent 0);
+      background-size: 5.5rem 5.5rem;
+      --_rule: color-mix(in srgb, var(--light-100) 12%, transparent);
+      mask-image: radial-gradient(
+        75% 75% at 50% 40%,
+        #000 20%,
+        transparent 78%
+      );
+    }
+
+    /* No edges anywhere: four blooms of different sizes, overlapping. */
+    .svchero_art.is-aurora {
+      background-color: var(--_band-1);
+      background-image:
+        radial-gradient(45% 55% at 20% 25%, var(--_band-4), transparent 70%),
+        radial-gradient(55% 60% at 75% 20%, var(--_band-6), transparent 72%),
+        radial-gradient(60% 70% at 60% 85%, var(--_band-3), transparent 70%),
+        radial-gradient(40% 50% at 92% 65%, var(--_band-7), transparent 72%);
+    }
+
+    /* One light behind the type and nothing else, so the headline carries the
+       whole frame. */
+    .svchero_art.is-spotlight {
+      background-color: var(--dark-900);
+      background-image:
+        radial-gradient(48% 55% at 50% 40%, var(--_band-4), transparent 72%),
+        radial-gradient(90% 70% at 50% 40%, var(--_band-2), transparent 75%);
+    }
+
+    .svchero_art.is-contour {
+      background-image: linear-gradient(
+        115deg,
+        var(--_band-1),
+        var(--_band-3) 60%,
+        var(--_band-4)
+      );
+    }
+
+    .svchero_contour {
+      width: 100%;
+      height: 100%;
+      display: block;
+      fill: none;
+      stroke: var(--_band-7);
+      stroke-width: 1.5;
+      /* Every third line is drawn heavier, which reads as depth rather than as
+         a stack of identical rules. */
+      & path {
+        opacity: calc(0.1 + mod(var(--_i), 3) * 0.14);
+      }
+    }
+
+    /* A single hard edge, raked to match the bands' lean so the two are
+       obviously the same family. */
+    .svchero_art.is-split {
+      background-color: var(--_band-2);
+    }
+
+    .svchero_split {
+      position: absolute;
+      inset: 0;
+      background-image: linear-gradient(160deg, var(--_band-5), var(--_band-7));
+      clip-path: polygon(38% 100%, 72% 0, 100% 0, 100% 100%);
+    }
+
+    /* Dots on the same rhythm as `grid`, thinning towards the left. */
+    .svchero_dots {
+      position: absolute;
+      inset: 0;
+      --_dot: color-mix(in srgb, var(--light-100) 45%, transparent);
+      background-image: radial-gradient(var(--_dot) 0.09375rem, transparent 0);
+      background-size: 2rem 2rem;
+      mask-image: linear-gradient(115deg, transparent 15%, #000 70%);
+    }
+
+    .svchero_art svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .svchero_container {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* A full-screen hero has to fit the screen it is on, so the rhythm is
+       measured in `svh` rather than in fixed steps: on a short laptop the
+       spacing closes up instead of pushing the buttons past the fold.
+
+       The padding lives here rather than on the section because the section's
+       padding utilities sit in a later cascade layer and would win. */
+    .svchero_body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(var(--space-4), 2.5svh, var(--space-6));
+      padding-top: calc(
+        var(--nav-height) + clamp(var(--space-4), 5svh, var(--space-8))
+      );
+      padding-bottom: clamp(var(--space-4), 5svh, var(--space-8));
+      max-width: 60rem;
+      margin-inline: auto;
+      text-align: center;
+    }
+
+    /* The two-weight mark: the studio's name set solid, the lane set light,
+       so the pair reads as one word the way the lane names do. */
+    .svchero_mark {
+      font-size: var(--h6);
+      font-weight: var(--primary-regular);
+      letter-spacing: var(--letter-spacing-tight);
+      color: rgb(255 255 255 / 0.9);
+    }
+
+    .svchero_mark_strong {
+      font-weight: var(--primary-semibold);
+    }
+
+    /* The headline is lit rather than coloured: solid where the artwork is
+       dark, thinning into it as the field brightens. `color` underneath is
+       what a browser without `background-clip: text` keeps. */
+    .svchero_title {
+      max-width: 20ch;
+      font-size: clamp(2.25rem, min(7.5vw, 12.5svh), 6.5rem);
+      font-weight: var(--primary-semibold);
+      line-height: 0.95;
+      letter-spacing: var(--letter-spacing-tighter);
+      color: var(--light-100);
+      text-wrap: balance;
+      @supports (-webkit-background-clip: text) {
+        background-image: linear-gradient(
+          120deg,
+          rgb(255 255 255 / 0.97) 25%,
+          rgb(255 255 255 / 0.55) 75%
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+    }
+
+    .svchero_title em {
+      display: block;
+      color: inherit;
+      font-style: normal;
+    }
+
+    .svchero_lead {
+      max-width: 44rem;
+      color: rgb(255 255 255 / 0.82);
+      font-size: var(--text-large);
+      line-height: var(--line-height-large);
+      text-wrap: pretty;
+    }
+
+    .svchero_actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: var(--space-4);
+      margin-top: var(--space-3);
+    }
+
+    /* `.cta_arrow` sets this size in `inparallel.css`, but that file is
+       imported into the `patterns` layer while `Icon.astro` sizes `.icon` in
+       `components` — and a later layer wins whatever the selectors say. So the
+       shared rule never lands, and the arrow renders at `1.5em` square, which
+       an SVG marked `preserveAspectRatio="none"` then stretches.
+
+       `Hero.astro` works around the same thing with a rule of its own inside
+       this layer. This is that rule, and the two arrows now match. */
+    .svchero_actions .cta_arrow {
+      --_size: 0.9375rem;
+      width: var(--_size);
+      height: auto;
+    }
+
+    @media (width < 48rem) {
+      .svchero_actions .cta {
+        width: 100%;
+      }
+    }
+  }
+</style>

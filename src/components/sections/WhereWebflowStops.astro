@@ -1,0 +1,109 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import { LIMITS, LIMITS_LEAD } from "@/data/services.ts";
+---
+
+{
+  /* The studio selling Webflow naming what Webflow cannot do. It reads as the
+     opposite of a sales section, which is why it sells — and it is the only
+     honest way to quote, because the limits are what decide the price. */
+}
+<Section theme="light" containerClass="container-narrow">
+  <div class="limits" data-reveal>
+    <div class="limits_intro">
+      <Heading tag="h2" class="heading-split">
+        Honest about Webflow. <em>Including where it stops.</em>
+      </Heading>
+      <Paragraph class="text-muted limits_lead">{LIMITS_LEAD}</Paragraph>
+    </div>
+
+    <ol class="limits_list">
+      {
+        LIMITS.map((limit) => (
+          <li class="limit">
+            <h3 class="limit_title">{limit.title}</h3>
+            <p class="limit_text">{limit.text}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    .limits {
+      width: 100%;
+      display: grid;
+      gap: var(--space-7) var(--space-8);
+      grid-template-columns: repeat(auto-fit, minmax(min(20rem, 100%), 1fr));
+      align-items: start;
+    }
+
+    .limits_intro {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      position: sticky;
+      top: var(--space-8);
+    }
+
+    .limits_lead {
+      max-width: 26rem;
+      font-size: var(--text-small);
+    }
+
+    /* Numbered, because these are the four questions every quote has to answer
+       and a reader should be able to count that they all got answered. */
+    .limits_list {
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: limit;
+    }
+
+    .limit {
+      counter-increment: limit;
+      display: grid;
+      gap: var(--space-2) var(--space-5);
+      grid-template-columns: 2rem minmax(0, 1fr);
+      padding-block: var(--space-5);
+      border-top: var(--border-width) solid var(--border-soft);
+    }
+
+    .limit:last-child {
+      border-bottom: var(--border-width) solid var(--border-soft);
+    }
+
+    .limit::before {
+      content: counter(limit, decimal-leading-zero);
+      grid-row: span 2;
+      color: var(--brand-500);
+      font-size: var(--text-small);
+      font-weight: var(--primary-semibold);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .limit_title {
+      font-size: var(--text-large);
+      font-weight: var(--primary-medium);
+      line-height: var(--line-height-large);
+    }
+
+    .limit_text {
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+
+    @media (width < 48rem) {
+      .limits_intro {
+        position: static;
+      }
+    }
+  }
+</style>

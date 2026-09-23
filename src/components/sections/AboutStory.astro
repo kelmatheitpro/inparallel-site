@@ -80,7 +80,12 @@ const words = (block: (typeof STORY)[number]) => [
        Clipping the sections rather than drawing the ribbon means it is
        whatever the page is, with no second colour to keep in step. */
     .about-story {
-      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 calc(100% - var(--about-seam)));
+      clip-path: polygon(
+        0 0,
+        100% 0,
+        100% 100%,
+        0 calc(100% - var(--about-seam))
+      );
       padding-bottom: calc(var(--section-space-large) + var(--about-seam));
     }
 

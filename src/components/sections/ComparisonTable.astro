@@ -1,0 +1,214 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Paragraph from "@/components/Paragraph.astro";
+import { LANES, COMPARISON_ROWS } from "@/data/services.ts";
+---
+
+{
+  /* The section people actually read when they are stuck between two lanes.
+     Every row states every lane — a blank cell would leave the reader to guess
+     which way the silence went. */
+}
+<Section id="compare" theme="light" containerClass="container-narrow">
+  <div class="section-head" data-reveal>
+    <Heading tag="h2" class="heading-split inline">
+      Compare at a glance. <em>Including where we say no.</em>
+    </Heading>
+    <Paragraph class="text-muted matrix_note">
+      “Add-on” means it is quoted on top, not that it is out of reach.
+    </Paragraph>
+  </div>
+
+  {
+    /* A table narrower than its content scrolls rather than crushing its
+       columns, and the row label stays put so a cell never loses its name. */
+  }
+  <div
+    class="matrix_scroll"
+    tabindex="0"
+    role="region"
+    aria-label="Package comparison"
+  >
+    <table class="matrix">
+      <thead>
+        <tr>
+          <th scope="col" class="matrix_corner">What's included</th>
+          {
+            LANES.map((lane) => (
+              <th
+                scope="col"
+                class:list={["matrix_head", lane.featured && "featured"]}
+              >
+                {lane.name}
+              </th>
+            ))
+          }
+        </tr>
+      </thead>
+      <tbody>
+        {
+          COMPARISON_ROWS.map((row) => (
+            <tr>
+              <th scope="row" class="matrix_row-label">
+                {row.label}
+              </th>
+              {row.cells.map((cell, index) => (
+                <td
+                  class:list={[
+                    "matrix_cell",
+                    LANES[index]?.featured && "featured",
+                  ]}
+                >
+                  {cell === true && (
+                    <>
+                      <span class="matrix_tick" aria-hidden="true" />
+                      <span class="sr-only">Included</span>
+                    </>
+                  )}
+                  {cell === false && (
+                    <>
+                      <span class="matrix_none" aria-hidden="true" />
+                      <span class="sr-only">Not included</span>
+                    </>
+                  )}
+                  {typeof cell === "string" && (
+                    <span class="matrix_qualified">{cell}</span>
+                  )}
+                </td>
+              ))}
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    .matrix_note {
+      max-width: 22rem;
+      font-size: var(--text-small);
+    }
+
+    .matrix_scroll {
+      width: 100%;
+      overflow-x: auto;
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: var(--radius-card);
+      background-color: var(--background-2);
+      &:focus-visible {
+        outline: var(--focus-width) solid var(--text);
+        outline-offset: var(--focus-offset);
+      }
+    }
+
+    .matrix {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--text-small);
+      text-align: left;
+    }
+
+    .matrix th,
+    .matrix td {
+      padding: var(--space-4) var(--space-5);
+      border-bottom: var(--border-width) solid var(--border-soft);
+      vertical-align: middle;
+    }
+
+    .matrix tbody tr:last-child :is(th, td) {
+      border-bottom: 0;
+    }
+
+    /* The header rides down the page so a cell ten rows in still has a column
+       name attached to it. */
+    .matrix thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      background-color: var(--background-2);
+      font-size: var(--text-small);
+      font-weight: var(--primary-semibold);
+      white-space: nowrap;
+    }
+
+    /* Only the corner is a label. The lane names are marks, and uppercasing
+       `inparallelBuild` throws away the one thing that reads at a glance. */
+    .matrix_corner {
+      font-size: var(--text-tiny);
+      letter-spacing: var(--letter-spacing-wide);
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .matrix_head.featured {
+      color: var(--brand-500);
+    }
+
+    /* Same idea sideways: the row label survives a horizontal scroll. */
+    .matrix_row-label {
+      position: sticky;
+      left: 0;
+      z-index: 1;
+      min-width: 14rem;
+      background-color: var(--background-2);
+      font-weight: var(--primary-medium);
+    }
+
+    .matrix_corner {
+      z-index: 3;
+      left: 0;
+    }
+
+    .matrix_cell {
+      min-width: 9rem;
+    }
+
+    .matrix_cell.featured {
+      background-color: color-mix(in srgb, var(--brand-500) 5%, transparent);
+    }
+
+    .matrix_tick,
+    .matrix_none {
+      display: inline-block;
+    }
+
+    .matrix_tick {
+      width: 1rem;
+      height: 1rem;
+      background-color: var(--brand-500);
+      mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 8.5l3.5 3.5L13 5'/%3E%3C/svg%3E")
+        no-repeat center / contain;
+    }
+
+    .matrix_none {
+      width: 0.75rem;
+      height: var(--border-width);
+      background-color: var(--border);
+      vertical-align: middle;
+    }
+
+    .matrix_qualified {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.25rem 0.625rem;
+      border: var(--border-width) solid var(--border);
+      border-radius: var(--radius-round);
+      color: var(--text-muted);
+      font-size: var(--text-tiny);
+      white-space: nowrap;
+    }
+
+    @media (width < 48rem) {
+      .matrix th,
+      .matrix td {
+        padding: var(--space-4);
+      }
+      .matrix_row-label {
+        min-width: 11rem;
+      }
+    }
+  }
+</style>

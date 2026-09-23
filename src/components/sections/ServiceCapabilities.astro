@@ -1,0 +1,101 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import type { LanePage } from "@/data/lanes.ts";
+
+interface Props {
+  capabilities: LanePage["capabilities"];
+  title: string;
+  titleMuted: string;
+}
+
+const { capabilities, title, titleMuted } = Astro.props;
+---
+
+{
+  /* What we can do about the problem above. Numbered because the list is the
+     answer to a question the reader just had, and a numbered answer reads as
+     complete where a grid of cards reads as a sample. */
+}
+<Section theme="dark" containerClass="container-narrow" class="caps">
+  <div slot="background" class="caps_field" aria-hidden="true"></div>
+
+  <div class="section-head" data-reveal>
+    <Heading tag="h2" class="heading-split inline">
+      {title}{" "}
+      <em>{titleMuted}</em>
+    </Heading>
+  </div>
+
+  <ol class="caps_list" data-reveal>
+    {
+      capabilities.map((item) => (
+        <li class="cap">
+          <h3 class="cap_title">{item.title}</h3>
+          <p class="cap_text">{item.text}</p>
+        </li>
+      ))
+    }
+  </ol>
+</Section>
+
+<style is:global>
+  @layer components {
+    .caps {
+      overflow: clip;
+    }
+
+    .caps_field {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        65% 80% at 85% 10%,
+        color-mix(in srgb, var(--brand-500) 30%, transparent),
+        transparent 70%
+      );
+    }
+
+    .caps_list {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      display: grid;
+      gap: var(--space-6) var(--space-8);
+      grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: cap;
+    }
+
+    .cap {
+      counter-increment: cap;
+      display: grid;
+      gap: var(--space-2) var(--space-5);
+      grid-template-columns: 2rem minmax(0, 1fr);
+      padding-block: var(--space-5);
+      border-top: var(--border-width) solid var(--border-soft);
+    }
+
+    .cap::before {
+      content: counter(cap, decimal-leading-zero);
+      grid-row: span 2;
+      color: var(--brand-300);
+      font-size: var(--text-small);
+      font-weight: var(--primary-semibold);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .cap_title {
+      font-size: var(--text-large);
+      font-weight: var(--primary-medium);
+      line-height: var(--line-height-large);
+    }
+
+    .cap_text {
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+  }
+</style>

@@ -1,105 +1,47 @@
 ---
 import Layout from "@/layouts/BaseLayout.astro";
-import Section from "@/components/Section.astro";
-import Heading from "@/components/Heading.astro";
-import PageHero from "@/components/sections/PageHero.astro";
-import Services from "@/components/sections/Services.astro";
-import WaysWeDiffer from "@/components/sections/WaysWeDiffer.astro";
-import MidCta from "@/components/sections/MidCta.astro";
-import { PROCESS } from "@/data/home.ts";
+import ServicesHero from "@/components/sections/ServicesHero.astro";
+import ProofStrip from "@/components/sections/ProofStrip.astro";
+import ServiceLanes from "@/components/sections/ServiceLanes.astro";
+import QuoteEstimate from "@/components/sections/QuoteEstimate.astro";
+import ComparisonTable from "@/components/sections/ComparisonTable.astro";
+import ClientProof from "@/components/sections/ClientProof.astro";
+import WhereWebflowStops from "@/components/sections/WhereWebflowStops.astro";
+import Beliefs from "@/components/sections/Beliefs.astro";
+import AlwaysIncluded from "@/components/sections/AlwaysIncluded.astro";
+import DontDo from "@/components/sections/DontDo.astro";
+import TwoOfUs from "@/components/sections/TwoOfUs.astro";
+import ServicesFaq from "@/components/sections/ServicesFaq.astro";
+import ClosingCta from "@/components/sections/ClosingCta.astro";
 ---
 
+{
+  /* A junction, not a catalogue. Its job is to get the visitor onto the one
+     lane that matches where their site is today — so it names the four, lets
+     them be compared and priced, and then argues for the studio rather than
+     for any one service. Everything specific to a lane lives on its own page. */
+}
 <Layout
   theme="light"
   overlap
   title="Services"
-  description="Four ways we move your website forward — design, build, launch, or all of it on a retainer. Pick a lane or run the full relay."
+  description="Four ways to work with a two-person Webflow studio — design, build, launch, or a retained crew. Fixed price, quoted within 24 hours."
 >
-  <PageHero
-    eyebrow="Services"
-    title="Four ways we move"
-    titleMuted="your website forward"
-    lead="Pick a lane or run the full relay. Whichever you choose, it is the same senior crew — the people who pitch are the people who ship."
-  />
+  <ServicesHero variant="both" />
+  <ProofStrip />
 
-  <Services heading={false} />
+  {/* Pick a lane. */}
+  <ServiceLanes />
+  <QuoteEstimate />
+  <ComparisonTable />
 
-  {
-    /* ---- how the work runs ------------------------------------------------ */
-  }
-  <Section theme="light" containerClass="container-narrow">
-    <div class="section-head centered">
-      <Heading tag="h2" class="heading-split">
-        No decks about decks. <em>Just a week you can click.</em>
-      </Heading>
-    </div>
-
-    <ol class="process">
-      {
-        PROCESS.map((step, index) => (
-          <li class="process_step">
-            <span class="process_number" aria-hidden="true">
-              {String(index + 1).padStart(2, "0")}
-            </span>
-            <div class="process_body">
-              <h3 class="process_title">{step.title}</h3>
-              <p class="process_text">{step.text}</p>
-            </div>
-          </li>
-        ))
-      }
-    </ol>
-  </Section>
-
-  <WaysWeDiffer />
-  <MidCta />
+  {/* Then the case for us, whichever lane they took. */}
+  <ClientProof />
+  <WhereWebflowStops />
+  <Beliefs />
+  <AlwaysIncluded />
+  <DontDo />
+  <TwoOfUs />
+  <ServicesFaq />
+  <ClosingCta />
 </Layout>
-
-<style is:global>
-  @layer components {
-    .process {
-      width: 100%;
-      display: grid;
-      gap: var(--space-5);
-      grid-template-columns: repeat(auto-fit, minmax(min(16rem, 100%), 1fr));
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      counter-reset: none;
-    }
-
-    .process_step {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-4);
-      padding: var(--space-6);
-      background-color: var(--background-2);
-      border: var(--border-width) solid var(--border-soft);
-      border-radius: var(--radius-card);
-    }
-
-    .process_number {
-      font-size: var(--h5);
-      font-weight: var(--primary-semibold);
-      color: var(--brand-500);
-      font-variant-numeric: tabular-nums;
-    }
-
-    .process_body {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-3);
-    }
-
-    .process_title {
-      font-size: var(--h6);
-      font-weight: var(--primary-medium);
-    }
-
-    .process_text {
-      color: var(--text-muted);
-      font-size: var(--text-small);
-      line-height: var(--line-height-large);
-    }
-  }
-</style>

@@ -16,7 +16,12 @@ export const CONTACT_EMAIL = "hello@inparallel.agency";
  * Surrounding slashes are optional: `"/thanks"`, `"thanks"` and `"/thanks/"`
  * all match the same route.
  */
-export const NOINDEX_ROUTES: string[] = ["/404", "/example-components"];
+export const NOINDEX_ROUTES: string[] = [
+  "/404",
+  "/example-components",
+  "/hero-variants",
+  "/section-variants",
+];
 
 /**
  * The proof chip the site repeats — in the hero, on the contact page and above
@@ -45,22 +50,22 @@ export interface NavLink {
 export const SERVICES_MENU: NavChild[] = [
   {
     label: "inparallelDesign",
-    href: "/services#services",
+    href: "/services/design",
     description: "Strategy, copy and design your developer can build from",
   },
   {
     label: "inparallelBuild",
-    href: "/services#services",
+    href: "/services/build",
     description: "A Webflow build your team can actually run",
   },
   {
     label: "inparallelLaunch",
-    href: "/services#services",
+    href: "/services/launch",
     description: "Built, launched and handed over in weeks",
   },
   {
     label: "inparallel+",
-    href: "/services#services",
+    href: "/services/plus",
     description: "Growth work that keeps shipping after launch",
   },
   {

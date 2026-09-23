@@ -1,0 +1,447 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import ArrowLink from "@/components/inparallel/ArrowLink.astro";
+import type { LanePage } from "@/data/lanes.ts";
+
+interface Props {
+  capabilities: LanePage["capabilities"];
+  title: string;
+  titleMuted: string;
+}
+
+const { capabilities, title, titleMuted } = Astro.props;
+
+/**
+ * Three tall cards, then wide ones.
+ *
+ * A second row of three reads as a continuation of the first and the grid stops
+ * being a composition, so anything past the third card goes out in pairs at
+ * double width, and a card left over on its own spans the full row as a banner.
+ */
+const TRACKS = 6;
+
+/* The lane that has a number to show puts it on the second card, where the grid
+   is tallest — the figure needs the height, and the eye lands there first. */
+const withFigure = capabilities.findIndex((item) => item.figure);
+const ordered = [...capabilities];
+if (withFigure > 1) ordered.splice(1, 0, ordered.splice(withFigure, 1)[0]);
+
+const last = ordered.length - 1;
+const isBanner = (index: number) =>
+  index >= 3 && (ordered.length - 3) % 2 === 1 && index === last;
+const spanOf = (index: number) =>
+  index < 3 ? 2 : isBanner(index) ? TRACKS : TRACKS / 2;
+
+/* A card is a surface and a piece of artwork, not a box with a paragraph in it.
+   Both are picked by position so the grid reads as one composition: the values
+   alternate down the rows, and no two neighbours carry the same motif.
+
+   Every motif is drawn in CSS from the brand tokens rather than shipped as an
+   image, so it follows `--brand-500` if the palette is ever retuned — and so
+   the section does not wait on photography we do not have yet. */
+const TONES = ["plain", "dark", "brand", "navy", "plain", "dark"] as const;
+const MOTIFS = ["rows", "arc", "panel", "devices", "bloom", "bloom"] as const;
+const at = <T,>(list: readonly T[], index: number) => list[index % list.length];
+---
+
+<Section theme="dark" containerClass="container-narrow" class="bento">
+  <div slot="background" class="bento_field" aria-hidden="true"></div>
+
+  <div class="section-head centered" data-reveal>
+    <Heading tag="h2" variant="display" class="heading-split bento_title">
+      {title}{" "}
+      <em>{titleMuted}</em>
+    </Heading>
+  </div>
+
+  <ul class="bento_grid" data-reveal>
+    {
+      ordered.map((item, index) => {
+        const motif = at(MOTIFS, index);
+        return (
+          <li
+            class:list={[
+              "bento_card",
+              `is-${at(TONES, index)}`,
+              index >= 3 && "is-wide",
+              isBanner(index) && "is-banner",
+            ]}
+            style={`--_span:${spanOf(index)}`}
+          >
+            {motif === "arc" && <span class="bento_arc" aria-hidden="true" />}
+            {motif === "rows" && (
+              <span class="bento_rows" aria-hidden="true">
+                <span class="bento_row" />
+                <span class="bento_row" />
+                <span class="bento_row" />
+              </span>
+            )}
+            {motif === "bloom" && (
+              <span class="bento_bloom" aria-hidden="true" />
+            )}
+            {motif === "panel" && (
+              <span class="bento_panel" aria-hidden="true">
+                <span class="bento_bar" />
+                <span class="bento_bar is-accent" />
+                <span class="bento_bar" />
+              </span>
+            )}
+            {motif === "devices" && (
+              <span class="bento_devices" aria-hidden="true">
+                <span class="bento_device" />
+                <span class="bento_device" />
+                <span class="bento_device" />
+              </span>
+            )}
+
+            <div class="bento_head">
+              <h3 class="bento_card_title">{item.title}</h3>
+              <p class="bento_text">{item.text}</p>
+            </div>
+
+            {item.figure ? (
+              <p class="bento_figure">
+                <span class="bento_figure_value">{item.figure}</span>
+                {item.figureLabel && (
+                  <span class="bento_figure_label">{item.figureLabel}</span>
+                )}
+              </p>
+            ) : (
+              index === 0 && (
+                <ArrowLink href="/contact" class="bento_link">
+                  Ask us about it
+                </ArrowLink>
+              )
+            )}
+          </li>
+        );
+      })
+    }
+  </ul>
+</Section>
+
+<style is:global>
+  @layer components {
+    .bento {
+      overflow: clip;
+    }
+
+    .bento_field {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        70% 80% at 50% -10%,
+        color-mix(in srgb, var(--brand-500) 24%, transparent),
+        transparent 70%
+      );
+    }
+
+    .bento_title {
+      max-width: 20ch;
+      margin-inline: auto;
+      text-align: center;
+      text-wrap: balance;
+    }
+
+    .bento_grid {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      display: grid;
+      gap: var(--space-5);
+      grid-template-columns: minmax(0, 1fr);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    @media (width >= 60rem) {
+      .bento_grid {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+      }
+      .bento_card {
+        grid-column: span var(--_span, 2);
+      }
+    }
+
+    /* Tall enough that the heading, the copy and the artwork each get their own
+       third — a short card turns all three into one paragraph. */
+    .bento_card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: var(--space-7);
+      min-height: clamp(21rem, 42vw, 34rem);
+      padding: var(--space-7);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: var(--radius-large);
+      background-color: var(--background-raised);
+      overflow: clip;
+      isolation: isolate;
+    }
+
+    /* The second row is shorter than the first. Equal rows read as a table. */
+    @media (width >= 60rem) {
+      .bento_card.is-wide {
+        min-height: clamp(18rem, 28vw, 26rem);
+      }
+      .bento_card.is-banner {
+        min-height: clamp(13rem, 19vw, 17rem);
+      }
+    }
+
+    /* `--dark-900` is the section's own background, so the dark card has to come
+       up a step to read as a card at all rather than as a hole in the page. */
+    .bento_card.is-dark {
+      background-color: var(--dark-800);
+      border-color: color-mix(in srgb, var(--light-100) 8%, transparent);
+    }
+
+    .bento_card.is-navy {
+      background-image: linear-gradient(
+        160deg,
+        var(--navy-900),
+        color-mix(in srgb, var(--navy-900) 55%, var(--dark-900))
+      );
+      border-color: color-mix(in srgb, var(--brand-300) 14%, transparent);
+    }
+
+    .bento_card.is-brand {
+      background-image: linear-gradient(
+        155deg,
+        var(--brand-500),
+        color-mix(in srgb, var(--brand-500) 50%, var(--navy-900))
+      );
+      border-color: transparent;
+    }
+
+    .bento_head {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .bento_card_title {
+      font-size: var(--h4);
+      font-weight: var(--primary-semibold);
+      line-height: var(--line-height-medium);
+      text-wrap: balance;
+    }
+
+    .bento_text {
+      max-width: 34ch;
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+
+    .bento_card.is-brand .bento_text {
+      color: color-mix(in srgb, var(--light-100) 84%, transparent);
+    }
+
+    /* The number is the card's floor, dropped in the corner at display size: it
+       is the evidence, so it is the last thing read and the biggest thing on
+       the card. The label under it stops the number being a riddle. */
+    .bento_figure {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .bento_figure_value {
+      font-size: clamp(3.5rem, 9vw, 7rem);
+      font-weight: var(--primary-semibold);
+      letter-spacing: var(--letter-spacing-tighter);
+      line-height: 0.85;
+      color: color-mix(in srgb, var(--light-100) 42%, transparent);
+    }
+
+    .bento_figure_label {
+      color: var(--text-faded);
+      font-size: var(--text-tiny);
+      letter-spacing: var(--letter-spacing-wide);
+      text-transform: uppercase;
+    }
+
+    .bento_link {
+      position: relative;
+      z-index: 1;
+      align-self: start;
+    }
+
+    /* ---------------------------------------------------------- the motifs */
+
+    .bento_arc,
+    .bento_bloom,
+    .bento_panel,
+    .bento_devices,
+    .bento_rows {
+      position: absolute;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* A ring cut out of a cone of brand light, bled off the bottom corner. */
+    .bento_arc {
+      inset: auto -34% -26% auto;
+      aspect-ratio: 1;
+      width: 96%;
+      border-radius: 50%;
+      background: conic-gradient(
+        from 200deg,
+        transparent 0deg,
+        color-mix(in srgb, var(--brand-500) 90%, transparent) 80deg,
+        color-mix(in srgb, var(--brand-300) 70%, transparent) 150deg,
+        transparent 215deg
+      );
+      mask-image: radial-gradient(circle, transparent 57%, #000 61%);
+      filter: blur(0.3rem);
+      opacity: 0.85;
+    }
+
+    .bento_bloom {
+      inset: auto -15% -30% auto;
+      aspect-ratio: 1;
+      width: 70%;
+      border-radius: 50%;
+      background: radial-gradient(
+        circle,
+        color-mix(in srgb, var(--brand-500) 55%, transparent),
+        transparent 65%
+      );
+      filter: blur(1.5rem);
+    }
+
+    /* A slice of interface, bled off the corner so it reads as a surface the
+       card is sitting on rather than a picture pasted into it. */
+    .bento_panel {
+      inset: auto calc(var(--space-7) * -0.5) calc(var(--space-7) * -0.5) auto;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      width: min(92%, 22rem);
+      padding: var(--space-5);
+      border: var(--border-width) solid
+        color-mix(in srgb, var(--light-100) 22%, transparent);
+      border-radius: var(--radius-medium);
+      background-color: color-mix(in srgb, var(--dark-900) 55%, transparent);
+      backdrop-filter: blur(0.5rem);
+    }
+
+    .bento_bar {
+      height: 0.5rem;
+      border-radius: var(--radius-small);
+      background-color: color-mix(in srgb, var(--light-100) 26%, transparent);
+    }
+
+    .bento_bar:nth-child(1) {
+      width: 70%;
+    }
+    .bento_bar:nth-child(3) {
+      width: 45%;
+    }
+
+    .bento_bar.is-accent {
+      background-color: var(--brand-300);
+    }
+
+    /* Ruled rows, bled off the right edge and anchored above the card's foot
+       so the link underneath keeps its own space. */
+    .bento_rows {
+      inset: auto -2.5rem 6rem var(--space-7);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .bento_row {
+      height: 2.25rem;
+      border: var(--border-width) solid
+        color-mix(in srgb, var(--light-100) 12%, transparent);
+      border-radius: var(--radius-small);
+      background-image: linear-gradient(
+        to right,
+        color-mix(in srgb, var(--light-100) 7%, transparent),
+        transparent
+      );
+    }
+
+    /* One column leaves the card no height to spare, and the rows end up
+       running underneath the link. The link is the useful half, so it stays. */
+    @media (width < 60rem) {
+      .bento_rows {
+        display: none;
+      }
+    }
+
+    .bento_row:nth-child(2) {
+      border-color: color-mix(in srgb, var(--brand-300) 40%, transparent);
+      background-image: linear-gradient(
+        to right,
+        color-mix(in srgb, var(--brand-500) 32%, transparent),
+        transparent
+      );
+    }
+
+    /* Three widths, standing on the floor of the card. */
+    .bento_devices {
+      inset: auto var(--space-7) 0 var(--space-7);
+      display: flex;
+      align-items: flex-end;
+      gap: var(--space-3);
+    }
+
+    .bento_device {
+      border: var(--border-width) solid
+        color-mix(in srgb, var(--brand-300) 30%, transparent);
+      border-bottom: 0;
+      border-radius: var(--radius-medium) var(--radius-medium) 0 0;
+      background-image: linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--brand-300) 12%, transparent),
+        transparent
+      );
+    }
+
+    .bento_device:nth-child(1) {
+      flex: 3;
+      height: 8rem;
+    }
+    .bento_device:nth-child(2) {
+      flex: 2;
+      height: 6rem;
+    }
+    .bento_device:nth-child(3) {
+      flex: 1;
+      height: 4.25rem;
+    }
+
+    /* The leftover card runs the full width, so the copy sits in two columns
+       rather than as one line of text stranded across the whole row. */
+    @media (width >= 60rem) {
+      /* Nothing sits at the banner's foot, so its copy holds the middle
+         instead of leaving the bottom half of the card empty. */
+      .bento_card.is-banner {
+        justify-content: center;
+      }
+      .bento_card.is-banner .bento_head {
+        flex-direction: row;
+        align-items: baseline;
+        gap: var(--space-7);
+      }
+      .bento_card.is-banner .bento_card_title {
+        flex: 2;
+      }
+      .bento_card.is-banner .bento_text {
+        flex: 3;
+        max-width: 48ch;
+      }
+    }
+  }
+</style>

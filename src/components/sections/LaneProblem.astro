@@ -1,0 +1,218 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import Img from "@/components/Img.astro";
+import founders from "@/assets/inparallel/founders.webp";
+import { SITE_NAME } from "@/consts.ts";
+import type { LanePage } from "@/data/lanes.ts";
+
+interface Props {
+  problem: LanePage["problem"];
+}
+
+const { problem } = Astro.props;
+---
+
+{
+  /* The visitor's situation, named before we say a word about ourselves — and
+     given the whole screen, because it is the section that decides whether the
+     rest gets read. The photograph rides under the pointer: proof that there
+     are two people behind the claim, without a paragraph saying so. */
+}
+<Section
+  theme="brand"
+  align="center"
+  containerClass="container-narrow"
+  class="claim"
+  data-cursor-media
+>
+  <div class="claim_body" data-reveal>
+    <Heading tag="h2" variant="display" class="claim_title">
+      {problem.title}
+      <span class="claim_title_second">{problem.titleMuted}</span>
+    </Heading>
+
+    <div class="claim_copy">
+      {problem.body.map((line) => <p class="claim_text">{line}</p>)}
+    </div>
+  </div>
+
+  {
+    /* Slotted beside the container rather than inside it. `.container` is
+       `position: relative`, so anything absolute in there measures itself
+       against the text block — which pinned the mark to the end of the copy
+       instead of the floor of the section, and put the carried photograph a
+       container's padding away from the pointer. */
+  }
+  <Img
+    slot="background"
+    src={founders}
+    alt=""
+    class="claim_media"
+    data-cursor-media-item
+    aria-hidden="true"
+  />
+
+  <p slot="background" class="claim_mark" aria-hidden="true">{SITE_NAME}</p>
+</Section>
+
+<style is:global>
+  @layer components {
+    /* One tall stage rather than a compact block: the copy sits centred in the
+       screen and the mark fills the floor beneath it.
+
+       The padding is written here rather than passed as a `paddingTop` prop,
+       because those props add utilities and a utility outranks anything this
+       component says. With the bottom space reserved on the section, `.section`
+       centres the container in what is left — which is what puts the text on
+       the middle of the screen instead of above it. */
+    .claim {
+      --background: color-mix(in srgb, var(--brand-700) 88%, var(--navy-900));
+
+      /* No `min-height`. A decreed height is a promise the copy has to fill,
+         and two paragraphs never fill a screen — the section ends up mostly
+         air with the mark stranded at the bottom. The height is the content
+         plus its padding, so it cannot be wrong for the text it holds. */
+      padding-top: clamp(3.5rem, 8vw, 7rem);
+      /* The floor the mark stands on. */
+      padding-bottom: clamp(8rem, 24vw, 25rem);
+      overflow: clip;
+      isolation: isolate;
+    }
+
+    .claim_body {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      /* The distance between the claim and its explanation is the section's
+         whole composition, so it is measured against the viewport rather than
+         taken from the spacing scale. It is wide on purpose: a statement
+         section earns its authority from the silence after the claim. */
+      gap: clamp(3rem, 8vw, 7rem);
+      text-align: center;
+    }
+
+    .claim_title {
+      /* Wide enough that the second half lands on one line in every lane —
+         the longest of them is "ends at the mood board.", and at 14ch it broke
+         into three lines on that page and two on the others. */
+      max-width: 17ch;
+      font-weight: var(--primary-semibold);
+      line-height: 0.98;
+      letter-spacing: var(--letter-spacing-tighter);
+      text-wrap: balance;
+    }
+
+    /* The second half is a block rather than an `<em>`: on the brand theme the
+       faded accent would drop it into the background, and this line is the
+       half that lands. */
+    .claim_title_second {
+      display: block;
+    }
+
+    .claim_copy {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+      max-width: 40rem;
+    }
+
+    /* On the brand field the muted step reads as a whisper, so the copy holds
+       its own size and a stronger tint — it is the explanation the headline
+       just promised, not a footnote. */
+    .claim_text {
+      color: color-mix(in srgb, var(--light-100) 74%, transparent);
+      font-size: var(--text-main);
+      /* `--line-height-large` is 1.2, which is a heading's line-height: set
+         that close, paragraph lines read as one grey block instead of as
+         sentences. Body copy needs the room, so this names its own. */
+      line-height: 1.6;
+      /* `pretty` only protects the last line; these are four-line centred
+         paragraphs, where every line wants to be the same length or the rag
+         reads as an accident. `balance` is the right tool at this length. */
+      text-wrap: balance;
+    }
+
+    /* The first paragraph is the one the headline just promised, so it takes
+       the size and the full tint and what follows supports it. Two paragraphs
+       at one weight are a wall; this gives the eye somewhere to land. */
+    .claim_text:first-child {
+      color: color-mix(in srgb, var(--light-100) 94%, transparent);
+      font-size: var(--text-large);
+    }
+
+    /* Carried, not placed: `cursor-media.ts` writes the position and the
+       section turns it on only while the pointer is inside. */
+    .claim_media {
+      position: absolute;
+      /* The slot rule hands every background child `inset: 0` and a full
+         width and height; the pointer decides this one's box instead. */
+      inset: 0 auto auto 0;
+      z-index: 1;
+      width: clamp(11rem, 23vw, 26rem);
+      height: auto;
+      border-radius: var(--radius-card);
+      translate: calc(var(--_x, 50%) - 50%) calc(var(--_y, 50%) - 50%);
+      rotate: -3deg;
+      opacity: 0;
+      scale: 0.94;
+      pointer-events: none;
+      transition:
+        opacity var(--duration-main),
+        scale var(--duration-main);
+    }
+
+    .claim.is-carrying .claim_media {
+      opacity: 1;
+      scale: 1;
+    }
+
+    /* The ridges the section hands over on. Drawn from one repeating gradient
+       and masked so they arrive out of nothing, which is what stops the join
+       with the next section reading as a hard cut. */
+    .claim::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      z-index: 1;
+      height: clamp(5rem, 9vw, 9rem);
+      background-image: repeating-linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--navy-900) 92%, transparent) 0 1.7rem,
+        transparent 1.7rem 2.05rem
+      );
+      mask-image: linear-gradient(to bottom, transparent, #000 60%);
+      pointer-events: none;
+    }
+
+    /* Set against the viewport rather than the container: the mark is the
+       floor of the section and reads as edge to edge, so its size is a share
+       of the screen and nothing caps it. */
+    .claim_mark {
+      position: absolute;
+      /* Standing on the ridges, not cropped by them — the band below is the
+         handover, and a mark sliced by it reads as a rendering fault. */
+      inset: auto auto clamp(3.5rem, 8vw, 8rem) 50%;
+      z-index: 0;
+      width: auto;
+      height: auto;
+      translate: -50% 0;
+      font-size: 15vw;
+      font-weight: var(--primary-semibold);
+      letter-spacing: var(--letter-spacing-tighter);
+      line-height: 1;
+      color: color-mix(in srgb, var(--light-100) 19%, transparent);
+      white-space: nowrap;
+      user-select: none;
+    }
+
+    /* No pointer to follow, so the photograph has no reason to be there. */
+    @media (hover: none) {
+      .claim_media {
+        display: none;
+      }
+    }
+  }
+</style>

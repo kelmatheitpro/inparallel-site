@@ -1,0 +1,64 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import { BELIEFS } from "@/data/services.ts";
+---
+
+{
+  /* Beginners describe what they do. This is the section that says what we
+     think, which is the part a client cannot get from a feature list. */
+}
+<Section theme="dark" containerClass="container-narrow">
+  <div class="section-head" data-reveal>
+    <Heading tag="h2" class="heading-split inline">
+      What we believe <em>about Webflow.</em>
+    </Heading>
+  </div>
+
+  <ul class="beliefs grid-cards" data-reveal>
+    {
+      BELIEFS.map((belief) => (
+        <li class="belief">
+          <h3 class="belief_title">{belief.title}</h3>
+          <p class="belief_text">{belief.text}</p>
+        </li>
+      ))
+    }
+  </ul>
+</Section>
+
+<style is:global>
+  @layer components {
+    /* Two columns of statements, each one sized like a claim rather than like
+       a card heading — the opinion is the content here. */
+    /* Two up, so four statements never leave an orphan on a third row. */
+    .beliefs {
+      --_min: 28rem;
+      width: 100%;
+      gap: var(--space-7) var(--space-8);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .belief {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+      padding-left: var(--space-5);
+      border-left: 2px solid var(--brand-500);
+    }
+
+    .belief_title {
+      font-size: var(--h5);
+      font-weight: var(--primary-semibold);
+      line-height: var(--line-height-large);
+      text-wrap: balance;
+    }
+
+    .belief_text {
+      color: var(--text-muted);
+      line-height: var(--line-height-large);
+    }
+  }
+</style>

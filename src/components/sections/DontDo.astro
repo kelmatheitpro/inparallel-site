@@ -1,0 +1,80 @@
+---
+import Section from "@/components/Section.astro";
+import Heading from "@/components/Heading.astro";
+import { DONT_DO, DONT_DO_NOTE } from "@/data/services.ts";
+---
+
+{
+  /* The one section that takes the whole screen in brand colour. A negation
+     printed in the same grey boxes as the promises reads like another promise;
+     this one has to look like the page changing its mind. */
+}
+<Section theme="brand" containerClass="container-narrow" class="dont">
+  <div class="dont_grid" data-reveal>
+    <Heading tag="h2" class="heading-split dont_title">
+      What we <em>don't do.</em>
+    </Heading>
+
+    <div class="dont_body">
+      <ul class="nots dont_list">
+        {DONT_DO.map((item) => <li class="dont_item">{item}</li>)}
+      </ul>
+      <p class="dont_note">{DONT_DO_NOTE}</p>
+    </div>
+  </div>
+</Section>
+
+<style is:global>
+  @layer components {
+    .dont_grid {
+      width: 100%;
+      display: grid;
+      gap: var(--space-7) var(--space-8);
+      grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+      align-items: start;
+    }
+
+    .dont_title {
+      font-weight: var(--primary-semibold);
+    }
+
+    .dont_body {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+    }
+
+    /* The shared `.nots` — the same list the extended-team page uses for this
+       exact content. It wraps into a row there; here the items are sentences
+       rather than phrases, so the only thing overridden is the direction. */
+    .dont_list {
+      flex-direction: column;
+      gap: var(--space-4);
+      font-size: inherit;
+      color: inherit;
+    }
+
+    /* Struck through rather than bulleted: the line does the saying, and the
+       rule is drawn at 60% so the words stay readable under it. */
+    .dont_item {
+      padding-bottom: var(--space-4);
+      border-bottom: var(--border-width) solid var(--border-soft);
+      font-size: var(--text-large);
+      line-height: var(--line-height-large);
+      text-decoration: line-through;
+      text-decoration-color: color-mix(in srgb, currentcolor 60%, transparent);
+      text-decoration-thickness: 1px;
+    }
+
+    .dont_item:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .dont_note {
+      color: var(--text-muted);
+      font-size: var(--text-small);
+      line-height: var(--line-height-large);
+    }
+  }
+</style>
