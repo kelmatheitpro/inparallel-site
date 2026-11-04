@@ -1,0 +1,357 @@
+---
+/**
+ * After handover: the same four jobs, done the usual way and ours — and the
+ * whole of the interface your team needs to do them, drawn the way the
+ * Webflow Editor shows it.
+ *
+ * The ledger is a list rather than a table so it can stack on a phone
+ * without losing which column is which: each row names its two answers, and
+ * on wide screens those names move up into one header row. The usual answer
+ * is set quieter; ours is ticked with the mark in the service's colour.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import LaneTick from "./LaneTick.astro";
+import type { Service } from "@/data/offer.ts";
+import {
+  EDITOR_FIELDS,
+  EDITOR_NOTE,
+  LEDGER,
+  LEDGER_LEAD,
+  laneStyle,
+} from "@/data/service-pages.ts";
+
+interface Props {
+  service: Service;
+  index: string;
+}
+
+const { service, index } = Astro.props;
+---
+
+<section
+  id="handover"
+  class="ledger theme-light"
+  style={laneStyle(service)}
+  aria-labelledby="ledger-title"
+>
+  <div class="ledger_inner">
+    <SectionHead
+      index={index}
+      label="After handover"
+      headingId="ledger-title"
+      lead={LEDGER_LEAD}
+    >
+      The first time you need <br />to change <span class="serif"
+        >something</span
+      >
+    </SectionHead>
+
+    <div class="ledger_body">
+      <div class="ledger_sheet">
+        <p class="ledger_heads" aria-hidden="true">
+          <span>The job</span>
+          <span>Usually</span>
+          <span>With us</span>
+        </p>
+        <ul class="ledger_rows" role="list">
+          {
+            LEDGER.map((row) => (
+              <li class="ledger_row">
+                <div class="ledger_job">{row.job}</div>
+                <dl class="ledger_ways">
+                  <div class="ledger_way is-usual">
+                    <dt>Usually</dt>
+                    <dd>{row.usual}</dd>
+                  </div>
+                  <div class="ledger_way is-ours">
+                    <dt>With us</dt>
+                    <dd>
+                      <LaneTick />
+                      {row.ours}
+                    </dd>
+                  </div>
+                </dl>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <figure class="editor" data-anim="rise">
+        <div class="editor_window" aria-hidden="true">
+          <div class="editor_bar">
+            <span class="editor_dot"></span>
+            <span class="editor_name">Editor</span>
+            <span class="editor_publish">Publish</span>
+          </div>
+          <div class="editor_fields">
+            {
+              EDITOR_FIELDS.map((field) => (
+                <div class="editor_field">
+                  <span class="editor_label">{field.label}</span>
+                  <span class="editor_input">{field.value}</span>
+                </div>
+              ))
+            }
+          </div>
+        </div>
+        <figcaption class="editor_note">{EDITOR_NOTE}</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  @layer components {
+    .ledger {
+      padding-block: var(--section-space-large, 8rem);
+      background-color: var(--light-200);
+    }
+
+    .ledger_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+    }
+
+    .ledger_body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+
+      @media (width >= 62rem) {
+        grid-template-columns: minmax(0, 7fr) minmax(0, 4.5fr);
+        align-items: start;
+      }
+    }
+
+    /* ---- the ledger ----------------------------------------------------- */
+    .ledger_sheet {
+      --_cols: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
+    }
+
+    .ledger_heads {
+      display: grid;
+      grid-template-columns: var(--_cols);
+      gap: 1.5rem;
+      margin: 0;
+      padding-bottom: 0.85rem;
+      border-bottom: var(--border-width) solid var(--border);
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+
+      &::before,
+      &::after {
+        content: none;
+      }
+
+      & span:last-child {
+        color: var(--lane-dark);
+      }
+    }
+
+    .ledger_rows {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .ledger_row {
+      display: grid;
+      grid-template-columns: var(--_cols);
+      gap: 1.5rem;
+      align-items: baseline;
+      padding-block: 1.35rem;
+      border-bottom: var(--border-width) solid var(--border-soft);
+    }
+
+    .ledger_job {
+      font-weight: 500;
+      line-height: 1.35;
+    }
+
+    /* The two answers sit in the row's last two columns. */
+    .ledger_ways {
+      display: contents;
+    }
+
+    .ledger_way {
+      & dt {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip-path: inset(50%);
+        white-space: nowrap;
+      }
+
+      & dd {
+        margin: 0;
+        line-height: 1.45;
+      }
+    }
+
+    /* Quieter than ours, but still copy: muted, not faded. */
+    .ledger_way.is-usual dd {
+      color: var(--text-muted);
+    }
+
+    .ledger_way.is-ours dd {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+
+      & .lane-tick {
+        translate: 0 0.1rem;
+      }
+    }
+
+    /* ---- the Editor ----------------------------------------------------- */
+    .editor {
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+      margin: 0;
+    }
+
+    .editor_window {
+      overflow: clip;
+      background-color: var(--light-100);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: 1rem;
+      box-shadow: 0 1.5rem 3rem -2rem rgb(13 25 40 / 0.35);
+    }
+
+    .editor_bar {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.75rem 0.9rem;
+      background-color: var(--dark-900);
+      color: var(--light-100);
+      font-size: 0.8125rem;
+    }
+
+    .editor_dot {
+      width: 0.5rem;
+      height: 0.5rem;
+      border-radius: 50%;
+      background-color: var(--lane-accent);
+    }
+
+    .editor_name {
+      font-weight: 500;
+    }
+
+    .editor_publish {
+      margin-left: auto;
+      padding: 0.35rem 0.75rem;
+      border-radius: 0.4rem;
+      background-color: var(--brand-500);
+      font-weight: 500;
+    }
+
+    .editor_fields {
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+      padding: 1.25rem;
+    }
+
+    .editor_field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .editor_label {
+      font-family: var(--mono-family);
+      font-size: 0.6875rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .editor_input {
+      padding: 0.65rem 0.8rem;
+      overflow: hidden;
+      border: var(--border-width) solid var(--border);
+      border-radius: 0.5rem;
+      background-color: var(--light-200);
+      font-size: 0.9375rem;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+
+      /* The first field is the one being edited: its caret blinks. */
+      .editor_field:first-child & {
+        border-color: var(--lane-dark);
+        box-shadow: 0 0 0 3px
+          color-mix(in srgb, var(--lane-accent) 30%, transparent);
+
+        &::after {
+          content: "";
+          display: inline-block;
+          width: 1px;
+          height: 1.05em;
+          margin-left: 1px;
+          vertical-align: -0.15em;
+          background-color: currentcolor;
+          animation: editor-caret 1.1s steps(1) infinite;
+        }
+      }
+    }
+
+    @keyframes editor-caret {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    .editor_note {
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+      line-height: 1.5;
+    }
+
+    /* ---- narrower ------------------------------------------------------- */
+    /* Stacked, each row names its two answers again. */
+    @media (width < 48rem) {
+      .ledger_heads {
+        display: none;
+      }
+      .ledger_row {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.75rem;
+      }
+      .ledger_ways {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 1rem;
+      }
+      .ledger_way dt {
+        position: static;
+        width: auto;
+        height: auto;
+        overflow: visible;
+        clip-path: none;
+        margin-bottom: 0.35rem;
+        font-family: var(--mono-family);
+        font-size: 0.6875rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .editor_input::after {
+        animation: none;
+      }
+    }
+  }
+</style>

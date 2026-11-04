@@ -6,7 +6,27 @@ headlineMuted: "across the UK and Ireland."
 stat: "100"
 statLabel: "perfect SEO score, mobile and desktop"
 logo: ../../assets/inparallel/logos/trakpro.svg
+media:
+  card: ../../assets/inparallel/work/trakpro/hero-card-shot-1080.webp
+  screens:
+    center: ../../assets/inparallel/work/trakpro/screen-center.webp
+    left: ../../assets/inparallel/work/trakpro/screen-left.webp
+    right: ../../assets/inparallel/work/trakpro/screen-right.webp
+  desktop: ../../assets/inparallel/work/trakpro/desktop.webp
+  mobile: ../../assets/inparallel/work/trakpro/mobile.webp
+  main: ../../assets/inparallel/work/trakpro/main.webp
+  cardBg: ../../assets/inparallel/work/trakpro/work-card-bg.webp
+  pages:
+    - image: ../../assets/inparallel/work/trakpro/page-home.webp
+      name: "Home"
+    - image: ../../assets/inparallel/work/trakpro/page-solutions.webp
+      name: "Solutions"
+    - image: ../../assets/inparallel/work/trakpro/page-pricing.webp
+      name: "Pricing"
+    - image: ../../assets/inparallel/work/trakpro/page-about.webp
+      name: "About"
 liveUrl: "https://trak-pro.com/"
+category: "Industrial"
 metaDescription: "Designing and building TrakPro's construction payment site across two markets, UK and Ireland, each in its own legal terminology, with a perfect SEO score."
 summary: "TrakPro is an Irish platform for subcontractor commercial management, pulling payment claims, variations, dayworks, retention, contra charges and compliance out of spreadsheets and email chains and into one system. It sells into two markets that share a language and use different words for the same document."
 services:
@@ -51,7 +71,7 @@ without losing anything it had earned.
 
 ## The solution
 
-TrakPro came to inparallel with a brief for a landing page and a product far
+TrakPro came to inParallel with a brief for a landing page and a product far
 bigger than one. The work ran in three tracks.
 
 First, design from scratch in Figma: competitor analysis, a full design system,

@@ -1,0 +1,495 @@
+---
+/**
+ * "One price, everything on it" — the three promises behind a fixed price,
+ * beside the receipt for one.
+ *
+ * The receipt is drawn, not pictured: cream paper with every line of a
+ * Webflow Development project on it, the extras that cost nothing set in the
+ * accent, the total that isn't a number, and a barcode whose bars lean at
+ * the slant. Its foot is torn into teeth along the same angle. Pointing at a
+ * promise lights the receipt line it answers for.
+ *
+ * The first time it is in view it prints out of its slot, in a few jerks, and
+ * swings to a stop on it. All of that is one transform on the paper, and the
+ * lights are layers faded in, so nothing is repainted while it happens.
+ */
+import Icon from "@/components/Icon.astro";
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import mark from "@/assets/inparallel/mark.svg";
+import { PROMISES, RECEIPT } from "@/data/pricing.ts";
+
+interface Props {
+  index?: string;
+}
+
+const { index = "02" } = Astro.props;
+
+/* The barcode: bars of a few widths in a fixed, made-up order — the same on
+   every build — leaning at the slant like every other stroke here. */
+const CODE_HEIGHT = 46;
+const CODE_LEAN = CODE_HEIGHT * Math.tan((32 * Math.PI) / 180);
+const bars: { x: number; w: number }[] = [];
+for (let x = 0, seed = 11; x < 290;) {
+  seed = (seed * 9301 + 49297) % 233280;
+  const width = 1 + (seed % 4);
+  seed = (seed * 9301 + 49297) % 233280;
+  bars.push({ x, w: width });
+  x += width + 1 + (seed % 3);
+}
+const codeWidth = Math.ceil(
+  (bars.at(-1)?.x ?? 0) + (bars.at(-1)?.w ?? 0) + CODE_LEAN,
+);
+---
+
+<section
+  id="included"
+  class="included theme-dark"
+  aria-labelledby="included-title"
+>
+  <div class="included_inner">
+    <div class="included_copy">
+      <SectionHead
+        index={index}
+        label="What's included"
+        headingId="included-title"
+      >
+        One price, <br />everything on it
+      </SectionHead>
+
+      <ul class="included_promises" role="list" data-anim-group>
+        {
+          PROMISES.map((promise) => (
+            <li class="promise" data-key={promise.key} data-anim="rise">
+              <h3 class="promise_title">{promise.title}</h3>
+              <p class="promise_text">{promise.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+
+      <a class="btn included_cta" href="/contact"> Get your quote </a>
+    </div>
+
+    <figure class="receipt" data-receipt>
+      <span class="receipt_slot" aria-hidden="true"></span>
+      <div class="receipt_feed">
+        <div class="receipt_paper">
+          <div class="receipt_head">
+            <span class="receipt_brand">
+              <Icon src={mark} class="receipt_mark" aria-hidden="true" />
+              {RECEIPT.title}
+            </span>
+            <span class="receipt_meta">{RECEIPT.meta}</span>
+          </div>
+
+          {
+            RECEIPT.groups.map((group) => (
+              <dl class="receipt_group">
+                {group.map((line) => (
+                  <div class="receipt_line" data-key={line.key}>
+                    <dt>{line.label}</dt>
+                    <dd class:list={[line.free && "is-free"]}>{line.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            ))
+          }
+
+          <div class="receipt_total">
+            <span class="receipt_total_label">Total</span>
+            <span class="receipt_total_value">
+              {RECEIPT.total[0]}
+              <br />
+              {RECEIPT.total[1]}
+            </span>
+          </div>
+
+          <svg
+            class="receipt_code"
+            viewBox={`0 0 ${codeWidth} ${CODE_HEIGHT}`}
+            preserveAspectRatio="none"
+            aria-hidden="true"
+          >
+            <g transform={`translate(${CODE_LEAN} 0) skewX(-32)`}>
+              {
+                bars.map((bar) => (
+                  <rect x={bar.x} y="0" width={bar.w} height={CODE_HEIGHT} />
+                ))
+              }
+            </g>
+          </svg>
+
+          <p class="receipt_thanks">{RECEIPT.thanks}</p>
+        </div>
+      </div>
+      <figcaption class="sr-only">
+        What a fixed price covers, itemised as a receipt.
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<script>
+  const receipt = document.querySelector<HTMLElement>("[data-receipt]");
+
+  /* Added here rather than in the markup, so without a script, or for a reader
+     who has asked for less motion, the paper simply hangs there printed. */
+  if (receipt && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    receipt.classList.add("is-waiting");
+    const watch = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((entry) => entry.isIntersecting)) return;
+        watch.disconnect();
+        receipt.classList.replace("is-waiting", "is-printing");
+      },
+      { threshold: 0.25 },
+    );
+    watch.observe(receipt);
+    receipt.addEventListener("animationend", (event) => {
+      if (event.animationName === "receipt-settle")
+        receipt.classList.remove("is-printing");
+    });
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .included {
+      padding-block: var(--section-space-large, 8rem);
+      overflow: clip;
+      background-color: var(--dark-900);
+    }
+
+    .included_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: center;
+      gap: clamp(3.5rem, 2rem + 4vw, 6rem);
+
+      @media (width >= 62rem) {
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+      }
+    }
+
+    .included_copy {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: clamp(2.5rem, 2rem + 1.5vw, 3.5rem);
+    }
+
+    /* ---- the promises --------------------------------------------------- */
+    .included_promises {
+      width: 100%;
+      max-width: 36rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .promise {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      padding-block: 1.4rem;
+      border-top: var(--border-width) solid var(--border-soft);
+      transition: opacity 0.35s var(--ease-out);
+
+      &:last-child {
+        border-bottom: var(--border-width) solid var(--border-soft);
+      }
+    }
+
+    .promise_title {
+      margin: 0;
+      font-size: clamp(1.2rem, 1.05rem + 0.45vw, 1.45rem);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+    }
+
+    .promise_text {
+      margin: 0;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Pointing at one promise quiets the other two... */
+    @media (hover: hover) {
+      .included_promises:has(.promise:hover) .promise:not(:hover) {
+        opacity: 0.45;
+      }
+
+      /* ...and lights the receipt line it stands behind. */
+      .included:has(.promise[data-key="meter"]:hover)
+        .receipt_line[data-key="meter"]::before,
+      .included:has(.promise[data-key="changes"]:hover)
+        .receipt_line[data-key="changes"]::before,
+      .included:has(.promise[data-key="crew"]:hover)
+        .receipt_line[data-key="crew"]::before {
+        opacity: 1;
+      }
+    }
+
+    /* ---- the receipt ---------------------------------------------------- */
+    /* Tilted a little, the way paper lands. The slot runs the width of the
+       column, the paper a little narrower, like a printer's. */
+    .receipt {
+      position: relative;
+      justify-self: center;
+      width: min(100%, 33rem);
+      margin: 0;
+      rotate: -2.5deg;
+
+      @media (width >= 62rem) {
+        width: min(100% - 1.5rem, 33rem);
+      }
+    }
+
+    /* The printer: a dark bar with its ends cut along the slant. */
+    .receipt_slot {
+      --_h: 3rem;
+      --_c: calc(var(--_h) * var(--slant-tan));
+      position: absolute;
+      inset: 0 0 auto;
+      z-index: 1;
+      height: var(--_h);
+      background-color: var(--dark-950);
+      clip-path: polygon(
+        var(--_c) 0,
+        100% 0,
+        calc(100% - var(--_c)) 100%,
+        0 100%
+      );
+    }
+
+    /* Starts at the slot's middle and leaves room under the paper for its
+       shadow. It only clips while the paper is on its way out. */
+    .receipt_feed {
+      margin-top: 1.5rem;
+      padding: 0.85rem 0 3.5rem;
+
+      .is-waiting &,
+      .is-printing & {
+        overflow: clip;
+      }
+    }
+
+    .receipt_paper {
+      /* The foot is torn into fine teeth that lean at the slant. */
+      --_tooth: 0.45rem;
+      position: relative;
+      width: min(100%, max(86%, 18.5rem));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+      padding: 2rem clamp(1.25rem, 0.9rem + 1.5vw, 1.75rem) 1.5rem;
+      background-color: var(--light-200);
+      color: var(--ink-900);
+      box-shadow: 0 2rem 2.5rem rgb(0 0 0 / 0.45);
+      transform-origin: 50% 0;
+
+      /* A pixel into the paper, so no seam shows while it's tilted. */
+      &::after {
+        content: "";
+        position: absolute;
+        inset: calc(100% - 1px) 0 auto;
+        height: var(--_tooth);
+        background-image: repeating-linear-gradient(
+          calc(90deg + var(--slant)),
+          var(--light-200) 0 0.22rem,
+          transparent 0.22rem 0.4rem
+        );
+      }
+
+      .is-waiting & {
+        transform: translate3d(0, -101%, 0);
+      }
+
+      .is-printing & {
+        animation:
+          receipt-print 2.2s cubic-bezier(0.45, 0.05, 0.25, 1) both,
+          receipt-settle 1.1s ease-in-out 2.1s both;
+      }
+    }
+
+    /* Out in jerks, the way a printer feeds. */
+    @keyframes receipt-print {
+      0% {
+        transform: translate3d(0, -101%, 0);
+      }
+      18% {
+        transform: translate3d(0, -78%, 0);
+      }
+      24% {
+        transform: translate3d(0, -74%, 0);
+      }
+      52% {
+        transform: translate3d(0, -40%, 0);
+      }
+      58% {
+        transform: translate3d(0, -36%, 0);
+      }
+      100% {
+        transform: translate3d(0, 0, 0);
+      }
+    }
+
+    /* And a little swing on the slot before it hangs still. */
+    @keyframes receipt-settle {
+      35% {
+        rotate: 0.8deg;
+      }
+      70% {
+        rotate: -0.3deg;
+      }
+    }
+
+    .receipt_head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-bottom: 1.1rem;
+      border-bottom: 1px dashed
+        color-mix(in srgb, var(--ink-900) 25%, transparent);
+    }
+
+    .receipt_brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 1.05rem;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+    }
+
+    .receipt_mark {
+      width: 1.45rem;
+      height: auto;
+      aspect-ratio: 159 / 100;
+      color: var(--brand-500);
+    }
+
+    .receipt_meta {
+      color: color-mix(in srgb, var(--ink-900) 50%, transparent);
+      font-family: var(--mono-family);
+      font-size: 0.6875rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .receipt_group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+      margin: 0;
+      padding-bottom: 1.1rem;
+      border-bottom: 1px dashed
+        color-mix(in srgb, var(--ink-900) 25%, transparent);
+    }
+
+    .receipt_line {
+      position: relative;
+      isolation: isolate;
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+      margin-inline: -0.5rem;
+      padding: 0.3rem 0.5rem;
+      font-family: var(--mono-family);
+      font-size: clamp(0.7rem, 0.62rem + 0.35vw, 0.78rem);
+
+      /* The light a promise throws on its line, faded in under the words. */
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background-color: color-mix(in srgb, var(--brand-500) 16%, transparent);
+        border-radius: 0.35rem;
+        opacity: 0;
+        transition: opacity 0.35s var(--ease-out);
+      }
+
+      /* The label runs on into a dotted leader that fills the gap. */
+      & dt {
+        flex: 1;
+        display: flex;
+        align-items: baseline;
+        gap: 0.35rem;
+        min-width: 0;
+        color: color-mix(in srgb, var(--ink-900) 75%, transparent);
+
+        &::after {
+          content: "";
+          flex: 1;
+          min-width: 0.5rem;
+          border-bottom: 1px dotted
+            color-mix(in srgb, var(--ink-900) 30%, transparent);
+        }
+      }
+
+      & dd {
+        margin: 0;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+
+      & dd.is-free {
+        color: var(--brand-500);
+      }
+    }
+
+    .receipt_total {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-top: 0.2rem;
+    }
+
+    .receipt_total_label {
+      color: color-mix(in srgb, var(--ink-900) 50%, transparent);
+      font-family: var(--mono-family);
+      font-size: 0.6875rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .receipt_total_value {
+      font-size: 1.15rem;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+      text-align: right;
+    }
+
+    .receipt_code {
+      width: 100%;
+      height: 2.75rem;
+      margin-top: 0.4rem;
+      fill: var(--ink-900);
+    }
+
+    .receipt_thanks {
+      margin: 0;
+      color: color-mix(in srgb, var(--ink-900) 55%, transparent);
+      font-family: var(--mono-family);
+      font-size: 0.6875rem;
+      letter-spacing: 0.04em;
+      text-align: center;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .promise,
+      .receipt_line::before {
+        transition: none;
+      }
+    }
+  }
+</style>

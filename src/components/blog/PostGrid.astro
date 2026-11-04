@@ -1,0 +1,410 @@
+---
+/**
+ * "All insights" — every post, newest first, with a filter by topic and a
+ * search over titles and summaries.
+ *
+ * The filter is a row of toggle buttons in the house switch (the one the
+ * relay board uses): one pressed at a time, the pressed one marked with the
+ * two strokes. Filter and search work together, in place, and announce how
+ * many posts they are showing. Both only appear once their script is running
+ * — without JavaScript every post is simply listed.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import PostCard from "@/components/blog/PostCard.astro";
+import { topics, topicSlug } from "@/components/blog/posts.ts";
+import type { Post } from "@/utils/content.ts";
+
+interface Props {
+  posts: Post[];
+}
+
+const { posts } = Astro.props;
+const filters = [
+  { name: "All", slug: "all", count: posts.length },
+  ...topics(posts),
+];
+---
+
+<section
+  class="post-grid theme-light"
+  aria-labelledby="post-grid-title"
+  data-post-grid
+>
+  <div class="post-grid_inner">
+    <SectionHead label="Archive" headingId="post-grid-title">
+      All insights
+    </SectionHead>
+
+    <div class="post-grid_tools" data-post-tools hidden>
+      <div class="post-grid_filter" role="group" aria-label="Filter by topic">
+        {
+          filters.map((filter, index) => (
+            <button
+              type="button"
+              class="post-grid_topic"
+              data-topic={filter.slug}
+              data-name={filter.name}
+              aria-label={`${filter.name}, ${filter.count} ${filter.count === 1 ? "post" : "posts"}`}
+              aria-pressed={index === 0 ? "true" : "false"}
+            >
+              <span class="slash-mark" aria-hidden="true">
+                <i />
+                <i />
+              </span>
+              <span class="post-grid_topic-name">{filter.name}</span>
+              <span class="post-grid_count">{filter.count}</span>
+            </button>
+          ))
+        }
+      </div>
+
+      <label class="post-grid_search">
+        <span class="sr-only">Search insights</span>
+        <input
+          class="post-grid_input"
+          type="search"
+          placeholder="Search insights…"
+          autocomplete="off"
+          enterkeyhint="search"
+          data-post-search
+        />
+        <svg viewBox="0 0 17 16" aria-hidden="true" focusable="false">
+          <circle
+            cx="7"
+            cy="7"
+            r="6"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"></circle>
+          <path
+            d="M11.4 11.4 16 15.5"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"></path>
+        </svg>
+      </label>
+    </div>
+
+    <p class="sr-only" role="status" aria-live="polite" data-post-status></p>
+
+    <ul class="post-grid_list" role="list" data-anim-group>
+      {
+        posts.map((post) => (
+          <li
+            class="post-grid_item"
+            data-topic={topicSlug(post.data.category)}
+            data-words={`${post.data.title} ${post.data.description} ${post.data.category ?? ""}`.toLowerCase()}
+            data-anim="rise"
+          >
+            <PostCard post={post} />
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="post-grid_empty" data-post-empty hidden>
+      <p class="post-grid_empty-text">Nothing on that yet.</p>
+      <button type="button" class="btn btn-ghost" data-post-reset>
+        Show every post
+      </button>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap } from "@/scripts/motion.ts";
+
+  for (const grid of document.querySelectorAll<HTMLElement>(
+    "[data-post-grid]",
+  )) {
+    const tools = grid.querySelector<HTMLElement>("[data-post-tools]");
+    const status = grid.querySelector<HTMLElement>("[data-post-status]");
+    const search = grid.querySelector<HTMLInputElement>("[data-post-search]");
+    const empty = grid.querySelector<HTMLElement>("[data-post-empty]");
+    const reset = grid.querySelector<HTMLButtonElement>("[data-post-reset]");
+    const list = grid.querySelector<HTMLElement>(".post-grid_list");
+    const buttons = [
+      ...grid.querySelectorAll<HTMLButtonElement>(".post-grid_topic"),
+    ];
+    const items = [...grid.querySelectorAll<HTMLElement>(".post-grid_item")];
+    if (!tools || !search || !list || !buttons.length) continue;
+
+    let topic = "all";
+    let topicName = "";
+    let settled = false;
+
+    /* A card waiting for its reveal is invisible, and a filter can bring it
+       up the page without it ever crossing the reveal's line: the first time
+       the list is changed, every card is simply let go, in full. */
+    const settle = () => {
+      if (settled) return;
+      settled = true;
+      gsap.set(items, { clearProps: "opacity,transform" });
+      list.classList.add("is-filtered");
+    };
+
+    const apply = () => {
+      settle();
+      const words = search.value.trim().toLowerCase();
+      let shown = 0;
+      for (const item of items) {
+        const match =
+          (topic === "all" || item.dataset.topic === topic) &&
+          (item.dataset.words ?? "").includes(words);
+        item.hidden = !match;
+        if (match) shown += 1;
+      }
+      for (const button of buttons)
+        button.setAttribute(
+          "aria-pressed",
+          String(button.dataset.topic === topic),
+        );
+      if (empty) empty.hidden = shown > 0;
+
+      const count = `${shown} ${shown === 1 ? "post" : "posts"}`;
+      const where = topic === "all" ? "" : ` on ${topicName}`;
+      const what = words ? ` matching ${search.value.trim()}` : "";
+      if (status) status.textContent = `Showing ${count}${where}${what}`;
+    };
+
+    for (const button of buttons)
+      button.addEventListener("click", () => {
+        topic = button.dataset.topic ?? "all";
+        topicName = button.dataset.name ?? "";
+        apply();
+      });
+
+    search.addEventListener("input", apply);
+
+    reset?.addEventListener("click", () => {
+      topic = "all";
+      topicName = "";
+      search.value = "";
+      apply();
+      search.focus();
+    });
+
+    tools.hidden = false;
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .post-grid {
+      padding-block: var(--section-space-large);
+      background-color: var(--light-200);
+    }
+
+    .post-grid_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(2rem, 1.5rem + 1.5vw, 3rem);
+    }
+
+    .post-grid_tools {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.25rem 2.5rem;
+
+      &[hidden] {
+        display: none;
+      }
+    }
+
+    .post-grid_filter {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 0.25rem;
+      padding: 0.3rem;
+      background-color: var(--light-300);
+      border-radius: 0.75rem;
+    }
+
+    /* The pressed state is a pad behind the words that fades in, and the
+       words come up to full ink with it. The strokes always hold their room,
+       so pressing a topic moves none of its neighbours. */
+    .post-grid_topic {
+      position: relative;
+      isolation: isolate;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-height: 2.75rem;
+      padding: 0 1rem;
+      border: 0;
+      border-radius: 0.55rem;
+      background: none;
+      color: var(--ink-900);
+      font: inherit;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: inherit;
+        background-color: var(--light-100);
+        box-shadow: 0 1px 3px rgb(13 25 40 / 0.12);
+        opacity: 0;
+        transition: opacity 0.3s var(--ease-out);
+      }
+
+      & .slash-mark {
+        height: 0.85em;
+        --_w: 0.16em;
+        --_gap: 0.1em;
+        opacity: 0;
+        transition: opacity 0.3s var(--ease-out);
+      }
+
+      &[aria-pressed="true"]::before,
+      &[aria-pressed="true"] .slash-mark {
+        opacity: 1;
+      }
+
+      @media (hover: hover) {
+        &:hover .post-grid_topic-name {
+          opacity: 1;
+        }
+      }
+    }
+
+    .post-grid_topic-name {
+      opacity: 0.62;
+      transition: opacity 0.3s var(--ease-out);
+
+      [aria-pressed="true"] > & {
+        opacity: 1;
+      }
+    }
+
+    .post-grid_count {
+      color: var(--text-muted);
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+    }
+
+    /* A line to write on: it goes to full ink as the field takes the focus. */
+    .post-grid_search {
+      position: relative;
+      flex: 0 1 22.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      min-height: 2.75rem;
+      color: var(--text-muted);
+      cursor: text;
+
+      &::before,
+      &::after {
+        content: "";
+        position: absolute;
+        inset: auto 0 0;
+        height: var(--border-width);
+        background-color: var(--border);
+      }
+
+      &::after {
+        background-color: var(--brand-500);
+        transform: scaleX(0);
+        transform-origin: 0 50%;
+        transition: transform 0.5s var(--ease-move);
+      }
+
+      &:focus-within::after {
+        transform: scaleX(1);
+      }
+
+      & svg {
+        flex: none;
+        width: 1.0625rem;
+        height: 1rem;
+      }
+
+      @media (width < 48rem) {
+        flex-basis: 100%;
+      }
+    }
+
+    .post-grid_input {
+      flex: 1;
+      min-width: 0;
+      height: 2.75rem;
+      padding: 0;
+      border: 0;
+      outline: 0;
+      border-radius: 0;
+      background: transparent;
+      color: var(--text);
+      font: inherit;
+      /* Under 16px a phone zooms the page when the field takes the focus. */
+      font-size: 1rem;
+      appearance: none;
+
+      &::placeholder {
+        color: var(--text-muted);
+        opacity: 1;
+      }
+
+      &::-webkit-search-cancel-button {
+        appearance: none;
+      }
+    }
+
+    .post-grid_list {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: clamp(2.5rem, 2rem + 1.5vw, 3.5rem) var(--space-6);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+
+      @media (width >= 40rem) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      @media (width >= 62rem) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    /* A card coming back into the list arrives the way the page's other
+       things do: up and in. */
+    .post-grid_list.is-filtered > .post-grid_item {
+      animation: post-grid-in 0.6s var(--ease-out) backwards;
+    }
+
+    @keyframes post-grid-in {
+      from {
+        opacity: 0;
+        transform: translateY(1rem);
+      }
+    }
+
+    .post-grid_empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      padding-block: 2.5rem;
+
+      &[hidden] {
+        display: none;
+      }
+    }
+
+    .post-grid_empty-text {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 1.125rem;
+    }
+  }
+</style>

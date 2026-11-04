@@ -1,0 +1,195 @@
+---
+/**
+ * "Named for how we work." — what inParallel is, and why it is called that.
+ *
+ * The claim, stated once in large type, the picture of the two of us at it,
+ * shown whole, then the three things the name means in practice, each under a
+ * parallel rule with the slanted tick the rest of the site uses for bullets.
+ * The heading stays put on a wide screen while the rest scrolls past it.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import Img from "@/components/Img.astro";
+import { NAME_POINTS, STUDIO_PHOTO } from "@/data/about.ts";
+---
+
+<section class="about-name theme-light" aria-labelledby="about-name-title">
+  <div class="about-name_inner">
+    <div class="about-name_head">
+      <SectionHead
+        index="01"
+        label="Why inParallel"
+        headingId="about-name-title"
+      >
+        Named for <span class="serif">how</span> we work.
+      </SectionHead>
+    </div>
+
+    <div class="about-name_body">
+      <p class="about-name_statement" data-anim="rise">
+        inParallel is two senior people, Aleksandar and Darko, building Webflow
+        sites side by side. The name is the method: design and build run in
+        parallel instead of as a relay, alongside your own team.
+      </p>
+
+      <figure class="about-name_figure">
+        <div class="about-name_media" data-anim="image">
+          <Img
+            src={STUDIO_PHOTO.image}
+            alt={STUDIO_PHOTO.alt}
+            class="about-name_photo"
+            variant="constrained"
+            sizes="(width >= 62rem) 52vw, 92vw"
+          />
+        </div>
+      </figure>
+
+      <ol class="about-name_points" role="list" data-anim-group>
+        {
+          NAME_POINTS.map((point, index) => (
+            <li class="about-name_point" data-anim="rise">
+              <span class="rule-pair about-name_rule" aria-hidden="true">
+                <i />
+                <i />
+              </span>
+              <span class="about-name_index" aria-hidden="true">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <h3 class="about-name_title">
+                <span class="about-name_tick" aria-hidden="true" />
+                {point.title}
+              </h3>
+              <p class="about-name_text">{point.text}</p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  @layer components {
+    .about-name {
+      padding-block: var(--section-space-large);
+      background-color: var(--light-200);
+    }
+
+    .about-name_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+
+      @media (width >= 62rem) {
+        grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+        align-items: start;
+      }
+    }
+
+    /* The heading holds its place while the points go by, clear of the
+       sticky nav. */
+    .about-name_head {
+      @media (width >= 62rem) {
+        position: sticky;
+        top: calc(var(--nav-height) + 2.5rem);
+      }
+    }
+
+    .about-name_body {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(2.5rem, 1.75rem + 2vw, 3.5rem);
+    }
+
+    .about-name_statement {
+      margin: 0;
+      font-size: clamp(1.4rem, 1.1rem + 1vw, 2rem);
+      font-weight: 500;
+      line-height: 1.25;
+      letter-spacing: -0.025em;
+      color: var(--ink-900);
+      text-wrap: pretty;
+    }
+
+    /* The shadow sits outside what the reveal wipes open, so it is there from
+       the start instead of arriving when the wipe lets go. */
+    .about-name_figure {
+      margin: 0;
+      border-radius: var(--radius-large);
+      box-shadow: 0 1.75rem 3rem -2rem rgb(13 25 40 / 0.55);
+    }
+
+    /* The photograph's own shape, so nothing of it is cut. */
+    .about-name_media {
+      aspect-ratio: 3 / 2;
+      overflow: clip;
+      border-radius: var(--radius-large);
+      background-color: var(--dark-900);
+    }
+
+    .about-name_photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .about-name_points {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(1.75rem, 1.25rem + 1.5vw, 2.5rem);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    /* Index in the margin, title and text in a column beside it. */
+    .about-name_point {
+      display: grid;
+      grid-template-columns: 3rem minmax(0, 1fr);
+      column-gap: 1rem;
+      row-gap: 0.75rem;
+    }
+
+    .about-name_rule {
+      grid-column: 1 / -1;
+      margin-bottom: 0.75rem;
+    }
+
+    .about-name_index {
+      grid-row: 2 / span 2;
+      padding-top: 0.3rem;
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      color: var(--brand-500);
+    }
+
+    .about-name_title {
+      margin: 0;
+      font-size: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);
+      font-weight: 500;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+
+    /* A bullet the shape of one stroke of the mark, set inline so the
+       heading keeps its own leading trim. */
+    .about-name_tick {
+      display: inline-block;
+      width: 0.5em;
+      height: 0.72em;
+      margin-right: 0.6em;
+      background-color: var(--brand-500);
+      transform: skewX(calc(var(--slant) * -1));
+    }
+
+    .about-name_text {
+      grid-column: 2;
+      max-width: 36rem;
+      margin: 0;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+  }
+</style>

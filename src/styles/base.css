@@ -3,33 +3,46 @@
    ========================================================================== */
 
 :root {
-  /* Swatches — inparallel brand.
+  /* Swatches — inParallel.
 
-     Blue, matching the deck: one action blue, a light tint for accents on
-     dark, and a deep shade for pressed and filled states. The darks carry a
-     navy cast rather than being neutral black, so the glow artwork sits on
-     them without a seam. */
+     Navy rather than neutral black for the dark sections, cream rather than
+     white for the light ones: the same pair the new studio site runs on.
+     One action blue, a light tint of it for accents on dark, a deep shade
+     for pressed and filled states. */
   --light-100: #ffffff;
-  --light-200: #f4f3f1;
-  --dark-800: #101720;
-  --dark-850: #151d28;
-  --dark-900: #0a0d12;
+  --light-200: #fbfaf7;
+  --light-300: #f2f0ea;
+  --dark-700: #1d2a45;
+  --dark-800: #16223a;
+  --dark-850: #111b2e;
+  --dark-900: #0b1322;
+  --dark-950: #060a13;
+  --brand-100: #dbe7ff;
   --brand-300: #8bb7ff;
   --brand-500: #2a6dda;
+  --brand-600: #1f5bc0;
   --brand-700: #14509b;
   /* The two parallel strokes in the logo. Held apart from `--brand-500` so the
-     mark can be retuned on its own, but pointed at it for now: the artwork was
-     drawn a shade brighter than the site's blue, and a button sitting next to
-     the logo made the two read as a mismatch rather than a pair. */
+     mark can be retuned on its own, but pointed at it for now. */
   --brand-mark: var(--brand-500);
   --brand-text: var(--light-100);
-  --ink-900: #131a26;
+  /* Text on cream: a navy ink, never pure black. */
+  --ink-900: #0d1928;
   --navy-900: #172c56;
   --webflow-500: #0077ff;
   --webflow-600: #005fdb;
 
+  /* The lean of the logo's two strokes, off vertical. Every slanted edge on
+     the site — cuts, wipes, ribs, the cursor's mark — takes this angle. */
+  --slant: 32deg;
+  --slant-tan: 0.6249;
+
   /* Typography primitives */
-  --primary-family: "Geist", system-ui, sans-serif;
+  --primary-family: "Geist Variable", "Geist", system-ui, sans-serif;
+  /* Labels, figures and the `//` marks: the code the studio writes. */
+  --mono-family: "Geist Mono Variable", ui-monospace, "SFMono-Regular", monospace;
+  /* The one word in a heading that gets said more softly. */
+  --serif-family: "Instrument Serif", Georgia, serif;
   --primary-regular: 400;
   --primary-medium: 500;
   --primary-semibold: 600;
@@ -297,12 +310,18 @@
   --background-2: var(--light-100);
   --background-raised: var(--light-100);
   --background-skeleton: color-mix(in lab, currentcolor 10%, transparent);
-  --text: #000000;
+  --text: var(--ink-900);
   --text-muted: color-mix(in srgb, var(--text) 60%, transparent);
   --text-faded: color-mix(in srgb, var(--text) 40%, transparent);
   --border: color-mix(in srgb, var(--text) 20%, transparent);
   --border-soft: color-mix(in srgb, var(--text) 10%, transparent);
   --heading-accent: var(--text-faded);
+
+  /* Headings are set flat: solid ink, nothing clipped to the letters. */
+  --heading-fill: none;
+  --heading-ink: currentcolor;
+  --heading-accent-ink: currentcolor;
+  --heading-descender: 0em;
 
   --button-background: var(--brand-500);
   --button-border: var(--button-background);
@@ -339,6 +358,13 @@
   --border-soft: color-mix(in srgb, var(--text) 10%, transparent);
   --heading-accent: var(--text-faded);
 
+  /* Headings are lit: white from above into the light blue (see "Lit
+     headings" in inparallel.css). */
+  --heading-fill: linear-gradient(to bottom, var(--light-100) 25%, var(--brand-300));
+  --heading-ink: transparent;
+  --heading-accent-ink: color-mix(in srgb, var(--brand-300) 55%, transparent);
+  --heading-descender: 0.25em;
+
   --button-background: var(--brand-500);
   --button-border: var(--button-background);
   --button-text: var(--light-100);
@@ -372,6 +398,12 @@
   --border: color-mix(in srgb, var(--text) 30%, transparent);
   --border-soft: color-mix(in srgb, var(--text) 15%, transparent);
   --heading-accent: var(--text-faded);
+
+  /* Headings are set flat: solid ink, nothing clipped to the letters. */
+  --heading-fill: none;
+  --heading-ink: currentcolor;
+  --heading-accent-ink: currentcolor;
+  --heading-descender: 0em;
 
   --button-background: var(--light-100);
   --button-border: var(--button-background);

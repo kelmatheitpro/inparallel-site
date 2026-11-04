@@ -1,0 +1,355 @@
+---
+/**
+ * The picture side of a study: the client's colour, and three screens of
+ * their site standing on its foot — the home page in the middle, two pages
+ * further down leaning out behind it. Nothing runs off the sides at rest: the
+ * home page is whole from its top edge, the panel's foot is the only crop.
+ *
+ * The geometry is a block of its own (`case-visual_screens`), one fixed shape
+ * sized from the panel, so every width shows the same composition. Hover, and
+ * the middle screen scrolls slowly down the page. With a set of
+ * whole pages in `media.pages`, a click opens them in the slider
+ * (`ProjectGallery.astro`); without JavaScript it's a link to the study.
+ */
+import { getImage } from "astro:assets";
+import Img from "@/components/Img.astro";
+import type { Project } from "@/utils/content.ts";
+
+interface Props {
+  project: Project;
+  class?: string;
+}
+
+const { project, class: className } = Astro.props;
+const { id, data } = project;
+const { media } = data;
+const { screens } = media;
+const pages = await Promise.all(
+  media.pages.map(async ({ image, name }) => ({
+    name,
+    src: (await getImage({ src: image, width: 2112, format: "webp" })).src,
+    thumb: (await getImage({ src: image, width: 300, format: "webp" })).src,
+  })),
+);
+const host = data.liveUrl
+  ? new URL(data.liveUrl).hostname.replace(/^www\./, "")
+  : "";
+---
+
+<a
+  class:list={["case-visual", className]}
+  href={`/work/${id}`}
+  aria-label={`${data.client} case study`}
+  data-cursor={pages.length ? "View pages" : "View case"}
+  data-gallery={pages.length
+    ? JSON.stringify({ client: data.client, host, logo: data.logo.src, pages })
+    : undefined}
+>
+  {
+    media.panel && (
+      <Img
+        src={media.panel}
+        alt=""
+        class="case-visual_bg"
+        variant="constrained"
+        sizes="(width >= 62rem) min(68vw, 58rem), 92vw"
+      />
+    )
+  }
+
+  {
+    screens && (
+      <span class="case-visual_screens" aria-hidden="true">
+        <span class="case-screen is-left">
+          <Img
+            src={screens.left}
+            alt=""
+            class="case-screen_img"
+            variant="constrained"
+            sizes="(width >= 62rem) 22vw, 42vw"
+          />
+        </span>
+        <span class="case-screen is-right">
+          <Img
+            src={screens.right}
+            alt=""
+            class="case-screen_img"
+            variant="constrained"
+            sizes="(width >= 62rem) 22vw, 42vw"
+          />
+        </span>
+        <span class="case-screen is-center">
+          <Img
+            src={screens.center}
+            alt=""
+            class="case-screen_img"
+            variant="constrained"
+            sizes="(width >= 62rem) 36vw, 62vw"
+          />
+        </span>
+      </span>
+    )
+  }
+
+  <span class="case-visual_overlay">
+    <span class="case-visual_tag">{data.industry}</span>
+  </span>
+
+  {
+    pages.length > 0 && (
+      <span class="case-visual_zoom" aria-hidden="true">
+        <svg viewBox="0 0 16 16" fill="none">
+          <path
+            d="M6 3H3v3M10 3h3v3M6 13H3v-3M10 13h3v-3"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </span>
+    )
+  }
+</a>
+
+<style is:global>
+  @layer components {
+    .case-visual {
+      position: relative;
+      isolation: isolate;
+      display: block;
+      min-width: 0;
+      height: 100%;
+      overflow: clip;
+      container-type: size;
+      background-color: var(--dark-800);
+      border: var(--border-width) solid rgb(255 255 255 / 0.2);
+      border-radius: 1rem;
+      color: var(--light-100);
+      text-decoration: none;
+    }
+
+    .case-visual_bg {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      width: 100%;
+      max-width: none;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.5s var(--ease-soft);
+    }
+
+    /* One shape, standing on the panel's foot and centred on it: 90.4% of the
+       panel's height, or as wide as the panel lets it be, whichever is less.
+       A wider panel shows more colour either side, a narrower one a smaller
+       shape, and neither ever cuts a side screen. With a pointer it keeps
+       clear of the edges by what hover spreads the side screens. */
+    .case-visual_screens {
+      --_room: 100cqw;
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: min(90.4cqh * 139 / 75, var(--_room));
+      aspect-ratio: 139 / 75;
+      transform: translateX(-50%);
+
+      @media (hover: hover) {
+        --_room: calc(100cqw - 3rem);
+      }
+    }
+
+    .case-screen {
+      position: absolute;
+      display: block;
+      overflow: clip;
+      border-radius: 1rem 1rem 0 0;
+      background-color: var(--light-100);
+      transition:
+        translate 0.6s var(--ease-out),
+        rotate 0.6s var(--ease-out);
+
+      &.is-center {
+        top: 0;
+        left: 19.664%;
+        width: 60.671%;
+        height: 100%;
+        container-type: size;
+      }
+
+      &.is-left {
+        top: 14.912%;
+        left: 2.989%;
+        width: 38.136%;
+        height: 86.104%;
+        opacity: 0.6;
+        rotate: -5.1deg;
+      }
+
+      &.is-right {
+        top: 14.095%;
+        left: 58.734%;
+        width: 38.136%;
+        height: 86.104%;
+        opacity: 0.6;
+        rotate: 5.1deg;
+      }
+    }
+
+    .case-screen_img {
+      display: block;
+      width: 100%;
+      max-width: none;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 0;
+    }
+
+    /* The middle screen is the long cut, at its own height, so hover can walk
+       down it, a touch wider than its frame so the page runs edge to edge.
+       Coming back is quick: nobody waits to see it rewind. */
+    .is-center > .case-screen_img {
+      width: 104%;
+      height: auto;
+      margin-left: -2%;
+      transition: translate 1s var(--ease-out);
+    }
+
+    .case-visual_overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      padding: 1.5625rem;
+      background-image: linear-gradient(
+        to bottom,
+        transparent 63%,
+        rgb(13 25 40 / 0.4)
+      );
+      pointer-events: none;
+    }
+
+    .case-visual_tag {
+      padding: 0.9375rem 1.25rem;
+      background-color: var(--case-tag, var(--ink-900));
+      border: var(--border-width) solid rgb(255 255 255 / 0.2);
+      border-radius: 0.625rem;
+      font-size: 1rem;
+      font-weight: 500;
+      line-height: 1.1;
+    }
+
+    .case-visual_zoom {
+      position: absolute;
+      top: 1.5625rem;
+      right: 1.5625rem;
+      display: grid;
+      place-items: center;
+      width: 2.375rem;
+      height: 2.375rem;
+      background-color: var(--case-tag, var(--ink-900));
+      border-radius: 0.75rem;
+      opacity: 0;
+      transform: translateY(-0.375rem);
+      transition:
+        opacity 0.3s var(--ease-soft),
+        transform 0.5s var(--ease-out);
+
+      & svg {
+        width: 1rem;
+        height: 1rem;
+      }
+    }
+
+    .case-visual:focus-visible {
+      outline: var(--focus-width) solid var(--brand-300);
+      outline-offset: var(--focus-offset);
+
+      & .case-visual_zoom {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    @media (hover: hover) {
+      .case-visual:hover {
+        & .case-visual_bg {
+          transform: scale(1.025);
+        }
+
+        & .case-visual_zoom {
+          opacity: 1;
+          transform: none;
+        }
+
+        & .is-left {
+          translate: -0.75rem 0.25rem;
+          rotate: -6.2deg;
+        }
+
+        & .is-right {
+          translate: 0.75rem 0.25rem;
+          rotate: 6.2deg;
+        }
+
+        & .is-center > .case-screen_img {
+          translate: 0 calc(-100% + 100cqh);
+          transition: translate 7s cubic-bezier(0.45, 0.05, 0.4, 1);
+        }
+      }
+    }
+
+    @media (width < 62rem) {
+      .case-visual {
+        height: auto;
+        aspect-ratio: 16 / 10;
+      }
+
+      .case-visual_overlay {
+        padding: 1rem;
+      }
+
+      .case-visual_tag {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.875rem;
+      }
+
+      .case-visual_zoom {
+        display: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .case-visual_bg,
+      .case-screen,
+      .is-center > .case-screen_img,
+      .case-visual_zoom {
+        transition: none;
+      }
+
+      .case-visual:hover {
+        & .case-visual_bg {
+          transform: none;
+        }
+
+        & .is-left,
+        & .is-right {
+          translate: 0 0;
+        }
+
+        & .is-left {
+          rotate: -5.1deg;
+        }
+
+        & .is-right {
+          rotate: 5.1deg;
+        }
+
+        & .is-center > .case-screen_img {
+          translate: 0 0;
+        }
+      }
+    }
+  }
+</style>

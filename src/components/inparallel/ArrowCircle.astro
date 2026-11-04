@@ -1,0 +1,37 @@
+---
+/**
+ * The circle with an arrow in it, used wherever a link says "this way". It
+ * draws the arrow twice: on hover one leaves as the other arrives (see
+ * "The circle arrow" in `parallel.css`). Whatever link it sits in is the
+ * trigger, so a whole card moves it without any wiring; a card that isn't
+ * itself a link takes the class `arrow-trigger` instead.
+ */
+interface Props {
+  /** Points up and to the right, for a link to a study or an outside site. */
+  diagonal?: boolean;
+  /** No circle: the arrow alone, for a text link that's too small for one. */
+  bare?: boolean;
+  class?: string;
+}
+
+const { diagonal = false, bare = false, class: className } = Astro.props;
+const arrow =
+  "M10.5303 6.05328C10.8232 5.76039 10.8232 5.28551 10.5303 4.99262L5.75736 0.219648C5.46447 -0.073245 4.98959 -0.073245 4.6967 0.219648C4.40381 0.512542 4.40381 0.987415 4.6967 1.28031L8.93934 5.52295L4.6967 9.76559C4.40381 10.0585 4.40381 10.5334 4.6967 10.8263C4.98959 11.1191 5.46447 11.1191 5.75736 10.8263L10.5303 6.05328ZM0 5.52295V6.27295H10V5.52295V4.77295H0V5.52295Z";
+---
+
+<span
+  class:list={[
+    "arrow-circle",
+    diagonal && "is-diag",
+    bare && "is-bare",
+    className,
+  ]}
+  aria-hidden="true"
+>
+  <svg class="arrow-circle_cur" viewBox="0 0 11 12" fill="currentColor">
+    <path d={arrow}></path>
+  </svg>
+  <svg class="arrow-circle_next" viewBox="0 0 11 12" fill="currentColor">
+    <path d={arrow}></path>
+  </svg>
+</span>

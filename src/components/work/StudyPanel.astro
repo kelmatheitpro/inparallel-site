@@ -1,0 +1,570 @@
+---
+/**
+ * A study's picture: the client's colour with its mark faded into it, and the
+ * site rising from the foot of it.
+ *
+ * It is the same picture at three sizes, so the card a reader clicks on the
+ * index is the picture the study opens with:
+ *
+ *   size="card"   the grid on /work, with the category in the corner
+ *   size="hero"   the top of a study: the client's mark in a chip, and three
+ *                 screens standing on the foot, nothing run off the sides. A
+ *                 long cut of the home page in the middle, which hover walks
+ *                 down, two pages further in leaning out behind it
+ *   size="wide"   "Read next", a landscape crop
+ *
+ * The hero is the home page's case panel (`CaseVisual`) at the size of the
+ * page: the same shape, so the two read as one picture, with its images asked
+ * for at this size. With whole pages in `media.pages`, a click opens them in
+ * the shared slider; the page has to render `ProjectGallery` for that, and
+ * without JavaScript the link goes down to the site further on the page.
+ *
+ * A study without a screen yet (a rebuild still in progress) shows the
+ * backdrop alone; the card around it says why. On a card the picture sits
+ * inside a link the client's mark already names, so the screen in it is
+ * described only at the top of the study.
+ */
+import { getImage } from "astro:assets";
+import Img from "@/components/Img.astro";
+import BrowserFrame from "@/components/work/BrowserFrame.astro";
+import type { Project } from "@/utils/content.ts";
+import { hostOf, logoHeight } from "@/data/work.ts";
+
+interface Props {
+  project: Project;
+  size?: "card" | "hero" | "wide";
+  /** Above the fold: load at once and first. */
+  eager?: boolean;
+  /** Written in the top corner, after the strokes (the grid's category). */
+  tag?: string;
+  /** How wide the panel is drawn. */
+  sizes?: string;
+  /** How wide the window on it is drawn: about three quarters of the panel. */
+  windowSizes?: string;
+  class?: string;
+}
+
+const {
+  project,
+  size = "card",
+  eager = false,
+  tag,
+  sizes = "(width >= 62rem) 40vw, 92vw",
+  windowSizes = "(width >= 62rem) 30vw, 72vw",
+  class: className,
+} = Astro.props;
+const { data } = project;
+const { media } = data;
+
+const hero = size === "hero";
+const backdrop = media.cardBg ?? media.panel;
+const shot = media.card ?? media.desktop;
+const screens = hero ? media.screens : undefined;
+const loading = eager ? "eager" : "lazy";
+
+/* The slider's own list: the same shape `CaseVisual` hands it. */
+const pages = hero
+  ? await Promise.all(
+      media.pages.map(async ({ image, name }) => ({
+        name,
+        src: (await getImage({ src: image, width: 2112, format: "webp" })).src,
+        thumb: (await getImage({ src: image, width: 300, format: "webp" })).src,
+      })),
+    )
+  : [];
+const Tag = pages.length ? "a" : "div";
+const link = pages.length
+  ? {
+      href: "#the-site",
+      "aria-label": `See the pages of the ${data.client} website`,
+      "data-cursor": "View pages",
+      "data-gallery": JSON.stringify({
+        client: data.client,
+        host: data.liveUrl ? hostOf(data.liveUrl) : "",
+        logo: data.logo.src,
+        pages,
+      }),
+    }
+  : {};
+---
+
+<Tag
+  class:list={["study-panel", `is-${size}`, !backdrop && "is-plain", className]}
+  {...link}
+>
+  {
+    backdrop && (
+      <Img
+        src={backdrop}
+        alt=""
+        class="study-panel_bg"
+        variant="constrained"
+        sizes={sizes}
+        loading={loading}
+      />
+    )
+  }
+
+  {
+    tag && (
+      <span class="study-panel_tag">
+        <span class="label_slash" aria-hidden="true">
+          //
+        </span>
+        {tag}
+      </span>
+    )
+  }
+
+  {
+    hero && (
+      <span class="study-panel_chip">
+        <Img
+          src={data.logo}
+          alt={data.client}
+          class="study-panel_logo"
+          style={`--_h: ${logoHeight(data.logo, 1.35)};`}
+          transparent
+          loading={loading}
+        />
+      </span>
+    )
+  }
+
+  {
+    screens ? (
+      <span class="study-panel_screens" aria-hidden="true">
+        {/* `case-screen` is how the slider knows which page a click meant. */}
+        <span class="case-screen study-panel_screen is-left">
+          <Img
+            src={screens.left}
+            alt=""
+            class="study-panel_screen_img"
+            variant="constrained"
+            sizes="(width >= 48rem) min(38vw, 30rem), 1px"
+          />
+        </span>
+        <span class="case-screen study-panel_screen is-right">
+          <Img
+            src={screens.right}
+            alt=""
+            class="study-panel_screen_img"
+            variant="constrained"
+            sizes="(width >= 48rem) min(38vw, 30rem), 1px"
+          />
+        </span>
+        <span class="case-screen study-panel_screen is-center">
+          <Img
+            src={screens.center}
+            alt=""
+            class="study-panel_screen_img"
+            variant="constrained"
+            sizes="(width >= 48rem) min(60vw, 47rem), 86vw"
+            loading={loading}
+            fetchPriority={eager ? "high" : "auto"}
+          />
+        </span>
+      </span>
+    ) : (
+      shot && (
+        <BrowserFrame
+          image={shot}
+          alt={hero ? `The ${data.client} website` : ""}
+          url={data.liveUrl}
+          ratio={size === "wide" ? "16 / 9" : "5 / 4"}
+          sizes={windowSizes}
+          loading={loading}
+          fetchPriority={eager ? "high" : "auto"}
+          class="study-panel_window"
+        />
+      )
+    )
+  }
+
+  {
+    pages.length > 0 && (
+      <span class="study-panel_zoom" aria-hidden="true">
+        <svg viewBox="0 0 16 16" fill="none">
+          <path
+            d="M6 3H3v3M10 3h3v3M6 13H3v-3M10 13h3v-3"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </span>
+    )
+  }
+
+  <span class="study-panel_sweep" aria-hidden="true"><i></i><i></i></span>
+</Tag>
+
+<style is:global>
+  @layer components {
+    .study-panel {
+      position: relative;
+      isolation: isolate;
+      display: block;
+      overflow: clip;
+      aspect-ratio: 16 / 11;
+      border-radius: 0.85rem;
+      background-color: var(--dark-800);
+      color: inherit;
+      text-decoration: none;
+      /* Without the client's colour, a field of the brand's own blue. */
+      &.is-plain {
+        background-image:
+          radial-gradient(
+            70% 80% at 70% 20%,
+            rgb(42 109 218 / 0.45),
+            transparent 70%
+          ),
+          linear-gradient(160deg, var(--dark-700), var(--dark-900));
+      }
+
+      /* The shape the three screens fill edge to edge, until the panel is as
+         tall as a laptop can show; past that it only gains colour at the
+         sides. */
+      &.is-hero {
+        width: 100%;
+        max-height: 46rem;
+        aspect-ratio: 1.68;
+        border: var(--border-width) solid rgb(255 255 255 / 0.2);
+        border-radius: 1.25rem;
+      }
+
+      &.is-wide {
+        aspect-ratio: 16 / 10;
+      }
+    }
+
+    .study-panel_bg {
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: scale 1.2s var(--ease-out);
+    }
+
+    /* ---- the window ------------------------------------------------------ */
+    /* Centred, running off the panel's foot, so the site reads as continuing
+       below the frame. */
+    .study-panel_window {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      width: 72%;
+      translate: -50% 12%;
+      border-radius: 0.7rem 0.7rem 0 0;
+      transition: translate 0.9s var(--ease-out);
+
+      .is-hero & {
+        width: 64%;
+        translate: -50% 10%;
+      }
+
+      .is-wide & {
+        width: 76%;
+        translate: -50% 18%;
+      }
+    }
+
+    /* ---- the three screens ----------------------------------------------- */
+    /* One block, sized from the panel's height and centred on it, in the same
+       proportions as the home page's panels. A wider panel shows more colour
+       either side; it never changes the crop. */
+    .study-panel_screens {
+      position: absolute;
+      left: 50%;
+      bottom: 0;
+      height: 90.4%;
+      aspect-ratio: 139 / 75;
+      transform: translateX(-50%);
+    }
+
+    .study-panel_screen {
+      position: absolute;
+      display: block;
+      overflow: clip;
+      border-radius: 1rem 1rem 0 0;
+      background-color: var(--light-100);
+      transition:
+        translate 0.6s var(--ease-out),
+        rotate 0.6s var(--ease-out);
+
+      &.is-center {
+        top: 0;
+        left: 19.664%;
+        width: 60.671%;
+        height: 100%;
+        container-type: size;
+      }
+
+      &.is-left {
+        top: 14.912%;
+        left: 2.989%;
+        width: 38.136%;
+        height: 86.104%;
+        opacity: 0.6;
+        rotate: -5.1deg;
+      }
+
+      &.is-right {
+        top: 14.095%;
+        left: 58.734%;
+        width: 38.136%;
+        height: 86.104%;
+        opacity: 0.6;
+        rotate: 5.1deg;
+      }
+    }
+
+    .study-panel_screen_img {
+      display: block;
+      width: 100%;
+      max-width: none;
+      height: 100%;
+      object-fit: cover;
+      object-position: 50% 0;
+
+      /* The long cut, at its own height, so hover can walk down it. Coming
+         back is quick: nobody waits to see it rewind. */
+      .is-center > & {
+        height: auto;
+        transition: translate 1s var(--ease-out);
+      }
+    }
+
+    /* ---- the corners ----------------------------------------------------- */
+    /* Both sit over the strokes: a stroke passes behind words, never over. */
+    .study-panel_tag {
+      position: absolute;
+      top: 0.9rem;
+      left: 0.9rem;
+      z-index: 5;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5em;
+      padding: 0.5rem 0.7rem;
+      background-color: rgb(6 10 19 / 0.88);
+      border-radius: 0.5rem;
+      color: var(--light-100);
+      font-family: var(--mono-family);
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      text-transform: uppercase;
+
+      & .label_slash {
+        color: var(--brand-300);
+      }
+    }
+
+    .study-panel_chip {
+      position: absolute;
+      top: 1.1rem;
+      left: 1.1rem;
+      z-index: 5;
+      display: inline-flex;
+      align-items: center;
+      padding: 0.8rem 1.05rem;
+      background-color: rgb(6 10 19 / 0.9);
+      border: var(--border-width) solid rgb(255 255 255 / 0.1);
+      border-radius: 0.7rem;
+    }
+
+    /* The marks on file are white, ready for the dark chip. */
+    .study-panel_logo {
+      width: auto;
+      height: var(--_h, 1.35rem);
+      max-width: 9rem;
+    }
+
+    .study-panel_zoom {
+      position: absolute;
+      top: 1.1rem;
+      right: 1.1rem;
+      z-index: 5;
+      display: grid;
+      place-items: center;
+      width: 2.375rem;
+      height: 2.375rem;
+      background-color: rgb(6 10 19 / 0.9);
+      border-radius: 0.75rem;
+      color: var(--light-100);
+      opacity: 0;
+      transform: translateY(-0.375rem);
+      transition:
+        opacity 0.3s var(--ease-soft),
+        transform 0.5s var(--ease-out);
+
+      & svg {
+        width: 1rem;
+        height: 1rem;
+      }
+    }
+
+    a.study-panel:focus-visible {
+      outline: var(--focus-width) solid var(--brand-300);
+      outline-offset: var(--focus-offset);
+
+      & .study-panel_zoom {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* ---- the strokes ------------------------------------------------------
+       Two leaning bars of light that cross the panel when a reader points at
+       the link it sits in — the button sweep, at the size of a picture. */
+    .study-panel_sweep {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      pointer-events: none;
+      overflow: clip;
+      /* A container, so the strokes can be sent the panel's own width. */
+      container-type: inline-size;
+
+      /* Leaning, a stroke reaches further than its own width at the top and
+         the foot, so it starts and ends well clear of either edge. */
+      & > i {
+        position: absolute;
+        top: -20%;
+        bottom: -20%;
+        left: 0;
+        width: 3.5rem;
+        background-color: rgb(255 255 255 / 0.16);
+        transform: translateX(-24rem) skewX(calc(var(--slant) * -1));
+        transition: transform 0.9s var(--ease-out);
+      }
+
+      & > i + i {
+        width: 1.4rem;
+        transition-delay: 0.07s;
+      }
+    }
+
+    @media (hover: hover) {
+      a:hover .study-panel_sweep > i {
+        transform: translateX(calc(100cqw + 24rem))
+          skewX(calc(var(--slant) * -1));
+      }
+
+      a:hover .study-panel_window {
+        translate: -50% 6%;
+      }
+
+      a:hover .study-panel.is-wide .study-panel_window {
+        translate: -50% 12%;
+      }
+
+      a:hover .study-panel_bg {
+        scale: 1.04;
+      }
+
+      a.study-panel:hover {
+        & .study-panel_zoom {
+          opacity: 1;
+          transform: none;
+        }
+
+        & .is-left {
+          translate: -0.75rem 0.25rem;
+          rotate: -6.2deg;
+        }
+
+        & .is-right {
+          translate: 0.75rem 0.25rem;
+          rotate: 6.2deg;
+        }
+
+        & .is-center > .study-panel_screen_img {
+          translate: 0 calc(-100% + 100cqh);
+          transition: translate 7s cubic-bezier(0.45, 0.05, 0.4, 1);
+        }
+      }
+    }
+
+    @media (width < 48rem) {
+      /* On a phone the bar is tall for the picture, so the window sits lower
+         to keep clear of the category in the corner. */
+      .study-panel_window {
+        width: 80%;
+        translate: -50% 26%;
+      }
+
+      /* Three screens on a phone would be three thumbnails. The home page
+         alone, as wide as the panel lets it, reads better. */
+      .study-panel.is-hero {
+        max-height: none;
+        aspect-ratio: 4 / 3;
+      }
+
+      /* Low enough to leave the corner to the client's mark. */
+      .study-panel_screens {
+        left: 7%;
+        right: 7%;
+        height: 80%;
+        aspect-ratio: auto;
+        transform: none;
+      }
+
+      .study-panel_screen {
+        &.is-left,
+        &.is-right {
+          display: none;
+        }
+
+        &.is-center {
+          left: 0;
+          width: 100%;
+        }
+      }
+
+      .study-panel_chip {
+        top: 0.8rem;
+        left: 0.8rem;
+        padding: 0.45rem 0.65rem;
+      }
+
+      .study-panel_logo {
+        height: calc(var(--_h, 1.35rem) * 0.72);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .study-panel_window,
+      .study-panel_bg,
+      .study-panel_screen,
+      .study-panel_screen_img,
+      .study-panel_zoom,
+      .study-panel_sweep > i {
+        transition: none;
+      }
+
+      a.study-panel:hover {
+        & .is-left,
+        & .is-right {
+          translate: none;
+        }
+
+        & .is-left {
+          rotate: -5.1deg;
+        }
+
+        & .is-right {
+          rotate: 5.1deg;
+        }
+
+        & .is-center > .study-panel_screen_img {
+          translate: none;
+        }
+      }
+    }
+  }
+</style>

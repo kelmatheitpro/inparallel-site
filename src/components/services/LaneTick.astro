@@ -1,0 +1,54 @@
+---
+/**
+ * A list bullet in a service's colours: the mark's two strokes, the deep one
+ * first and the bright one a stroke behind it. The colours come from the
+ * nearest `--lane-dark` / `--lane-accent` (set by `laneStyle`), so the same
+ * bullet reads green on one page and gold on another.
+ *
+ * On a dark section the deep stroke would vanish into the navy, so there the
+ * pair turns to the accent and its soft tint.
+ */
+---
+
+<span class="lane-tick" aria-hidden="true"><i></i><i></i></span>
+
+<style is:global>
+  @layer components {
+    .lane-tick {
+      flex: none;
+      display: inline-flex;
+      gap: 0.16rem;
+      height: 0.9rem;
+
+      & > i {
+        display: block;
+        width: 0.26rem;
+        height: 100%;
+        background-color: var(--lane-dark, var(--brand-500));
+        transform: skewX(calc(var(--slant) * -1));
+      }
+
+      & > i + i {
+        background-color: color-mix(
+          in srgb,
+          var(--lane-accent, var(--brand-300)) 80%,
+          var(--lane-dark, var(--brand-500))
+        );
+      }
+    }
+
+    .theme-dark .lane-tick:not(.theme-light *) {
+      & > i {
+        background-color: var(--lane-accent, var(--brand-300));
+      }
+
+      & > i + i {
+        background-color: color-mix(
+          in srgb,
+          var(--lane-soft, var(--brand-100)) 55%,
+          transparent
+        );
+      }
+    }
+  }
+</style>

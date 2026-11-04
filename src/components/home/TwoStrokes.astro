@@ -1,0 +1,438 @@
+---
+/**
+ * "Two people. Zero theatre." — the studio, as the mark.
+ *
+ * The logo's two strokes, at the size of the section, one for each of us:
+ * Aleksandar in front of the left stroke, Darko in front of the right,
+ * leaning at the same angle, a gap apart. Two co-founders doing the same job,
+ * so the captions under them match on purpose. On a wide screen the strokes
+ * slide along their own lean into line as the section arrives, the way the
+ * mark is drawn; narrower, they stand one above the other.
+ *
+ * Under them, the three things the studio promises, each a way further in.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import ArrowCircle from "@/components/inparallel/ArrowCircle.astro";
+import Img from "@/components/Img.astro";
+import { FOUNDERS, CREW_CARDS } from "@/data/parallel.ts";
+---
+
+<section id="studio" class="strokes theme-dark" aria-labelledby="studio-title">
+  <div class="strokes_inner">
+    <SectionHead
+      index="06"
+      label="The studio"
+      headingId="studio-title"
+      lead="inParallel is two co-founders doing the same job, side by side. We both plan, design, build and ship — so whoever you talk to knows your project end to end."
+    >
+      Two people. <span class="serif">Zero</span> theatre.
+    </SectionHead>
+
+    <ul class="strokes_pair" role="list">
+      {
+        FOUNDERS.map((founder, index) => (
+          <li
+            class:list={["stroke-card", index === 0 ? "is-first" : "is-second"]}
+            data-scrub="converge"
+            data-direction={index === 0 ? 1 : -1}
+          >
+            <div class="stroke-card_figure">
+              <div class="stroke-card_shape" aria-hidden="true">
+                <span class="stroke-card_ribs" />
+              </div>
+              <div class="stroke-card_person">
+                <Img
+                  src={founder.shadow}
+                  class="stroke-card_shadow"
+                  variant="densities"
+                  width={330}
+                  transparent
+                />
+                <Img
+                  src={founder.photo}
+                  alt={founder.name}
+                  class="stroke-card_photo"
+                  variant="constrained"
+                  sizes="(width >= 62rem) 32vw, 80vw"
+                  transparent
+                />
+              </div>
+            </div>
+            <div class="stroke-card_caption">
+              <span class="label">
+                <span class="label_slash" aria-hidden="true">
+                  //
+                </span>
+                <span class="label_text">{founder.role}</span>
+              </span>
+              <p class="stroke-card_name">{founder.name}</p>
+              <p class="stroke-card_does">{founder.does}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+
+    <ul class="strokes_cards" role="list" data-anim-group>
+      {
+        CREW_CARDS.map((card) => (
+          <li class="crew-card" data-anim="rise">
+            <h3 class="crew-card_title">
+              {card.title[0]}
+              <br />
+              {card.title[1]}
+            </h3>
+            <p class="crew-card_text">{card.text}</p>
+            <a class="crew-card_link" href={card.link.href}>
+              {card.link.label}
+              <ArrowCircle class="crew-card_arrow" />
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<script>
+  /* The shadow waits for its photo: alone on the stroke it reads as the ghost
+     of someone who hasn't arrived. */
+  for (const photo of document.querySelectorAll<HTMLImageElement>(
+    ".stroke-card_photo",
+  )) {
+    const show = () => photo.parentElement?.classList.add("is-ready");
+    if (photo.complete) show();
+    else photo.addEventListener("load", show, { once: true });
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .strokes {
+      padding-block: var(--section-space-large, 8rem);
+      overflow: clip;
+      background-color: var(--dark-900);
+    }
+
+    .strokes_inner {
+      /* The site's container: the Lumos width, the site margin either side. */
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      /* The strokes are sized off this width (see below). */
+      container-type: inline-size;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(3rem, 2rem + 3vw, 5rem);
+    }
+
+    /* ---- the two strokes ------------------------------------------------ */
+    /* How tall the strokes are follows how wide the row is: a stroke's
+       width across is half the row less its lean, and the crossed arms in
+       front of it need about two thirds of the photo's height — so past
+       0.44 of the row, the arms would start to hang over the edges. */
+    .strokes_pair {
+      --_h: min(36rem, 44cqw);
+      --_lean: calc(var(--_h) * var(--slant-tan));
+      --_gap: clamp(1rem, 0.5rem + 1.5vw, 2rem);
+      display: flex;
+      align-items: start;
+      margin: 2rem 0 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    /* The cards' boxes overlap by the lean, so only what's drawn takes the
+       pointer; the first stands in front, or the second's stroke would cut
+       across the first of us at the foot. */
+    .stroke-card {
+      position: relative;
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      pointer-events: none;
+
+      &.is-first {
+        z-index: 1;
+      }
+
+      /* Where they slide with the scroll (`data-scrub="converge"`), each is a
+         layer of its own from the start, so the move is only ever a shift. */
+      @media (width >= 62rem) and (hover: hover) and (pointer: fine) {
+        will-change: transform;
+      }
+    }
+
+    /* Overlap by the lean, less the gap: two strokes, a gap apart, all the
+       way up. */
+    .stroke-card + .stroke-card {
+      margin-left: calc(var(--_gap) - var(--_lean));
+    }
+
+    /* The figure isn't cut: only its backdrop is the stroke, so each of us
+       stands in front of it, a head taller than it. */
+    .stroke-card_figure {
+      position: relative;
+      height: var(--_h);
+    }
+
+    .stroke-card_shape {
+      position: absolute;
+      inset: 0;
+      clip-path: polygon(
+        var(--_lean) 0,
+        100% 0,
+        calc(100% - var(--_lean)) 100%,
+        0 100%
+      );
+      background-image:
+        radial-gradient(
+          70% 60% at 62% 38%,
+          rgb(255 255 255 / 0.18),
+          transparent 70%
+        ),
+        linear-gradient(180deg, var(--_top), var(--_bottom));
+
+      .is-first & {
+        --_top: #3b82f0;
+        --_bottom: #133f8f;
+      }
+      .is-second & {
+        --_top: #a8c8ff;
+        --_bottom: #3d6fc4;
+      }
+
+      pointer-events: auto;
+
+      /* Hover lifts the stroke a shade: a fade, not a filter. */
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-color: rgb(255 255 255 / 0.08);
+        opacity: 0;
+        transition: opacity 0.6s var(--ease-out);
+      }
+    }
+
+    /* Plain white hairlines, faint enough to read as the soft-light of glass:
+       a blend mode here would repaint the stroke behind it as it moves. */
+    .stroke-card_ribs {
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        calc(90deg + var(--slant)),
+        transparent 0 calc(1.9rem - 1px),
+        rgb(255 255 255 / 0.05) calc(1.9rem - 1px) 1.9rem
+      );
+    }
+
+    /* Centred on the stroke at chest height — where the leaning band sits a
+       little right of its foot — so the crossed arms stay inside it. */
+    .stroke-card_person {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      height: 104%;
+      aspect-ratio: 1000 / 1228;
+      translate: -50% 0;
+      transition: scale 0.9s var(--ease-out);
+      transform-origin: 50% 100%;
+      pointer-events: auto;
+    }
+
+    .stroke-card_photo {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      max-width: none;
+      height: 100%;
+    }
+
+    /* The shadow is a picture: the photo's silhouette, already blurred, with
+       room round it for the blur (the file is 132% of the photo's width and
+       126% of its height). A shadow filter would be worked out again on every
+       frame the card moves. */
+    .stroke-card_shadow {
+      position: absolute;
+      top: -13.03%;
+      left: -16%;
+      width: 132%;
+      max-width: none;
+      height: 126.06%;
+      translate: 0 1.5rem;
+      opacity: 0;
+      transition: opacity 0.4s var(--ease-soft);
+
+      .is-ready > & {
+        opacity: 1;
+      }
+    }
+
+    /* The words stand on the stroke's foot, kept to its width so the two
+       captions never meet, and above the shadow that falls past it. */
+    .stroke-card_caption {
+      position: relative;
+      max-width: calc(100% - var(--_lean) - var(--_gap));
+      pointer-events: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: 0.5rem;
+      margin-top: 1.75rem;
+    }
+
+    .stroke-card_name {
+      margin: 0.25rem 0 0;
+      font-size: clamp(1.35rem, 1rem + 1vw, 2rem);
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+    }
+
+    .stroke-card_does {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+      line-height: 1.45;
+    }
+
+    @media (hover: hover) {
+      .stroke-card:hover .stroke-card_person {
+        scale: 1.03;
+      }
+      .stroke-card:hover .stroke-card_shape::after {
+        opacity: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .stroke-card_person {
+        transition: none;
+      }
+
+      .stroke-card:hover .stroke-card_person {
+        scale: 1;
+      }
+    }
+
+    /* ---- the three promises -------------------------------------------- */
+    /* Three across; two with the third under them at full width, so no row is
+       left half empty; one to a row on a phone. */
+    .strokes_cards {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-5);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    /* The link stretches over the card, so the whole of it fills the arrow;
+       the surface lifts a shade with it, the way the study cards do. */
+    .crew-card {
+      --arrow-fill: var(--brand-500);
+      --arrow-ink: var(--light-100);
+      position: relative;
+      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: 0.85rem;
+      padding: 1.75rem;
+      background-color: var(--dark-850);
+      border: var(--border-width) solid rgb(255 255 255 / 0.08);
+      border-radius: 1rem;
+
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: inherit;
+        background-color: rgb(255 255 255 / 0.04);
+        opacity: 0;
+        transition: opacity 0.35s var(--ease-soft);
+      }
+
+      @media (hover: hover) {
+        &:hover::before {
+          opacity: 1;
+        }
+      }
+
+      &:has(:focus-visible)::before {
+        opacity: 1;
+      }
+    }
+
+    .crew-card_title {
+      margin: 0;
+      font-size: clamp(1.3rem, 1.1rem + 0.6vw, 1.6rem);
+      font-weight: 500;
+      letter-spacing: -0.025em;
+      line-height: 1.1;
+    }
+
+    .crew-card_text {
+      margin: 0;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .crew-card_link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-top: auto;
+      padding-top: 0.75rem;
+      color: var(--light-100);
+      font-weight: 500;
+      text-decoration: none;
+
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+      }
+    }
+
+    /* ---- narrower ------------------------------------------------------- */
+    @container (width < 48rem) {
+      .strokes_cards {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .crew-card:last-child {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @container (width < 34rem) {
+      .strokes_cards {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .crew-card:last-child {
+        grid-column: auto;
+      }
+    }
+
+    /* Narrow: one stroke above the other, each with its words underneath. */
+    @media (width < 48rem) {
+      .strokes_pair {
+        --_h: min(22rem, 92cqw);
+        --_lean: calc(var(--_h) * 0.3);
+        flex-direction: column;
+        align-items: stretch;
+        gap: 2.5rem;
+      }
+      .stroke-card + .stroke-card {
+        margin-left: 0;
+      }
+      .stroke-card_caption {
+        max-width: none;
+        margin-top: 1.25rem;
+      }
+    }
+  }
+</style>

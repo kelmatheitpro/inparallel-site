@@ -1,0 +1,234 @@
+---
+/**
+ * "Four ways in" — the four services as doors along the foot of the hero.
+ *
+ * Each door is the mark's stroke, leaning at the logo's angle, in its
+ * service's colour, and leads to that service's page. Point at one (or tab
+ * to it) and it lifts and brightens, and the light behind the hero's glass
+ * turns to its colour — the page tints itself to the way in you're looking
+ * at, then settles back to blue when you move on.
+ *
+ * The light is the hero's own glass again in each colour, laid over the blue
+ * and faded in, so moving between doors only changes an opacity and never
+ * has to repaint the hero.
+ *
+ * Narrow screens scroll the four sideways, the way the home page's lanes do.
+ */
+import { SERVICES_P } from "@/data/offer.ts";
+import { laneStyle } from "@/data/service-pages.ts";
+
+const pad = (n: number) => String(n).padStart(2, "0");
+---
+
+<nav class="doors" aria-label="The four services" data-doors>
+  {
+    SERVICES_P.map((service) => (
+      <div
+        class="page-hero_glass doors_light"
+        style={`--hero-accent: ${service.theme.accent};`}
+        data-light={service.slug}
+        aria-hidden="true"
+      />
+    ))
+  }
+  <ul class="doors_track" role="list">
+    {
+      SERVICES_P.map((service, index) => (
+        <li class="door" style={laneStyle(service)}>
+          <a
+            class="door_link"
+            href={`/services/${service.slug}`}
+            data-door={service.slug}
+          >
+            <span class="door_shape" aria-hidden="true" />
+            <span class="door_index" aria-hidden="true">
+              {pad(index + 1)}
+            </span>
+            <span class="door_name">{service.name}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>
+
+<script>
+  for (const doors of document.querySelectorAll<HTMLElement>("[data-doors]")) {
+    const lights = [...doors.querySelectorAll<HTMLElement>("[data-light]")];
+    const light = (slug?: string) => {
+      for (const one of lights) {
+        one.classList.toggle("is-on", one.dataset.light === slug);
+      }
+    };
+    for (const link of doors.querySelectorAll<HTMLElement>("[data-door]")) {
+      const on = () => light(link.dataset.door);
+      link.addEventListener("pointerenter", on);
+      link.addEventListener("focus", on);
+    }
+    /* Back to blue only once the pointer or focus has left all four, so
+       moving from one door to the next goes straight from colour to
+       colour. */
+    doors.addEventListener("pointerleave", () => {
+      if (!doors.contains(document.activeElement)) light();
+    });
+    doors.addEventListener("focusout", (event) => {
+      if (!doors.contains(event.relatedTarget as Node | null)) light();
+    });
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .doors_light {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.9s var(--ease-out);
+
+      &.is-on {
+        opacity: 1;
+      }
+    }
+
+    .doors {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin: clamp(3rem, 2rem + 3vw, 5rem) auto 0;
+    }
+
+    .doors_track {
+      --_h: clamp(8.5rem, 5rem + 6vw, 11.5rem);
+      /* How far each door's top runs ahead of its foot. */
+      --_lean: calc(var(--_h) * var(--slant-tan));
+      --_gap: clamp(0.5rem, 0.3rem + 0.6vw, 1rem);
+      display: flex;
+      height: var(--_h);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .door {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+
+    /* Neighbours overlap by the lean, less the gap, so the strokes stand an
+       even distance apart all the way up. */
+    .door + .door {
+      margin-left: calc(var(--_gap) - var(--_lean));
+    }
+
+    .door_link {
+      position: relative;
+      isolation: isolate;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 1rem 1.25rem 1.1rem;
+      color: var(--light-100);
+      text-decoration: none;
+      clip-path: polygon(
+        var(--_lean) 0,
+        100% 0,
+        calc(100% - var(--_lean)) 100%,
+        0 100%
+      );
+      transition: translate 0.6s var(--ease-out);
+
+      &:focus-visible {
+        outline: none;
+
+        & .door_shape {
+          box-shadow: inset 0 0 0 3px var(--light-100);
+        }
+      }
+
+      @media (hover: hover) {
+        &:hover {
+          translate: 0 -0.5rem;
+        }
+      }
+
+      &:focus-visible {
+        translate: 0 -0.5rem;
+      }
+    }
+
+    /* The stroke: the lane's deep colour lit from the top by its accent,
+       with ribs along the slant. At rest it holds back; chosen, it lights. */
+    .door_shape {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background-color: var(--lane-dark);
+      background-image:
+        repeating-linear-gradient(
+          calc(90deg + var(--slant)),
+          transparent 0 calc(1.5rem - 1px),
+          rgb(255 255 255 / 0.07) calc(1.5rem - 1px) 1.5rem
+        ),
+        radial-gradient(
+          120% 90% at 75% 0%,
+          color-mix(in srgb, var(--lane-accent) 55%, transparent),
+          transparent 70%
+        ),
+        linear-gradient(
+          200deg,
+          color-mix(in srgb, var(--lane-accent) 28%, var(--lane-dark)),
+          var(--lane-dark) 75%
+        );
+      opacity: 0.72;
+      transition: opacity 0.6s var(--ease-out);
+
+      .door_link:hover &,
+      .door_link:focus-visible & {
+        opacity: 1;
+      }
+    }
+
+    .door_index {
+      align-self: end;
+      margin-right: calc(var(--_lean) * 0.08);
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      color: var(--lane-accent);
+    }
+
+    /* The door's left edge leans in as it rises, so the name — up to two
+       lines high at the foot — steps in by the share of the lean it climbs. */
+    .door_name {
+      margin-left: calc(var(--_lean) * 0.2);
+      max-width: 12ch;
+      font-size: clamp(1rem, 0.7rem + 0.9vw, 1.5rem);
+      font-weight: 500;
+      line-height: 1.05;
+      letter-spacing: -0.025em;
+    }
+
+    @media (width < 48rem) {
+      .doors_track {
+        --_h: 8.5rem;
+        overflow-x: auto;
+        padding: 0.75rem var(--site-margin) 0.5rem;
+        margin-inline: calc(var(--site-margin) * -1);
+        height: auto;
+        scroll-snap-type: x mandatory;
+        scrollbar-width: none;
+      }
+      .door {
+        flex: 0 0 14rem;
+        height: var(--_h);
+        scroll-snap-align: start;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .doors_light,
+      .door_link,
+      .door_shape {
+        transition: none;
+      }
+    }
+  }
+</style>

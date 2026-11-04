@@ -1,0 +1,101 @@
+---
+/**
+ * A row of numbered cards — a title and a line or two each. The partner
+ * pages use it for the situations a reader recognises and for the promises
+ * they keep reading for.
+ *
+ * `headingTag` keeps the outline right: `h3` under a section head, `h2`
+ * where the cards open a section on their own.
+ */
+interface Props {
+  items: readonly { title: string; text: string }[];
+  headingTag?: "h2" | "h3";
+  tone?: "light" | "dark";
+}
+
+const { items, headingTag: Tag = "h3", tone = "light" } = Astro.props;
+---
+
+<ul class:list={["card-row", `is-${tone}`]} role="list" data-anim-group>
+  {
+    items.map((item, index) => (
+      <li class="card-row_item" data-anim="rise">
+        <span class="card-row_index" aria-hidden="true">
+          <span class="card-row_tick" />
+          {String(index + 1).padStart(2, "0")}
+        </span>
+        <Tag class="card-row_title">{item.title}</Tag>
+        <p class="card-row_text">{item.text}</p>
+      </li>
+    ))
+  }
+</ul>
+
+<style is:global>
+  @layer components {
+    .card-row {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-4);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+
+      /* Three abreast or one above the other: never two and a stray. */
+      @media (width >= 48rem) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    .card-row_item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      padding: clamp(1.4rem, 1.1rem + 1vw, 2rem);
+      background-color: var(--light-100);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: 1rem;
+
+      .card-row.is-dark & {
+        background-color: var(--dark-850);
+        border-color: rgb(255 255 255 / 0.08);
+      }
+    }
+
+    .card-row_index {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.4rem;
+      color: var(--text-faded);
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+    }
+
+    /* The number stands beside the mark's two strokes. */
+    .card-row_tick {
+      width: 0.26rem;
+      height: 0.9rem;
+      background-color: var(--brand-500);
+      transform: skewX(calc(var(--slant) * -1));
+      box-shadow: 0.42rem 0 0 var(--brand-300);
+      margin-right: 0.42rem;
+    }
+
+    .card-row_title {
+      margin: 0;
+      font-size: clamp(1.2rem, 1.05rem + 0.5vw, 1.45rem);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+    }
+
+    .card-row_text {
+      margin: 0;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+  }
+</style>

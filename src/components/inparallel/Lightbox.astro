@@ -31,7 +31,6 @@
       data-lightbox-frame
       title="Video"
       allow="autoplay; encrypted-media; picture-in-picture; fullscreen"
-      allowfullscreen
       hidden></iframe>
     <video
       class="lightbox_video"
@@ -42,13 +41,16 @@
     <img class="lightbox_poster" data-lightbox-poster alt="" hidden />
   </div>
 
-  <figcaption class="lightbox_caption" data-lightbox-caption></figcaption>
+  <p class="lightbox_caption" data-lightbox-caption></p>
 </dialog>
 
 <style is:global>
   @layer components {
     .lightbox {
-      width: min(64rem, 92vw);
+      /* The height is what limits it on a phone held sideways: the stage, the
+         close button over it and the caption under it all have to fit, or
+         there's no way out of the dialog. */
+      width: min(64rem, 92vw, (100dvh - 9rem) * 16 / 9);
       max-width: none;
       /* A modal dialog centres itself on `margin: auto`, and the reset's
          `* { margin: 0 }` takes that away — without this it opens in the top
@@ -59,21 +61,52 @@
       background: transparent;
       color: var(--light-100);
       overflow: visible;
+      opacity: 0;
+      scale: 0.98;
+      transition:
+        opacity var(--duration-main) var(--ease-out),
+        scale var(--duration-main) var(--ease-out),
+        overlay var(--duration-main) allow-discrete,
+        display var(--duration-main) allow-discrete;
 
+      /* Solid rather than blurred: a blur the size of the screen is redrawn
+         for as long as anything behind it moves, and the page keeps moving. */
       &::backdrop {
-        background-color: rgb(11 10 12 / 0.85);
-        backdrop-filter: blur(6px);
+        background-color: rgb(11 10 12 / 0.92);
+        opacity: 0;
+        transition:
+          opacity var(--duration-main) var(--ease-out),
+          overlay var(--duration-main) allow-discrete,
+          display var(--duration-main) allow-discrete;
       }
 
       &[open] {
-        animation: lightbox-in var(--duration-main) var(--ease-out);
+        opacity: 1;
+        scale: 1;
+      }
+
+      &[open]::backdrop {
+        opacity: 1;
       }
     }
 
-    @keyframes lightbox-in {
-      from {
+    /* Where a modal fades in from, and out to as it closes: without the two
+       discrete properties above it leaves the top layer in a single frame. */
+    @starting-style {
+      .lightbox[open] {
         opacity: 0;
         scale: 0.98;
+      }
+
+      .lightbox[open]::backdrop {
+        opacity: 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .lightbox,
+      .lightbox::backdrop {
+        transition: none;
       }
     }
 

@@ -1,0 +1,312 @@
+---
+/**
+ * One card in the client wall: the client's mark, greyed, on white.
+ *
+ * Everything is read off the client's file in `src/content/clients`. A client
+ * with a written study links to it, carries a small mark in the corner saying
+ * so, and on hover turns up the study's one result. One without links to their
+ * own site and only darkens. Both draw one file, and the ink is the card's to
+ * decide: the files arrive black or white depending on where they were first
+ * drawn, so a filter sets it, once, on two copies, and hover fades one into
+ * the other. Nothing is filtered while it moves.
+ */
+import Img from "@/components/Img.astro";
+import ArrowCircle from "./ArrowCircle.astro";
+import type { Client } from "@/utils/content.ts";
+
+interface Props {
+  client: Client;
+}
+
+const { client } = Astro.props;
+const { data } = client;
+
+const studied = Boolean(data.study && data.result);
+const href = studied ? `/work/${data.study}` : data.href;
+const external = /^https?:/i.test(href ?? "");
+const Tag = href ? "a" : "div";
+---
+
+<Tag
+  class:list={["client-card", studied && "has-study"]}
+  href={href}
+  target={external ? "_blank" : undefined}
+  rel={external ? "noopener" : undefined}
+  aria-label={studied
+    ? `${data.name}: read the case study`
+    : href
+      ? `${data.name} (opens in a new tab)`
+      : undefined}
+>
+  <span class="client-card_bg" aria-hidden="true"></span>
+  {
+    studied && (
+      <span class="client-card_flag" aria-hidden="true">
+        <>
+          <i />
+          <i />
+        </>
+      </span>
+    )
+  }
+  <span class="client-card_logo-wrap">
+    <Img src={data.logo} alt={data.name} class="client-card_logo" transparent />
+    <Img src={data.logo} class="client-card_logo is-lit" transparent />
+  </span>
+  {
+    studied && (
+      <span class="client-card_foot">
+        <span class="client-card_result">{data.result}</span>
+        <ArrowCircle class="client-card_arrow" />
+      </span>
+    )
+  }
+</Tag>
+
+<style is:global>
+  @layer components {
+    .client-card {
+      --_lift: 2rem;
+      position: relative;
+      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+      min-height: 10rem;
+      padding: 0.9375rem;
+      overflow: clip;
+      background-color: var(--light-100);
+      border-radius: 1rem;
+      color: var(--light-100);
+      text-decoration: none;
+    }
+
+    /* Dark comes up from behind the card rather than the card changing
+       colour, so the logo's ink and the fill turn over together. */
+    .client-card_bg {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background-image: linear-gradient(
+        to bottom,
+        var(
+          --trusted-top,
+          color-mix(in srgb, var(--brand-500) 42%, var(--dark-900))
+        ),
+        var(--trusted-bottom, var(--dark-950))
+      );
+      opacity: 0;
+      transition: opacity 0.4s var(--ease-soft);
+
+      /* The mark's two strokes cross the card once as it turns. */
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(
+          to right,
+          transparent calc(100% - 3.4rem),
+          rgb(255 255 255 / 0.1) calc(100% - 3.4rem) calc(100% - 1.6rem),
+          transparent calc(100% - 1.6rem) calc(100% - 1.05rem),
+          rgb(255 255 255 / 0.1) calc(100% - 1.05rem) calc(100% - 0.4rem),
+          transparent calc(100% - 0.4rem)
+        );
+        opacity: 0;
+        transform: translateX(calc(-100% - 5rem)) skewX(calc(var(--slant) * -1));
+        transition:
+          opacity 0.25s var(--ease-soft),
+          transform 0s linear 0.25s;
+      }
+    }
+
+    .client-card_logo-wrap {
+      position: relative;
+      flex: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.45s var(--ease-move);
+    }
+
+    .client-card_logo {
+      width: 65%;
+      max-height: 3.5rem;
+      object-fit: contain;
+      opacity: 0.42;
+      filter: brightness(0);
+      transition: opacity 0.4s var(--ease-soft);
+
+      &.is-lit {
+        position: absolute;
+        opacity: 0;
+        filter: brightness(0) invert(1);
+      }
+    }
+
+    /* A written study: the mark's two strokes, small, in the corner. */
+    .client-card_flag {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      display: flex;
+      gap: 0.15rem;
+      transition: opacity 0.3s var(--ease-soft);
+
+      & > i {
+        width: 0.25rem;
+        height: 0.7rem;
+        border-radius: 0.05rem;
+        background-color: var(--trusted-flag, var(--brand-500));
+        opacity: 0.55;
+        transform: skewX(calc(var(--slant) * -1));
+      }
+
+      & > i + i {
+        opacity: 0.28;
+      }
+    }
+
+    .client-card_foot {
+      position: absolute;
+      inset: auto 0.9375rem 0.9375rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding-top: 0.625rem;
+      border-top: var(--border-width) solid rgb(255 255 255 / 0.1);
+      opacity: 0;
+      transform: translateY(1rem);
+      transition:
+        transform 0.45s var(--ease-move),
+        opacity 0.4s var(--ease-soft);
+    }
+
+    .client-card_result {
+      color: rgb(255 255 255 / 0.8);
+      font-size: 0.875rem;
+      line-height: 1.15;
+    }
+
+    .client-card_arrow {
+      --arrow-fill: var(--trusted-arrow, var(--brand-500));
+      --arrow-ink: var(--light-100);
+      border-color: transparent;
+      background-color: rgb(255 255 255 / 0.18);
+      color: var(--light-100);
+    }
+
+    /* The card is the link and the circle is the only part with its own say:
+       the arrow crosses when the circle itself is hovered, because the whole
+       row is already arriving when the card is. */
+    a.client-card:hover .client-card_arrow:not(:hover) {
+      border-color: transparent;
+      background-color: rgb(255 255 255 / 0.18);
+      color: var(--light-100);
+
+      & > .arrow-circle_cur {
+        translate: 0 0;
+      }
+
+      & > .arrow-circle_next {
+        translate: calc(var(--_travel) * -1) 0;
+      }
+    }
+
+    /* Two to a row on a phone: the row's own height, so the cards never run
+       into the row below. */
+    @media (width < 48rem) {
+      .client-card {
+        min-height: 7.5rem;
+      }
+    }
+
+    /* Hover needs a pointer and the width for it. Narrower, the card stays as
+       it is: a tap goes straight to the link. */
+    @media (width >= 62rem) and (hover: hover) {
+      a.client-card:hover {
+        & .client-card_bg {
+          opacity: 1;
+        }
+
+        & .client-card_bg::after {
+          opacity: 1;
+          transform: translateX(6rem) skewX(calc(var(--slant) * -1));
+          transition:
+            opacity 0s,
+            transform 0.9s var(--ease-move);
+        }
+
+        & .client-card_logo {
+          opacity: 0;
+        }
+
+        & .client-card_logo.is-lit {
+          opacity: 1;
+        }
+
+        & .client-card_flag {
+          opacity: 0;
+        }
+      }
+
+      a.client-card.has-study:hover {
+        & .client-card_logo-wrap {
+          transform: translateY(calc(var(--_lift) * -1));
+        }
+
+        & .client-card_foot {
+          opacity: 1;
+          transform: none;
+        }
+      }
+    }
+
+    @media (width >= 62rem) {
+      a.client-card:focus-visible {
+        & .client-card_bg {
+          opacity: 1;
+        }
+
+        & .client-card_logo {
+          opacity: 0;
+        }
+
+        & .client-card_logo.is-lit {
+          opacity: 1;
+        }
+
+        & .client-card_flag {
+          opacity: 0;
+        }
+      }
+
+      a.client-card.has-study:focus-visible {
+        & .client-card_logo-wrap {
+          transform: translateY(calc(var(--_lift) * -1));
+        }
+
+        & .client-card_foot {
+          opacity: 1;
+          transform: none;
+        }
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .client-card *,
+      .client-card_bg::after {
+        transition: none;
+      }
+
+      .client-card_bg::after {
+        display: none;
+      }
+
+      a.client-card.has-study:is(:hover, :focus-visible) {
+        & .client-card_logo-wrap {
+          transform: none;
+        }
+      }
+    }
+  }
+</style>

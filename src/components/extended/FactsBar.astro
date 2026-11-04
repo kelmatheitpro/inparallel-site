@@ -1,0 +1,76 @@
+---
+/**
+ * The foot of a partner page's hero: the few facts a reader scans for before
+ * reading a word — availability, hours, minimums — standing on a parallel
+ * rule, the way the home hero ends.
+ */
+interface Props {
+  facts: readonly { value: string; label: string }[];
+}
+
+const { facts } = Astro.props;
+---
+
+<div class="facts-bar">
+  <div class="rule-pair" data-anim="rule"><i></i><i></i></div>
+  <dl class="facts-bar_list">
+    {
+      facts.map((fact) => (
+        <div class="facts-bar_item">
+          <dt class="label facts-bar_label">
+            <span class="label_slash" aria-hidden="true">
+              //
+            </span>
+            <span class="label_text">{fact.label}</span>
+          </dt>
+          <dd class="facts-bar_value">{fact.value}</dd>
+        </div>
+      ))
+    }
+  </dl>
+</div>
+
+<style is:global>
+  @layer components {
+    .facts-bar {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin: clamp(3rem, 2rem + 3vw, 5rem) auto 0;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(1.5rem, 1.2rem + 1vw, 2.25rem);
+    }
+
+    .facts-bar_list {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.5rem clamp(1.5rem, 1rem + 2vw, 3rem);
+      margin: 0;
+
+      /* Three abreast or one above the other: never two and a stray. */
+      @media (width >= 40rem) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    /* A list reads its term first; on screen the value leads and the term
+       sits under it as a label. */
+    .facts-bar_item {
+      display: flex;
+      flex-direction: column-reverse;
+      align-items: start;
+      gap: 0.6rem;
+    }
+
+    .facts-bar_label {
+      color: rgb(255 255 255 / 0.6);
+    }
+
+    .facts-bar_value {
+      margin: 0;
+      font-size: clamp(1.15rem, 1rem + 0.5vw, 1.4rem);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+  }
+</style>

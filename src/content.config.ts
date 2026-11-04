@@ -17,32 +17,12 @@ const clients = defineCollection({
       industry: z.string().optional(),
       /** Low numbers come first on the wall. */
       order: z.number().default(0),
-      /**
-       * Where the tile goes when it is clicked. The client's own site, usually;
-       * an internal path such as `/work/trakpro` sends it to the case study
-       * instead. A tile without one isn't a link at all.
-       */
+      /** The client's own site: where a card without a study goes. */
       href: z.string().optional(),
-      /**
-       * Turns the tile into a dark, highlighted one carrying a result. The
-       * design draws one of these; several still work.
-       */
-      featured: z
-        .object({
-          result: z.string(),
-        })
-        .optional(),
-      /**
-       * The client whose story runs in the card beside the wall: a YouTube id
-       * for the clip, and who is speaking in it.
-       */
-      story: z
-        .object({
-          youtube: z.string(),
-          speaker: z.string(),
-          line: z.string(),
-        })
-        .optional(),
+      /** The case study the card opens, an id in `src/content/projects`. */
+      study: z.string().optional(),
+      /** The one result the card turns up on hover, from that study. */
+      result: z.string().optional(),
     }),
 });
 
@@ -83,6 +63,63 @@ const projects = defineCollection({
       services: z.array(z.string()).default([]),
       timeline: z.string().optional(),
       year: z.number().optional(),
+      /**
+       * Pictures of the work. Every field is optional — a study shows what it
+       * has. `panel` is the brand-coloured backdrop the case panel sits on,
+       * `page` a full-length capture the browser frame scrolls through,
+       * `thumbs` other pages of the site, `card` the square shot used on
+       * grids and the hero, `desktop`/`mobile` first-screen captures.
+       */
+      media: z
+        .object({
+          card: image().optional(),
+          panel: image().optional(),
+          page: image().optional(),
+          /**
+           * The three screens on a case panel, each cut from the full capture:
+           * the top of the page, and two places further down. Cut rather than
+           * shown through a window on the whole capture, which would decode
+           * 200MB of page to show a sixth of it.
+           */
+          screens: z
+            .object({ center: image(), left: image(), right: image() })
+            .optional(),
+          thumbs: z.array(image()).default([]),
+          desktop: image().optional(),
+          mobile: image().optional(),
+          main: image().optional(),
+          /** The work grid's card backdrop: the client's colour and mark. */
+          cardBg: image().optional(),
+          /** The two screens the study opens with, left and right. */
+          heroLeft: image().optional(),
+          heroRight: image().optional(),
+          /** "What they had / what we shipped": the old site and the new. */
+          before: image().optional(),
+          after: image().optional(),
+          gallery: z.array(image()).default([]),
+          /** Whole pages of the site, for the slider the panel opens. */
+          pages: z
+            .array(z.object({ image: image(), name: z.string() }))
+            .default([]),
+        })
+        .default({ thumbs: [], gallery: [], pages: [] }),
+      /** The filter the study sits under on the work index. */
+      category: z.string().optional(),
+      /**
+       * `soon` lists the client on the work index without a study page —
+       * the work is live, the write-up isn't yet.
+       */
+      status: z.enum(["live", "soon"]).default("live"),
+      /** A client's words about the project, transcribed as said. */
+      quote: z
+        .object({
+          text: z.string(),
+          name: z.string(),
+          role: z.string().optional(),
+          /** The client's film, once it's hosted (a Cloudinary URL). */
+          video: z.url().optional(),
+        })
+        .optional(),
       /** Extra results listed under the headline number. */
       results: z
         .array(z.object({ value: z.string(), label: z.string() }))
@@ -93,4 +130,31 @@ const projects = defineCollection({
     }),
 });
 
-export const collections = { clients, projects };
+/**
+ * Posts — the Insights journal.
+ *
+ * Only the studio's own writing: every post is bylined to one of the two of
+ * us. The body is the article; the frontmatter is what the index and the
+ * article's head need.
+ */
+const posts = defineCollection({
+  loader: glob({ pattern: "**/*.md", base: "./src/content/posts" }),
+  schema: ({ image }) =>
+    z.object({
+      title: z.string(),
+      /** Meta description, and the excerpt on the index. */
+      description: z.string(),
+      date: z.coerce.date(),
+      updated: z.coerce.date().optional(),
+      author: z.enum(["aleksandar", "darko"]).default("aleksandar"),
+      /** One topic, for the index filters: "Webflow", "SEO & AEO", … */
+      category: z.string().optional(),
+      cover: image(),
+      coverAlt: z.string().default(""),
+      /** Minutes, as the original states it. */
+      readingTime: z.number().optional(),
+      draft: z.boolean().default(false),
+    }),
+});
+
+export const collections = { clients, projects, posts };

@@ -1,0 +1,142 @@
+---
+/**
+ * "In everything we ship. Not a premium tier." — the six things every
+ * project gets, whatever it costs.
+ *
+ * A ruled sheet rather than six cards: the hairlines between the cells are
+ * the section's own colour showing through a one-pixel gap, so the grid
+ * stays even however it wraps. Each cell is numbered the way the labels are,
+ * and ticked with the mark in the page's service colour.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import LaneTick from "./LaneTick.astro";
+import type { Service } from "@/data/offer.ts";
+import { EVERY_PROJECT, laneStyle } from "@/data/service-pages.ts";
+
+interface Props {
+  service: Service;
+  index: string;
+}
+
+const { service, index } = Astro.props;
+const pad = (n: number) => String(n).padStart(2, "0");
+---
+
+<section
+  id="every-project"
+  class="every theme-light"
+  style={laneStyle(service)}
+  aria-labelledby="every-title"
+>
+  <div class="every_inner">
+    <SectionHead
+      index={index}
+      label="Every project"
+      headingId="every-title"
+      lead="Whatever the scope and whatever the price, these come with it."
+    >
+      In everything we ship. <br />Not a <span class="serif">premium</span> tier.
+    </SectionHead>
+
+    <ul class="every_grid" role="list" data-anim-group data-stagger="0.06">
+      {
+        EVERY_PROJECT.map((item, position) => (
+          <li class="every_item" data-anim="rise">
+            <span class="every_index" aria-hidden="true">
+              {pad(position + 1)}
+            </span>
+            <h3 class="every_title">
+              <LaneTick />
+              {item.title}
+            </h3>
+            <p class="every_text">{item.text}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style is:global>
+  @layer components {
+    .every {
+      padding-block: var(--section-space-large, 8rem);
+      background-color: var(--light-200);
+    }
+
+    .every_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+    }
+
+    .every_grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--border-width);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      background-color: var(--border-soft);
+      border-block: var(--border-width) solid var(--border-soft);
+    }
+
+    .every_item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding: clamp(1.5rem, 1rem + 1.5vw, 2.5rem)
+        clamp(1.25rem, 1rem + 1vw, 2rem);
+      background-color: var(--light-200);
+    }
+
+    .every_index {
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+    }
+
+    /* A flex row; the type system's leading-trim pseudo-elements would
+       become stray items in it, so they are switched off. */
+    .every_title {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 0;
+      font-size: clamp(1.15rem, 1.05rem + 0.4vw, 1.35rem);
+      font-weight: 500;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+
+      &::before,
+      &::after {
+        content: none;
+      }
+    }
+
+    .every_text {
+      max-width: 26rem;
+      margin: 0;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    @media (width < 62rem) {
+      .every_grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (width < 40rem) {
+      .every_grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .every_item {
+        padding-inline: 0;
+      }
+    }
+  }
+</style>

@@ -1,0 +1,413 @@
+---
+/**
+ * The slider a case panel opens: whole pages of the client's site, one at a
+ * time, with the rest a drag, a key or a thumbnail away. One per page; each
+ * panel carries its own list on `data-gallery` (see `CaseVisual.astro`) and
+ * `project-gallery.ts` fills this in when it opens.
+ */
+---
+
+<div
+  class="pg"
+  data-project-gallery
+  role="dialog"
+  aria-modal="true"
+  aria-label="Project pages"
+>
+  <div class="pg_dim" data-pg-dim></div>
+  <div class="pg_top">
+    <span class="pg_logo" data-pg-logo></span>
+    <button class="pg_close" type="button" data-pg-close aria-label="Close">
+      <i></i><i></i>
+    </button>
+  </div>
+  <p class="pg_count" data-pg-count aria-live="polite"></p>
+  <div class="pg_frame">
+    <div class="pg_stage" data-pg-stage></div>
+    <button class="pg_arrow is-prev" type="button" data-pg-prev aria-label="Previous page">
+      <svg viewBox="0 0 24 43" fill="none" aria-hidden="true">
+        <path d="M22 2 3 21.5 22 41" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </button>
+    <button class="pg_arrow is-next" type="button" data-pg-next aria-label="Next page">
+      <svg viewBox="0 0 24 43" fill="none" aria-hidden="true">
+        <path d="m2 2 19 19.5L2 41" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </button>
+  </div>
+  <p class="pg_cap" data-pg-cap></p>
+  <div class="pg_thumbs" data-pg-thumbs></div>
+</div>
+
+<script>
+  import { initProjectGallery } from "@/scripts/project-gallery.ts";
+  initProjectGallery();
+</script>
+
+<style is:global>
+  @layer components {
+    .pg {
+      position: fixed;
+      inset: 0;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 8.125rem 0 2.5rem;
+      visibility: hidden;
+      color: var(--light-100);
+
+      &.is-open {
+        visibility: visible;
+      }
+    }
+
+    .pg_dim {
+      position: absolute;
+      inset: 0;
+      background-color: rgb(6 10 19 / 0.84);
+      backdrop-filter: blur(10px);
+      opacity: 0;
+      transition: opacity 0.5s ease;
+
+      .pg.is-open & {
+        opacity: 1;
+      }
+    }
+
+    .pg_top,
+    .pg_count,
+    .pg_cap,
+    .pg_thumbs,
+    .pg_arrow {
+      opacity: 0;
+      transition:
+        opacity 0.4s ease,
+        transform 0.6s var(--ease-out);
+
+      .pg.is-ready & {
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    .pg_top,
+    .pg_count {
+      transform: translateY(-0.5rem);
+    }
+
+    .pg_cap,
+    .pg_thumbs {
+      transform: translateY(0.5rem);
+    }
+
+    .pg_top {
+      position: absolute;
+      z-index: 4;
+      top: 3.125rem;
+      left: 3.125rem;
+      right: 3.125rem;
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      pointer-events: none;
+    }
+
+    .pg_logo,
+    .pg_close {
+      pointer-events: auto;
+    }
+
+    .pg_logo img {
+      display: block;
+      width: auto;
+      max-width: none;
+      height: 2.25rem;
+    }
+
+    .pg_close {
+      display: grid;
+      place-items: center;
+      width: 4rem;
+      height: 4rem;
+      padding: 0;
+      background-color: var(--light-100);
+      border: 0;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.4s var(--ease-out);
+
+      & > i {
+        grid-area: 1 / 1;
+        width: 3px;
+        height: 1.25rem;
+        border-radius: 5px;
+        background-color: var(--ink-900);
+        transform: rotate(45deg);
+      }
+
+      & > i + i {
+        transform: rotate(-45deg);
+      }
+
+      @media (hover: hover) {
+        &:hover {
+          transform: rotate(90deg);
+        }
+      }
+    }
+
+    .pg_count,
+    .pg_cap {
+      position: relative;
+      z-index: 2;
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.02em;
+      line-height: 1.4;
+      text-align: center;
+
+      & span {
+        color: rgb(255 255 255 / 0.5);
+        font-weight: 400;
+      }
+    }
+
+    .pg_frame {
+      position: relative;
+      z-index: 2;
+      height: var(--pg-h);
+      margin: 1.5625rem 0;
+    }
+
+    .pg_stage {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      cursor: grab;
+      touch-action: pan-y;
+      user-select: none;
+
+      &.is-drag {
+        cursor: grabbing;
+      }
+    }
+
+    .pg_slide {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      width: var(--pg-w);
+      height: var(--pg-h);
+      margin-left: calc(var(--pg-w) / -2);
+      overflow: hidden;
+      background-color: var(--light-100);
+      border-radius: 2rem;
+      box-shadow: 0 40px 90px -30px rgb(0 0 0 / 0.75);
+      will-change: transform;
+
+      &.is-anim {
+        transition:
+          transform 0.7s var(--ease-out),
+          opacity 0.5s ease;
+      }
+
+      & img {
+        display: block;
+        width: 100%;
+        max-width: none;
+        height: 100%;
+        object-fit: cover;
+        object-position: 50% 0;
+        pointer-events: none;
+      }
+    }
+
+    .pg_arrow {
+      position: absolute;
+      z-index: 3;
+      top: 50%;
+      display: grid;
+      place-items: center;
+      width: 6.25rem;
+      height: 6.25rem;
+      margin-top: -3.125rem;
+      padding: 0;
+      background-color: transparent;
+      border: 0;
+      border-radius: 50%;
+      color: var(--light-100);
+      cursor: pointer;
+
+      & svg {
+        width: 1.5rem;
+        height: 2.7rem;
+      }
+
+      &.is-prev {
+        left: 3.125rem;
+      }
+
+      &.is-next {
+        right: 3.125rem;
+      }
+
+      &[disabled] {
+        opacity: 0.25 !important;
+        cursor: default;
+      }
+
+      @media (hover: hover) {
+        &:not([disabled]):hover {
+          background-color: rgb(255 255 255 / 0.08);
+        }
+      }
+    }
+
+    .pg_thumbs {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5625rem;
+      margin-top: 3.125rem;
+      padding: 0 1rem;
+    }
+
+    .pg_thumb {
+      position: relative;
+      width: 9.375rem;
+      height: 6.25rem;
+      padding: 0;
+      overflow: hidden;
+      background-color: var(--light-100);
+      border: var(--border-width) solid var(--ink-900);
+      border-radius: 0.75rem;
+      opacity: 0.4;
+      cursor: pointer;
+      transition:
+        opacity 0.3s ease,
+        transform 0.4s var(--ease-out);
+
+      & img {
+        display: block;
+        width: 100%;
+        max-width: none;
+        height: 100%;
+        object-fit: cover;
+        object-position: 50% 0;
+      }
+
+      &::after {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        border: 4px solid rgb(255 255 255 / 0.4);
+        border-radius: inherit;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+      }
+
+      &.is-on {
+        opacity: 1;
+        transform: translateY(-2px);
+      }
+
+      &.is-on::after {
+        opacity: 1;
+      }
+
+      @media (hover: hover) {
+        &:hover {
+          opacity: 0.75;
+        }
+        &.is-on:hover {
+          opacity: 1;
+        }
+      }
+    }
+
+    .pg_close:focus-visible,
+    .pg_arrow:focus-visible,
+    .pg_thumb:focus-visible {
+      outline: 2px solid var(--brand-300);
+      outline-offset: 3px;
+    }
+
+    @media (width < 62rem) {
+      .pg_arrow {
+        width: 4rem;
+        height: 4rem;
+        margin-top: -2rem;
+
+        &.is-prev {
+          left: 1rem;
+        }
+
+        &.is-next {
+          right: 1rem;
+        }
+      }
+    }
+
+    @media (width < 48rem) {
+      .pg {
+        padding: 5.5rem 0 1.5rem;
+      }
+
+      .pg_top {
+        top: 1rem;
+        left: 1rem;
+        right: 1rem;
+        align-items: center;
+      }
+
+      .pg_logo img {
+        height: 1.75rem;
+      }
+
+      .pg_close {
+        width: 3rem;
+        height: 3rem;
+      }
+
+      .pg_count,
+      .pg_cap {
+        font-size: 0.9375rem;
+      }
+
+      .pg_frame {
+        margin: 1rem 0;
+      }
+
+      .pg_slide {
+        border-radius: 1rem;
+      }
+
+      .pg_arrow {
+        display: none;
+      }
+
+      .pg_thumbs {
+        gap: 0.625rem;
+        margin-top: 1.5rem;
+      }
+
+      .pg_thumb {
+        width: 4.5rem;
+        height: 3rem;
+        border-radius: 0.5rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .pg,
+      .pg * {
+        transition: none !important;
+      }
+    }
+  }
+</style>

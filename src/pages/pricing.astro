@@ -1,0 +1,64 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import PageHero from "@/components/parallel/PageHero.astro";
+import PriceCard from "@/components/pricing/PriceCard.astro";
+import Compare from "@/components/pricing/Compare.astro";
+import Included from "@/components/pricing/Included.astro";
+import Referral from "@/components/pricing/Referral.astro";
+import Questions from "@/components/pricing/Questions.astro";
+import WorkInMotion from "@/components/home/WorkInMotion.astro";
+import Lightbox from "@/components/inparallel/Lightbox.astro";
+import { FAQ, PRICE_TIERS } from "@/data/pricing.ts";
+
+/* The hero's light starts in the colour of the service whose tab is open. The
+   other three wait as layers of the same glass, so choosing a tab only has to
+   fade one in (see `PriceCard`). */
+const [first, ...others] = PRICE_TIERS;
+const accent = first?.service.theme.accent;
+---
+
+<Layout
+  theme="dark"
+  overlap
+  title="Pricing"
+  description="Launch fast, build the whole thing, or keep a senior crew on it every month. Pick where you are, and you get a fixed number after the first call."
+>
+  <PageHero
+    label="Pricing"
+    accent={accent}
+    lead="Launch fast, build the whole thing, or keep a senior crew on it every month. Pick where you are, and you get a fixed number after the first call."
+  >
+    One price, agreed up front, no <span class="serif">surprises</span
+    >&nbsp;after
+    <PriceCard slot="visual" />
+    <Fragment slot="after">
+      {
+        others.map((tier) => (
+          <div
+            class="page-hero_glass"
+            style={`--hero-accent: ${tier.service.theme.accent};`}
+            aria-hidden="true"
+            hidden
+          />
+        ))
+      }
+    </Fragment>
+  </PageHero>
+
+  {/* Navy and cream take turns, the way the rest of the site runs. */}
+  <Compare index="01" />
+  <Included index="02" />
+  <WorkInMotion index="03" />
+  <Referral index="04" />
+  <Questions index="05" items={FAQ} name="pricing-faq">
+    Questions, answered up front
+    <p slot="foot">
+      Something else on your mind? <a href="/contact">Ask it on the call</a>.
+    </p>
+  </Questions>
+
+  {
+    /* One dialog serves every play button above it, once the films are hosted. */
+  }
+  <Lightbox />
+</Layout>

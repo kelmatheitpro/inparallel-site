@@ -25,9 +25,20 @@ interface Props extends HTMLAttributes<"div"> {
    * its own.
    */
   fill?: string;
+  /**
+   * A still of our own for the card, in place of YouTube's thumbnail — which
+   * can carry a burned-in caption, and is one more request to YouTube.
+   */
+  poster?: string;
 }
 
-const { youtube, fill = "100%", class: className, ...rest } = Astro.props;
+const {
+  youtube,
+  fill = "100%",
+  poster,
+  class: className,
+  ...rest
+} = Astro.props;
 ---
 
 <div
@@ -40,7 +51,7 @@ const { youtube, fill = "100%", class: className, ...rest } = Astro.props;
 >
   <img
     class="video-loop_still"
-    src={`https://i.ytimg.com/vi/${youtube}/maxresdefault.jpg`}
+    src={poster ?? `https://i.ytimg.com/vi/${youtube}/maxresdefault.jpg`}
     alt=""
     width="1280"
     height="720"

@@ -1,0 +1,193 @@
+---
+/**
+ * The service's terms, in the hero: a pane of glass over the lit strokes
+ * (the hero's light already takes the lane's colour). Its two figures lead,
+ * large, and the rest of the terms follow in smaller rows, the way a receipt
+ * reads — so price, time and what happens after launch are settled before
+ * the page asks for anything.
+ *
+ * Its top edge is the lane itself — a strip of ribs along the slant in the
+ * service's colours — so the pane reads as belonging to that service before
+ * a word of it is read.
+ */
+import Copy from "./Copy.astro";
+import type { Service } from "@/data/offer.ts";
+import { laneStyle, type Fact, type Term } from "@/data/service-pages.ts";
+
+interface Props {
+  service: Service;
+  facts: [Fact, Fact];
+  terms: Term[];
+  /** Position among the four, from 1. */
+  position: number;
+  total: number;
+}
+
+const { service, facts, terms, position, total } = Astro.props;
+const pad = (n: number) => String(n).padStart(2, "0");
+---
+
+<div class="svc-spec" style={laneStyle(service)}>
+  <span class="svc-spec_lane" aria-hidden="true"></span>
+  <div class="svc-spec_head">
+    <span class="label">
+      <span class="label_slash" aria-hidden="true">//</span>
+      <span class="label_text">{service.name}</span>
+    </span>
+    <span class="svc-spec_count">
+      <span class="sr-only">Service {position} of {total}</span>
+      <span aria-hidden="true">{pad(position)} / {pad(total)}</span>
+    </span>
+  </div>
+  <dl class="svc-spec_facts">
+    {
+      facts.map((fact) => (
+        <div class="svc-spec_fact">
+          <dt>{fact.label}</dt>
+          <dd>{fact.value}</dd>
+        </div>
+      ))
+    }
+  </dl>
+  <dl class="svc-spec_terms">
+    {
+      terms.map((term) => (
+        <div class="svc-spec_term">
+          <dt>{term.label}</dt>
+          <dd>
+            <Copy text={term.value} />
+          </dd>
+        </div>
+      ))
+    }
+  </dl>
+</div>
+
+<style is:global>
+  @layer components {
+    .svc-spec {
+      position: relative;
+      width: min(100%, 30rem);
+      margin-left: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      padding: 2rem 1.75rem 1.5rem;
+      overflow: clip;
+      background-color: color-mix(in srgb, var(--dark-950) 84%, transparent);
+      border: var(--border-width) solid rgb(255 255 255 / 0.12);
+      border-radius: 1.25rem;
+      box-shadow: 0 2rem 4rem -1.5rem rgb(0 0 0 / 0.6);
+    }
+
+    /* The lane along the top edge: ribs at the slant, deep into bright. */
+    .svc-spec_lane {
+      position: absolute;
+      inset: 0 0 auto;
+      height: 0.45rem;
+      background-image:
+        repeating-linear-gradient(
+          calc(90deg + var(--slant)),
+          transparent 0 0.5rem,
+          rgb(255 255 255 / 0.28) 0.5rem 0.62rem
+        ),
+        linear-gradient(90deg, var(--lane-accent), var(--lane-soft));
+    }
+
+    .svc-spec_head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+
+      & .label_slash {
+        color: var(--lane-accent);
+      }
+    }
+
+    .svc-spec_count {
+      flex: none;
+      white-space: nowrap;
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      color: rgb(255 255 255 / 0.55);
+    }
+
+    /* One figure to a row, so "Month to month" has the width it needs. */
+    .svc-spec_facts {
+      margin: 0;
+      border-top: var(--border-width) solid rgb(255 255 255 / 0.12);
+    }
+
+    .svc-spec_fact {
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-block: 1.1rem;
+      border-bottom: var(--border-width) solid rgb(255 255 255 / 0.12);
+
+      & dd {
+        flex: none;
+        margin: 0;
+        font-size: clamp(1.6rem, 1.3rem + 1vw, 2.25rem);
+        font-weight: 500;
+        letter-spacing: -0.035em;
+        line-height: 1.05;
+        white-space: nowrap;
+        color: var(--light-100);
+      }
+
+      & dt {
+        min-width: 0;
+        font-family: var(--mono-family);
+        font-size: 0.75rem;
+        letter-spacing: 0.06em;
+        text-align: right;
+        text-transform: uppercase;
+        color: rgb(255 255 255 / 0.6);
+      }
+    }
+
+    /* The smaller terms: label left, value right, like the lines on a till
+       roll under its two big numbers. */
+    .svc-spec_terms {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      margin: 0;
+    }
+
+    .svc-spec_term {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1.25rem;
+
+      & dt {
+        flex: none;
+        font-family: var(--mono-family);
+        font-size: 0.6875rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: rgb(255 255 255 / 0.55);
+      }
+
+      & dd {
+        margin: 0;
+        color: rgb(255 255 255 / 0.88);
+        font-size: 0.9375rem;
+        line-height: 1.35;
+        text-align: right;
+      }
+    }
+
+    @media (width < 62rem) {
+      .svc-spec {
+        margin-left: 0;
+      }
+    }
+  }
+</style>

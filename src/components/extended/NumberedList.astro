@@ -1,0 +1,151 @@
+---
+/**
+ * An ordered list where the order matters: the rules an agency reads before
+ * it writes, the steps a job goes through. Each item is numbered in mono on
+ * a stroke of the mark; an item may carry a title, or be a single sentence.
+ *
+ * `tags` labels items by who does them — the freelancer's step against the
+ * three that are ours — and is read out with the item.
+ */
+interface Item {
+  title?: string;
+  text: string;
+  tag?: string;
+}
+
+interface Props {
+  items: readonly (string | Item)[];
+  /** How many to a row on wide screens. */
+  columns?: 1 | 2 | 4;
+}
+
+const { items, columns = 2 } = Astro.props;
+const rows: Item[] = items.map((item) =>
+  typeof item === "string" ? { text: item } : item,
+);
+---
+
+<ol class:list={["numbered", `is-${columns}`]} role="list" data-anim-group>
+  {
+    rows.map((item, index) => (
+      <li
+        class:list={["numbered_item", item.tag && "has-tag"]}
+        data-anim="rise"
+      >
+        <span class="numbered_index" aria-hidden="true">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+        <div class="numbered_body">
+          {item.tag && <span class="numbered_tag">{item.tag}</span>}
+          {item.title && <h3 class="numbered_title">{item.title}</h3>}
+          <p class:list={["numbered_text", !item.title && "is-lead"]}>
+            {item.text}
+          </p>
+        </div>
+      </li>
+    ))
+  }
+</ol>
+
+<style is:global>
+  @layer components {
+    /* Blue on cream, light blue on navy — set on the themes, so a list takes
+       the nearest section's by inheritance. */
+    .theme-light {
+      --numbered-accent: var(--brand-500);
+    }
+
+    .theme-dark {
+      --numbered-accent: var(--brand-300);
+    }
+
+    .numbered {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0 clamp(1.5rem, 1rem + 2.5vw, 3.5rem);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+
+      @media (width >= 48rem) {
+        &.is-2,
+        &.is-4 {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (width >= 75rem) {
+        &.is-4 {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+      }
+    }
+
+    .numbered_item {
+      display: grid;
+      grid-template-columns: 3rem minmax(0, 1fr);
+      align-items: baseline;
+      padding-block: 1.4rem;
+      border-top: var(--border-width) solid var(--border-soft);
+    }
+
+    /* The number sits on a short stroke at the slant. */
+    .numbered_index {
+      position: relative;
+      padding-left: 0.85rem;
+      color: var(--numbered-accent, var(--brand-500));
+      font-family: var(--mono-family);
+      font-size: 0.8125rem;
+      letter-spacing: 0.04em;
+
+      &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: -0.05em;
+        width: 0.2rem;
+        height: 1.1em;
+        background-color: currentcolor;
+        transform: skewX(calc(var(--slant) * -1));
+      }
+    }
+
+    .numbered_body {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: 0.5rem;
+    }
+
+    .numbered_tag {
+      padding: 0.2rem 0.5rem;
+      border: var(--border-width) solid var(--border);
+      border-radius: 0.35rem;
+      color: var(--text-muted);
+      font-family: var(--mono-family);
+      font-size: 0.6875rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .numbered_title {
+      margin: 0;
+      font-size: clamp(1.1rem, 1rem + 0.35vw, 1.3rem);
+      font-weight: 500;
+      letter-spacing: -0.015em;
+      line-height: 1.2;
+    }
+
+    .numbered_text {
+      margin: 0;
+      color: var(--text-muted);
+      line-height: 1.55;
+
+      &.is-lead {
+        color: var(--text);
+        font-size: clamp(1.02rem, 0.97rem + 0.2vw, 1.12rem);
+      }
+    }
+  }
+</style>

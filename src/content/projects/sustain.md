@@ -6,7 +6,25 @@ headlineMuted: "for a UK commercial solar leader."
 stat: "80+"
 statLabel: "pages launched"
 logo: ../../assets/inparallel/logos/sustain-mark.svg
+media:
+  card: ../../assets/inparallel/work/sustain/hero-card-shot-1080.webp
+  screens:
+    center: ../../assets/inparallel/work/sustain/screen-center.webp
+    left: ../../assets/inparallel/work/sustain/screen-left.webp
+    right: ../../assets/inparallel/work/sustain/screen-right.webp
+  desktop: ../../assets/inparallel/work/sustain/desktop.webp
+  mobile: ../../assets/inparallel/work/sustain/mobile.webp
+  main: ../../assets/inparallel/work/sustain/main.avif
+  cardBg: ../../assets/inparallel/work/sustain/work-card-bg.webp
+  pages:
+    - image: ../../assets/inparallel/work/sustain/page-home.webp
+      name: "Home"
+    - image: ../../assets/inparallel/work/sustain/page-solutions.webp
+      name: "Solar installation"
+    - image: ../../assets/inparallel/work/sustain/page-about.webp
+      name: "About"
 liveUrl: "https://www.sustaincommercialsolar.com/"
+category: "Industrial"
 metaDescription: "Webflow development for Sustain Commercial Solar, a UK commercial solar leader. 80+ pages, a scalable CMS and a component library designed to keep growing."
 summary: "Sustain Commercial Solar has been in the UK commercial solar industry since 2007, across installations for blue-chip companies, real estate portfolios, agricultural sites, manufacturing facilities and local councils. The brief was 80+ pages, seven content types, and a CMS the team could publish into on their own."
 services:
@@ -24,8 +42,7 @@ order: 3
 
 ## The background
 
-Sustain Commercial Solar has been in the UK commercial solar industry since
-2007. Their work spans installations for blue-chip companies, real estate
+Sustain Commercial Solar has been in the UK commercial solar industry since 2007. Their work spans installations for blue-chip companies, real estate
 portfolios, agricultural sites, manufacturing facilities and local councils.
 
 The product offering grew steadily over the years to cover solar installations,
@@ -47,7 +64,7 @@ would not trip up the editors using it.
 
 ## The solution
 
-inparallel built the Webflow side end to end. The CMS was structured around
+inParallel built the Webflow side end to end. The CMS was structured around
 clear collection types: solutions, services, sectors, case studies, FAQs,
 glossary terms and resources. Each collection had its own template designed for
 the kind of content it would hold, with reusable components covering everything

@@ -1,0 +1,227 @@
+---
+/**
+ * "Honest about Webflow. Including where it stops." — the platform's edges,
+ * named before the quote rather than found in month three, and beside them
+ * the work we turn down.
+ *
+ * The limits are four numbered notes. What we don't do sits apart on a navy
+ * card, each line struck out by the mark's two strokes crossed — the one
+ * place the strokes stop running side by side.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import {
+  DONT_DO,
+  DONT_DO_NOTE,
+  LIMITS,
+  LIMITS_LEAD,
+} from "@/data/service-pages.ts";
+
+interface Props {
+  index: string;
+}
+
+const { index } = Astro.props;
+const pad = (n: number) => String(n).padStart(2, "0");
+---
+
+<section id="limits" class="limits theme-light" aria-labelledby="limits-title">
+  <div class="limits_inner">
+    <SectionHead
+      index={index}
+      label="Straight answers"
+      headingId="limits-title"
+      lead={LIMITS_LEAD}
+    >
+      Honest about Webflow. <br />Including where it <span class="serif"
+        >stops.</span
+      >
+    </SectionHead>
+
+    <div class="limits_body">
+      <ol class="limits_list" role="list" data-anim-group data-stagger="0.07">
+        {
+          LIMITS.map((limit, position) => (
+            <li class="limit" data-anim="rise">
+              <span class="limit_index" aria-hidden="true">
+                {pad(position + 1)}
+              </span>
+              <h3 class="limit_title">{limit.title}</h3>
+              <p class="limit_text">{limit.text}</p>
+            </li>
+          ))
+        }
+      </ol>
+
+      <aside
+        class="refuse theme-dark"
+        aria-labelledby="refuse-title"
+        data-anim="rise"
+      >
+        <h3 class="refuse_title" id="refuse-title">What we don't do</h3>
+        <ul class="refuse_list" role="list">
+          {
+            DONT_DO.map((item) => (
+              <li>
+                <span class="refuse_cross" aria-hidden="true">
+                  <i />
+                  <i />
+                </span>
+                {item}
+              </li>
+            ))
+          }
+        </ul>
+        <p class="refuse_note">{DONT_DO_NOTE}</p>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  @layer components {
+    .limits {
+      padding-block: var(--section-space-large, 8rem);
+      background-color: var(--light-200);
+    }
+
+    .limits_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+    }
+
+    .limits_body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-5);
+
+      @media (width >= 62rem) {
+        grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+      }
+    }
+
+    /* ---- the limits ----------------------------------------------------- */
+    .limits_list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--border-width);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      background-color: var(--border-soft);
+      border-block: var(--border-width) solid var(--border-soft);
+    }
+
+    .limit {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding: clamp(1.5rem, 1rem + 1.5vw, 2.25rem)
+        clamp(1.25rem, 1rem + 1vw, 2rem) clamp(1.5rem, 1rem + 1.5vw, 2.25rem) 0;
+      background-color: var(--light-200);
+
+      &:nth-child(even) {
+        padding-left: clamp(1.25rem, 1rem + 1vw, 2rem);
+      }
+    }
+
+    .limit_index {
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      color: var(--brand-500);
+    }
+
+    .limit_title {
+      margin: 0;
+      font-size: clamp(1.15rem, 1.05rem + 0.4vw, 1.35rem);
+      font-weight: 500;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    .limit_text {
+      max-width: 30rem;
+      margin: 0;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* ---- what we turn down ---------------------------------------------- */
+    .refuse {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      padding: clamp(1.5rem, 1rem + 1.5vw, 2.25rem);
+      background-color: var(--dark-900);
+      border-radius: 1.25rem;
+      color: var(--text);
+    }
+
+    .refuse_title {
+      margin: 0;
+      font-size: clamp(1.4rem, 1.2rem + 0.6vw, 1.75rem);
+      font-weight: 500;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .refuse_list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border-top: var(--border-width) solid var(--border-soft);
+
+      & li {
+        display: flex;
+        align-items: baseline;
+        gap: 0.85rem;
+        padding-block: 0.9rem;
+        border-bottom: var(--border-width) solid var(--border-soft);
+        line-height: 1.4;
+      }
+    }
+
+    /* The two strokes, crossed: no. */
+    .refuse_cross {
+      position: relative;
+      flex: none;
+      width: 0.8rem;
+      height: 0.8rem;
+      translate: 0 0.05rem;
+
+      & > i {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 2px;
+        height: 100%;
+        background-color: var(--brand-300);
+        rotate: var(--slant);
+      }
+
+      & > i + i {
+        rotate: calc(var(--slant) * -1);
+        background-color: color-mix(in srgb, var(--brand-300) 55%, transparent);
+      }
+    }
+
+    .refuse_note {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+    }
+
+    @media (width < 40rem) {
+      .limits_list {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .limit,
+      .limit:nth-child(even) {
+        padding-inline: 0;
+      }
+    }
+  }
+</style>

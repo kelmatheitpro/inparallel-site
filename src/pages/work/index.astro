@@ -1,43 +1,94 @@
 ---
+/**
+ * /work — every site, and what each one did once it launched.
+ *
+ * Dark and light take turns down the page: the hero with the live sites in a
+ * large browser under the copy, one client's old site against the new one, the
+ * grid of every site, the figures the studies report, the ask, and the clients
+ * on camera. The footer closes it with its own call to action.
+ */
 import Layout from "@/layouts/BaseLayout.astro";
-import Section from "@/components/Section.astro";
-import PageHero from "@/components/sections/PageHero.astro";
-import ProjectCard from "@/components/inparallel/ProjectCard.astro";
-import MidCta from "@/components/sections/MidCta.astro";
+import PageHero from "@/components/parallel/PageHero.astro";
+import CtaBand from "@/components/parallel/CtaBand.astro";
+import WorkInMotion from "@/components/home/WorkInMotion.astro";
+import Lightbox from "@/components/inparallel/Lightbox.astro";
+import WorkFeatured from "@/components/work/WorkFeatured.astro";
+import WorkCompare from "@/components/work/WorkCompare.astro";
+import WorkGrid from "@/components/work/WorkGrid.astro";
+import WorkMeasures from "@/components/work/WorkMeasures.astro";
 import { getProjects } from "@/utils/content.ts";
+import { WORK_INDEX } from "@/data/work.ts";
+import { SITE_NAME, SITE_URL } from "@/consts.ts";
 
-const projects = await getProjects();
+const description =
+  "Webflow sites we designed, built and grew for SaaS, AI, healthcare and industrial teams — and what each one did once it launched.";
+
+const studies = await getProjects();
+
+/* Search engines and AI assistants read the page as a collection of studies. */
+const structured = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  name: "Our work",
+  description,
+  url: new URL("/work", SITE_URL).href,
+  publisher: { "@type": "Organization", name: SITE_NAME, url: SITE_URL },
+  mainEntity: {
+    "@type": "ItemList",
+    itemListElement: studies.map(({ id, data }, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: new URL(`/work/${id}`, SITE_URL).href,
+      name: `${data.headline} ${data.headlineMuted}`,
+    })),
+  },
+};
 ---
 
 <Layout
-  theme="light"
+  theme="dark"
   overlap
-  title="Our work"
-  description="Case studies from the inparallel studio — what we built, what changed, and the numbers that followed."
+  title="Our work — Webflow case studies"
+  description={description}
 >
-  <PageHero
-    eyebrow="Our work"
-    title="Every project,"
-    titleMuted="measured by its results"
-    lead="Not a portfolio of screenshots. What the brief was, what we pushed back on, and what happened after launch."
+  <script
+    is:inline
+    slot="head"
+    type="application/ld+json"
+    set:html={JSON.stringify(structured)}
   />
 
-  <Section theme="dark" paddingTop="medium" paddingBottom="medium">
-    <div class="work_grid">
-      {projects.map((project) => <ProjectCard project={project} />)}
-    </div>
-  </Section>
+  <PageHero
+    align="center"
+    label={WORK_INDEX.hero.label}
+    lead={WORK_INDEX.hero.lead}
+  >
+    <span class="work-hero_title">
+      Built in Webflow, <br />measured <span class="serif">after</span> launch
+    </span>
+    <Fragment slot="actions">
+      <a class="btn" href="/contact"> Book an intro call </a>
+      <a class="btn btn-ghost" href="#sites">See every site</a>
+    </Fragment>
+    <WorkFeatured slot="after" />
+  </PageHero>
 
-  <MidCta />
+  <WorkCompare />
+  <WorkGrid />
+  <WorkMeasures />
+  <CtaBand />
+  <WorkInMotion index={WORK_INDEX.stories.index} />
+
+  {/* One dialog serves every play button above it. */}
+  <Lightbox />
 </Layout>
 
 <style is:global>
   @layer components {
-    .work_grid {
-      width: 100%;
-      display: grid;
-      gap: var(--space-5);
-      grid-template-columns: repeat(auto-fill, minmax(min(22rem, 100%), 1fr));
+    /* Sized so "measured after launch" holds to one line on a phone: the claim
+       reads as two lines, the way it's written. */
+    .page-hero_title:has(.work-hero_title) {
+      font-size: clamp(2.1rem, 1.1rem + 4.4vw, 5rem);
     }
   }
 </style>

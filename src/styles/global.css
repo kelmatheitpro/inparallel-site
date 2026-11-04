@@ -8,8 +8,16 @@
 /* Geist is the design's typeface. Self-hosted variable cut, so the whole
    400–700 range the design uses costs one file per subset. */
 @import "@fontsource-variable/geist";
+/* Labels and figures in the mono cut; accents in Instrument Serif's italic. */
+@import "@fontsource-variable/geist-mono";
+@import "@fontsource/instrument-serif/400-italic.css";
 
 @import "./base.css" layer(base);
 @import "./patterns.css" layer(patterns);
 @import "./inparallel.css" layer(patterns);
+/* The house marks sit with the components: their compound rules (a button's
+   arrow, say) have to win over a primitive's own defaults, like `.icon`'s
+   square size — and a component's own styles, coming later, still win
+   over them. */
+@import "./parallel.css" layer(components);
 @import "./utilities.css" layer(utilities);

@@ -1,0 +1,361 @@
+---
+/**
+ * The work, moving in parallel: two lanes of shipped sites running in
+ * opposite directions under the hero.
+ *
+ * Every card is the mark's stroke — a parallelogram at the logo's lean — with
+ * a site inside it, and the cards nest along their slant so each lane reads
+ * as one long band of strokes. The lanes loop seamlessly (each list is there
+ * twice and slides by exactly one copy), pause while the pointer is over
+ * them, and stand still for a reader who has asked for less motion.
+ */
+import Img from "@/components/Img.astro";
+import { getProjects } from "@/utils/content.ts";
+
+const projects = (await getProjects({ includeSoon: true })).filter(
+  ({ data }) => data.media.desktop ?? data.media.card,
+);
+
+/* The second lane runs the same work in the other order, so the two never
+   show the same site side by side. */
+const lanes = [projects, [...projects].reverse()];
+---
+
+<section
+  id="shipped"
+  class="tracks theme-dark"
+  aria-label="Sites we've shipped"
+>
+  {
+    lanes.map((lane, laneIndex) => (
+      <div
+        class:list={["tracks_lane", laneIndex === 0 ? "is-left" : "is-right"]}
+      >
+        <div class="tracks_belt">
+          {[0, 1].map((copy) =>
+            lane.map(({ id, data }) => {
+              const shot = (data.media.desktop ?? data.media.card)!;
+              const linked = data.status !== "soon";
+              const Tag = linked ? "a" : "div";
+              return (
+                <Tag
+                  class="track-card"
+                  href={linked ? `/work/${id}` : undefined}
+                  data-cursor={linked ? "View case" : undefined}
+                  aria-hidden={copy === 1 ? "true" : undefined}
+                  tabindex={copy === 1 && linked ? -1 : undefined}
+                  aria-label={
+                    linked && copy === 0
+                      ? `${data.client} case study`
+                      : undefined
+                  }
+                >
+                  <Img
+                    src={shot}
+                    alt=""
+                    class="track-card_shot"
+                    variant="constrained"
+                    sizes="20rem"
+                  />
+                  <span class="track-card_name">
+                    {data.client.split(" ")[0]}
+                  </span>
+                </Tag>
+              );
+            }),
+          )}
+        </div>
+      </div>
+    ))
+  }
+  {
+    /* Moving for longer than a few seconds, so it has to be stoppable. The
+       pause sign is two parallel strokes — the mark, standing up. */
+  }
+  <button
+    type="button"
+    class="tracks_toggle"
+    data-tracks-toggle
+    aria-pressed="false"
+  >
+    <span class="tracks_toggle_icon" aria-hidden="true"><i></i><i></i></span>
+    <span class="tracks_toggle_label">Pause</span>
+  </button>
+</section>
+
+<script>
+  for (const toggle of document.querySelectorAll<HTMLButtonElement>(
+    "[data-tracks-toggle]",
+  )) {
+    const band = toggle.closest<HTMLElement>(".tracks");
+    const label = toggle.querySelector(".tracks_toggle_label");
+    toggle.addEventListener("click", () => {
+      const paused = toggle.getAttribute("aria-pressed") !== "true";
+      toggle.setAttribute("aria-pressed", String(paused));
+      band?.classList.toggle("is-paused", paused);
+      if (label) label.textContent = paused ? "Play" : "Pause";
+    });
+
+    /* Out of sight the belts stop: two long layers moving for nobody. */
+    if (band)
+      new IntersectionObserver(([entry]) =>
+        band.classList.toggle("is-away", !entry?.isIntersecting),
+      ).observe(band);
+
+    /* The tab key can land on a card that has slid out of view, and a lane has
+       no scroll to bring it back with: its belt is wound to where the card
+       stands as near the middle of the screen as the loop goes. Only the first
+       copy takes focus, so the belt's offset is never past a whole copy. */
+    band?.addEventListener("focusin", (event) => {
+      const card = (event.target as Element).closest<HTMLElement>(
+        ".track-card",
+      );
+      const belt = card?.parentElement;
+      const run = belt?.getAnimations()[0];
+      if (!card || !belt || !run) return;
+      const box = card.getBoundingClientRect();
+      const room = document.documentElement.clientWidth;
+      if (box.left >= 0 && box.right <= room) return;
+      const loop = belt.getBoundingClientRect().width / 2;
+      const length = Number(run.effect?.getComputedTiming().duration);
+      const middle = (room - box.width) / 2 - card.offsetLeft;
+      const wound = Math.max(0, Math.min(loop - 1, -middle)) / loop;
+      /* The upper lane runs left as time passes, the lower one right. */
+      run.currentTime =
+        (belt.closest(".is-right") ? 1 - wound : wound) * (length - 1);
+    });
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .tracks {
+      position: relative;
+      --_h: clamp(7.5rem, 5rem + 6vw, 11.5rem);
+      --_w: calc(var(--_h) * 1.65);
+      --_lean: calc(var(--_h) * var(--slant-tan));
+      --_gap: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: var(--_gap);
+      /* The foot keeps room for the pause button, clear of the moving names. */
+      padding-block: clamp(1.5rem, 1rem + 1.5vw, 2.5rem) 2.75rem;
+      overflow: clip;
+      background-color: var(--dark-950);
+    }
+
+    /* A jump to the band (the hero's scroll cue) stops right under the bar: it
+       has no padding to take the room the site leaves other sections, and
+       Lenis, where it runs, allows for the bar itself. */
+    .tracks:target {
+      scroll-margin-top: var(--nav-height);
+    }
+
+    html.lenis .tracks:target {
+      scroll-margin-top: 0;
+    }
+
+    .tracks_lane {
+      overflow: clip;
+    }
+
+    /* One belt holds the lane's list twice; sliding it by half is exactly one
+       copy, so the loop has no seam. */
+    .tracks_belt {
+      display: flex;
+      width: max-content;
+      animation: tracks-run 70s linear infinite;
+
+      .is-right & {
+        animation-name: tracks-run-back;
+        animation-duration: 84s;
+      }
+
+      /* Still while it's being looked at closely — pointer over it, a card
+         focused — and for good once it's paused. Only a card counts: the
+         pause button keeps focus after a click, and "Play" has to play. */
+      .tracks:hover &,
+      .tracks:has(.track-card:focus) &,
+      .tracks.is-away &,
+      .tracks.is-paused & {
+        animation-play-state: paused;
+      }
+    }
+
+    @keyframes tracks-run {
+      to {
+        translate: -50% 0;
+      }
+    }
+
+    @keyframes tracks-run-back {
+      from {
+        translate: -50% 0;
+      }
+      to {
+        translate: 0 0;
+      }
+    }
+
+    /* A stroke with a site in it. Neighbours overlap by the lean less the
+       gap, so the strokes stand an even gap apart all the way up. */
+    .track-card {
+      position: relative;
+      flex: none;
+      display: block;
+      width: var(--_w);
+      height: var(--_h);
+      margin-right: calc(var(--_gap) - var(--_lean));
+      clip-path: polygon(
+        var(--_lean) 0,
+        100% 0,
+        calc(100% - var(--_lean)) 100%,
+        0 100%
+      );
+      background-color: var(--dark-800);
+      color: var(--light-100);
+      text-decoration: none;
+    }
+
+    .track-card_shot {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      transition: scale 0.8s var(--ease-out);
+    }
+
+    /* The shots sit back behind a plain shade. A filter here would be raster
+       work on every tile of two belts that never stop moving. */
+    .track-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background-color: rgb(6 10 19 / 0.2);
+      transition: opacity 0.5s var(--ease-out);
+      pointer-events: none;
+    }
+
+    /* Far enough in that the stroke's leaning edge clears the tag's top
+       corner. One word: the whole name won't fit a stroke's foot on a phone,
+       and the link carries it in full for anyone who needs it read. */
+    .track-card_name {
+      position: absolute;
+      left: 1.5rem;
+      bottom: 0.7rem;
+      z-index: 2;
+      padding: 0.3rem 0.55rem;
+      border-radius: 0.4rem;
+      background-color: rgb(6 10 19 / 0.78);
+      font-family: var(--mono-family);
+      font-size: 0.6875rem;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    @media (hover: hover) {
+      a.track-card:hover .track-card_shot {
+        scale: 1.04;
+      }
+
+      a.track-card:hover::before {
+        opacity: 0;
+      }
+    }
+
+    /* Focus can't draw an outline round a clipped shape, so the stroke
+       lights up instead. */
+    a.track-card:focus-visible {
+      outline: none;
+
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-color: rgb(42 109 218 / 0.45);
+      }
+
+      &::before {
+        opacity: 0;
+      }
+    }
+
+    .tracks_toggle {
+      position: absolute;
+      right: var(--site-margin);
+      bottom: 0.55rem;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.3rem 0.6rem;
+      border: var(--border-width) solid rgb(255 255 255 / 0.18);
+      border-radius: 0.4rem;
+      background-color: rgb(6 10 19 / 0.82);
+      color: var(--light-100);
+      font-family: var(--mono-family);
+      font-size: 0.625rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      opacity: 0.8;
+      transition: opacity 0.3s var(--ease-soft);
+
+      @media (hover: hover) {
+        &:hover {
+          opacity: 1;
+        }
+      }
+
+      &:focus-visible {
+        opacity: 1;
+        outline: var(--focus-width) solid var(--brand-300);
+        outline-offset: 2px;
+      }
+    }
+
+    .tracks_toggle_icon {
+      display: inline-flex;
+      gap: 0.16rem;
+
+      & > i {
+        width: 0.18rem;
+        height: 0.65rem;
+        background-color: currentcolor;
+        transform: skewX(calc(var(--slant) * -1));
+      }
+    }
+
+    /* Paused, the sign becomes play: the two strokes close into one. */
+    .tracks.is-paused .tracks_toggle_icon > i + i {
+      display: none;
+    }
+
+    .tracks.is-paused .tracks_toggle_icon > i {
+      width: 0.45rem;
+      clip-path: polygon(0 0, 100% 50%, 0 100%);
+      transform: none;
+    }
+
+    /* Standing still, a lane is one you can scroll along yourself. */
+    @media (prefers-reduced-motion: reduce) {
+      .tracks_belt {
+        animation: none;
+      }
+      .tracks_lane {
+        overflow-x: auto;
+        scrollbar-width: none;
+      }
+      .tracks_toggle {
+        display: none;
+      }
+      .track-card_shot {
+        transition: none;
+      }
+      a.track-card:hover .track-card_shot {
+        scale: 1;
+      }
+    }
+  }
+</style>

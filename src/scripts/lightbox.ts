@@ -48,6 +48,12 @@ export function initLightbox() {
     }
 
     dialog.showModal();
+    document.documentElement.classList.add("is-locked");
+    document.dispatchEvent(
+      new CustomEvent("inparallel:overlay", {
+        detail: { id: "lightbox", open: true },
+      }),
+    );
     if (src && !youtube) video.play().catch(() => {});
   };
 
@@ -78,11 +84,18 @@ export function initLightbox() {
     if (event.target === dialog) close();
   });
 
-  /* Escape closes the dialog without going through the button. */
+  /* Escape closes the dialog without going through the button; every way
+     out ends here, so this is where the page is let go again. */
   dialog.addEventListener("close", () => {
     video.pause();
     video.removeAttribute("src");
     frame.removeAttribute("src");
     frame.hidden = true;
+    document.documentElement.classList.remove("is-locked");
+    document.dispatchEvent(
+      new CustomEvent("inparallel:overlay", {
+        detail: { id: "lightbox", open: false },
+      }),
+    );
   });
 }

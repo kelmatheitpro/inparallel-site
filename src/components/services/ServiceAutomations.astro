@@ -1,0 +1,251 @@
+---
+/**
+ * "Your site shouldn't stop at the form." — four automations, each drawn as
+ * the chain it is.
+ *
+ * Every chain runs along a pair of rails, the parallel rule laid flat, and
+ * its steps sit on the rails as parallelograms at the slant; the last one,
+ * where the work lands, is filled in the service's colour. A reader sees the
+ * shape of each flow before reading a word of it. The tools we wire them
+ * with follow, then where the work is sold.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import type { Service } from "@/data/offer.ts";
+import {
+  AUTOMATION_LEAD,
+  AUTOMATION_NOTE,
+  AUTOMATION_TOOLS,
+  FLOWS,
+  laneStyle,
+} from "@/data/service-pages.ts";
+
+interface Props {
+  service: Service;
+  index: string;
+}
+
+const { service, index } = Astro.props;
+---
+
+<section
+  id="automations"
+  class="flows theme-light"
+  style={laneStyle(service)}
+  aria-labelledby="flows-title"
+>
+  <div class="flows_inner">
+    <SectionHead
+      index={index}
+      label="Automations"
+      headingId="flows-title"
+      lead={AUTOMATION_LEAD}
+    >
+      Your site shouldn't stop <br />at the <span class="serif">form.</span>
+    </SectionHead>
+
+    <ul class="flows_grid" role="list" data-anim-group data-stagger="0.07">
+      {
+        FLOWS.map((flow) => (
+          <li class="flow" data-anim="rise">
+            <ol class="flow_chain" aria-label={`${flow.title}, step by step`}>
+              {flow.steps.map((step) => (
+                <li class="flow_step">
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ol>
+            <h3 class="flow_title">{flow.title}</h3>
+            <p class="flow_text">{flow.text}</p>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="flows_foot">
+      <p class="flows_tools">
+        <span class="flows_tools_label">Wired with</span>
+        {AUTOMATION_TOOLS.map((tool) => <span class="flows_tool">{tool}</span>)}
+      </p>
+      <p class="flows_note">{AUTOMATION_NOTE}</p>
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  @layer components {
+    .flows {
+      padding-block: var(--section-space-large, 8rem);
+      background-color: var(--light-200);
+    }
+
+    .flows_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+    }
+
+    .flows_grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-4);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding: clamp(1.5rem, 1rem + 1.5vw, 2.25rem);
+      background-color: var(--light-100);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: 1rem;
+    }
+
+    /* ---- the chain ------------------------------------------------------ */
+    /* The rails run under the steps; each step's own fill parts them. */
+    .flow_chain {
+      position: relative;
+      /* As wide as its steps, so the rails stop at the last one. */
+      align-self: start;
+      max-width: 100%;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem 1.4rem;
+      margin: 0 0 1.25rem;
+      padding: 0.35rem 0.5rem;
+      list-style: none;
+
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 50% 0 auto;
+        height: 0.3rem;
+        translate: 0 -50%;
+        border-block: 1px solid
+          color-mix(in srgb, var(--lane-dark) 35%, transparent);
+      }
+    }
+
+    .flow_step {
+      position: relative;
+      isolation: isolate;
+      padding: 0.45rem 0.95rem;
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+
+      /* The parallelogram is drawn behind the word, so the word stays
+         upright while its box leans. */
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border: 1px solid color-mix(in srgb, var(--lane-dark) 40%, transparent);
+        border-radius: 0.3rem;
+        background-color: var(--light-100);
+        transform: skewX(calc(var(--slant) * -1));
+      }
+
+      &:last-child {
+        color: var(--light-100);
+
+        &::before {
+          border-color: var(--lane-dark);
+          background-color: var(--lane-dark);
+          box-shadow: 0.35rem 0 0
+            color-mix(in srgb, var(--lane-accent) 80%, var(--lane-dark));
+        }
+      }
+    }
+
+    .flow_title {
+      margin: 0;
+      font-size: clamp(1.2rem, 1.05rem + 0.5vw, 1.45rem);
+      font-weight: 500;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    .flow_text {
+      max-width: 30rem;
+      margin: 0;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* ---- tools ---------------------------------------------------------- */
+    .flows_foot {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem 2rem;
+      padding-top: 1.5rem;
+      border-top: var(--border-width) solid var(--border-soft);
+    }
+
+    .flows_tools {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0;
+
+      &::before,
+      &::after {
+        content: none;
+      }
+    }
+
+    .flows_tools_label {
+      margin-right: 0.5rem;
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .flows_tool {
+      padding: 0.35rem 0.7rem;
+      border: var(--border-width) solid var(--border);
+      border-radius: 0.4rem;
+      font-size: 0.875rem;
+    }
+
+    .flows_note {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+    }
+
+    @media (width < 48rem) {
+      .flows_grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    /* On a phone a longer chain wraps, and rails through the gap between its
+       rows would join nothing, so the steps stand on their own. */
+    @media (width < 30rem) {
+      .flow_chain {
+        gap: 0.7rem 1.1rem;
+
+        &::before {
+          display: none;
+        }
+      }
+      .flow_step {
+        padding: 0.4rem 0.75rem;
+        font-size: 0.6875rem;
+      }
+    }
+  }
+</style>

@@ -335,8 +335,9 @@ const percent = (value: number, of: number) => `${((value / of) * 100).toFixed(3
     }
 
     .dot-map.is-revealed .dot-map_spark {
-      animation: dot-map-spark var(--_cycle) calc(var(--_delay) + 900ms)
-        infinite linear;
+      /* Once along each arc. On a loop it would repaint the whole map for as
+         long as the page stayed open. */
+      animation: dot-map-spark var(--_cycle) calc(var(--_delay) + 900ms) linear;
     }
 
     @keyframes dot-map-spark {
@@ -366,8 +367,8 @@ const percent = (value: number, of: number) => `${((value / of) * 100).toFixed(3
       transition-delay: calc(var(--_delay) + 1100ms);
     }
 
-    /* The ring thrown off a node, and the one Belgrade throws continuously.
-       Both are drawn as a stroke that grows and fades rather than a filled
+    /* The ring thrown off a node as it lands, and the one Belgrade keeps
+       throwing. Both are drawn as a stroke that grows and fades rather than a filled
        disc, so nothing ever covers the node underneath. */
     .dot-map_ping,
     .dot-map_home-ping {
@@ -380,8 +381,7 @@ const percent = (value: number, of: number) => `${((value / of) * 100).toFixed(3
     }
 
     .dot-map.is-revealed .dot-map_ping {
-      animation: dot-map-ping var(--_cycle) calc(var(--_delay) + 1100ms)
-        infinite ease-out;
+      animation: dot-map-ping var(--_cycle) calc(var(--_delay) + 1100ms) ease-out;
     }
 
     .dot-map_home {

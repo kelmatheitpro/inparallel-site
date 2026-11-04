@@ -1,0 +1,241 @@
+---
+/**
+ * The visitor's situation, named before we say a word about ourselves — then
+ * what we do about it, while the problem is still on screen.
+ *
+ * The problem is the section's heading, with the two paragraphs that explain
+ * it beside it. A parallel rule separates it from the answer: six things we
+ * do, each a card, one of them carrying the number that stops the grid
+ * reading as six paragraphs in boxes. That card is lit in the service's
+ * colour, the way the chosen lane is on the home page.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import LaneTick from "./LaneTick.astro";
+import TitleLines from "./TitleLines.astro";
+import type { Service } from "@/data/offer.ts";
+import { laneStyle, type ServicePage } from "@/data/service-pages.ts";
+
+interface Props {
+  service: Service;
+  problem: NonNullable<ServicePage["problem"]>;
+  index: string;
+}
+
+const { service, problem, index } = Astro.props;
+---
+
+<section
+  id="problem"
+  class="problem theme-dark on-lane"
+  style={laneStyle(service)}
+  aria-labelledby="problem-title"
+>
+  <div class="problem_inner">
+    <div class="problem_head">
+      <SectionHead index={index} label="The problem" headingId="problem-title">
+        <TitleLines title={problem.title} />
+      </SectionHead>
+      <div class="problem_body">
+        {problem.body.map((text) => <p>{text}</p>)}
+      </div>
+    </div>
+
+    <span class="rule-pair" data-anim="rule" aria-hidden="true">
+      <i></i><i></i>
+    </span>
+
+    <div class="problem_answer">
+      <p class="problem_answer_title">
+        What that takes. <span>All of it included.</span>
+      </p>
+      <ul class="problem_grid" role="list" data-anim-group data-stagger="0.06">
+        {
+          problem.capabilities.map((item) => (
+            <li
+              class:list={["capability", item.figure && "has-figure"]}
+              data-anim="rise"
+            >
+              {item.figure ? (
+                <div class="capability_figure">
+                  <span class="capability_figure_value">{item.figure}</span>
+                  <span class="capability_figure_label">
+                    {item.figureLabel}
+                  </span>
+                </div>
+              ) : (
+                <LaneTick />
+              )}
+              <h3 class="capability_title">{item.title}</h3>
+              <p class="capability_text">{item.text}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  @layer components {
+    .problem {
+      padding-block: var(--section-space-large, 8rem);
+      background-color: var(--lane-dark);
+    }
+
+    .problem_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
+    }
+
+    .problem_head {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2rem;
+
+      @media (width >= 62rem) {
+        grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+        align-items: end;
+        column-gap: clamp(3rem, 1rem + 4vw, 6rem);
+      }
+    }
+
+    .problem_body {
+      display: flex;
+      flex-direction: column;
+      gap: 1.4rem;
+
+      & p {
+        max-width: 34rem;
+        margin: 0;
+        color: var(--text-muted);
+        font-size: clamp(1.0625rem, 1rem + 0.25vw, 1.2rem);
+        line-height: 1.55;
+      }
+
+      & p:first-child {
+        color: var(--text);
+      }
+    }
+
+    .problem_answer {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(1.75rem, 1rem + 2vw, 2.75rem);
+    }
+
+    .problem_answer_title {
+      margin: 0;
+      font-size: clamp(1.4rem, 1.15rem + 0.9vw, 2rem);
+      font-weight: 500;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+
+      & span {
+        color: var(--lane-accent);
+      }
+    }
+
+    /* ---- the six -------------------------------------------------------- */
+    .problem_grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-4);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .capability {
+      position: relative;
+      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: 0.85rem;
+      padding: clamp(1.4rem, 1.1rem + 0.8vw, 1.9rem);
+      overflow: clip;
+      background-color: rgb(255 255 255 / 0.03);
+      border: var(--border-width) solid rgb(255 255 255 / 0.08);
+      border-radius: 1rem;
+
+      & .lane-tick {
+        margin-bottom: 0.4rem;
+      }
+    }
+
+    /* The card with the number: the lane, lit — deep colour, its accent
+       glowing from the top, ribs along the slant. */
+    .capability.has-figure {
+      border-color: color-mix(in srgb, var(--lane-accent) 35%, transparent);
+      background-color: var(--lane-dark);
+      background-image:
+        repeating-linear-gradient(
+          calc(90deg + var(--slant)),
+          transparent 0 calc(1.75rem - 1px),
+          rgb(255 255 255 / 0.06) calc(1.75rem - 1px) 1.75rem
+        ),
+        radial-gradient(
+          120% 70% at 80% 0%,
+          color-mix(in srgb, var(--lane-accent) 45%, transparent),
+          transparent 70%
+        );
+    }
+
+    .capability_figure {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .capability_figure_value {
+      font-size: clamp(2.75rem, 2rem + 2.5vw, 4rem);
+      font-weight: 500;
+      letter-spacing: -0.045em;
+      line-height: 1;
+      color: var(--light-100);
+    }
+
+    .capability_figure_label {
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--lane-accent);
+    }
+
+    .capability_title {
+      margin: 0;
+      font-size: clamp(1.15rem, 1.05rem + 0.4vw, 1.35rem);
+      font-weight: 500;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+
+    .capability_text {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+      line-height: 1.55;
+
+      .has-figure & {
+        color: rgb(255 255 255 / 0.75);
+      }
+    }
+
+    @media (width < 62rem) {
+      .problem_grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (width < 40rem) {
+      .problem_grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+  }
+</style>

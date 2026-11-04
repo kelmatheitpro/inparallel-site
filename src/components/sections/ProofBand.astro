@@ -1,0 +1,215 @@
+---
+import Section from "@/components/Section.astro";
+import Img from "@/components/Img.astro";
+import Icon from "@/components/Icon.astro";
+import { getProjects } from "@/utils/content.ts";
+import { RECOGNITION } from "@/data/home.ts";
+
+/* The first two studies already have rows of their own above this band, so
+   it carries the headline number of every study after them — each one a
+   way into its write-up. */
+const projects = (await getProjects()).slice(2);
+---
+
+<Section id="proof" paddingTop="none" gap="6">
+  <ul class="proof_stats" role="list">
+    {
+      projects.map(({ id, data }) => (
+        <li class="proof_stat">
+          <a class="proof_stat_link" href={`/work/${id}`}>
+            <span class="proof_stat_value" data-anim="count">
+              {data.stat}
+            </span>
+            <span class="proof_stat_label">{data.statLabel}</span>
+            <span class="proof_stat_client">{data.client}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+
+  <ul class="proof_awards" role="list" aria-label="Recognition">
+    {
+      RECOGNITION.map((award) => (
+        <li class="proof_award surface">
+          <span class="proof_award_mark" aria-hidden="true">
+            {award.icon ? (
+              <Icon src={award.icon} class="proof_award_icon" />
+            ) : (
+              award.image && (
+                <Img
+                  src={award.image}
+                  class="proof_award_image"
+                  variant="densities"
+                  width={40}
+                  transparent
+                />
+              )
+            )}
+          </span>
+          <span class="proof_award_title">{award.title}</span>
+          <span class="proof_award_issuer">{award.issuer}</span>
+        </li>
+      ))
+    }
+  </ul>
+</Section>
+
+<style is:global>
+  @layer components {
+    /* ---- the numbers ---------------------------------------------------- */
+    /* One ruled band across the container, a column per study, split by the
+       same hairline that runs along its top. */
+    .proof_stats {
+      width: 100%;
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(0, 1fr);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border-block: var(--border-width) solid var(--border-soft);
+    }
+
+    .proof_stat + .proof_stat {
+      border-left: var(--border-width) solid var(--border-soft);
+    }
+
+    .proof_stat_link {
+      position: relative;
+      isolation: isolate;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-3);
+      padding: var(--space-7) var(--space-6);
+      color: inherit;
+      text-decoration: none;
+
+      /* The column's hover shade is a fade of its own, so nothing here
+         repaints as the pointer passes. */
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background-color: var(--background-raised);
+        opacity: 0;
+        transition: opacity var(--duration-main);
+      }
+
+      @media (hover: hover) {
+        &:hover::before {
+          opacity: 1;
+        }
+      }
+
+      &:focus-visible::before {
+        opacity: 1;
+      }
+    }
+
+    /* The figure is lit the way the headings are. */
+    .proof_stat_value {
+      margin-bottom: var(--space-2);
+      padding-bottom: var(--heading-descender);
+      background-image: var(--heading-fill);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: var(--heading-ink);
+      font-size: clamp(3rem, 6vw, 5rem);
+      font-weight: var(--primary-semibold);
+      line-height: 1;
+      letter-spacing: var(--letter-spacing-tight);
+    }
+
+    .proof_stat_label {
+      max-width: 18rem;
+      line-height: var(--line-height-large);
+    }
+
+    .proof_stat_client {
+      color: var(--text-faded);
+      font-size: var(--text-small);
+    }
+
+    /* ---- recognition ---------------------------------------------------- */
+    .proof_awards {
+      width: 100%;
+      display: grid;
+      gap: var(--space-5);
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(0, 1fr);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    /* Glass, lit along the top edge like the chips, with the mark in the
+       corner and the issuer set under the title. */
+    .proof_award {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      grid-template-rows: auto auto;
+      column-gap: var(--space-4);
+      row-gap: var(--space-1);
+      align-items: center;
+      padding: var(--space-5);
+      background-color: var(--background-raised);
+      background-image: linear-gradient(
+        to bottom,
+        rgb(255 255 255 / 0.05),
+        rgb(255 255 255 / 0.015)
+      );
+      border: var(--border-width) solid var(--border-soft);
+    }
+
+    .proof_award_mark {
+      grid-row: span 2;
+      width: 3rem;
+      height: 3rem;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius-main);
+      background-color: rgb(255 255 255 / 0.06);
+      border: var(--border-width) solid var(--border-soft);
+    }
+
+    .proof_award_icon {
+      --_size: 1.5rem;
+      color: var(--brand-300);
+    }
+
+    .proof_award_image {
+      width: 1.75rem;
+      height: auto;
+    }
+
+    .proof_award_title {
+      font-size: var(--text-large);
+      font-weight: var(--primary-medium);
+      line-height: var(--line-height-small);
+    }
+
+    .proof_award_issuer {
+      color: var(--text-muted);
+      font-size: var(--text-small);
+    }
+
+    /* One row, or one column: a row of two with a third alone under it reads
+       as a mistake. */
+    @media (width < 48rem) {
+      .proof_stats,
+      .proof_awards {
+        grid-auto-flow: row;
+      }
+      .proof_stat + .proof_stat {
+        border-left: 0;
+        border-top: var(--border-width) solid var(--border-soft);
+      }
+      .proof_stat_link {
+        padding-inline: 0;
+      }
+    }
+  }
+</style>

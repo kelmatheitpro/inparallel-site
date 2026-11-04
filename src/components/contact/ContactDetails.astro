@@ -1,0 +1,198 @@
+---
+/**
+ * Beside the enquiry form: the address to write to, where the studio works
+ * from, and the two proofs it can stand behind — the Webflow partnership and
+ * the Upwork record (`SOCIAL_PROOF`, stated once for the whole site).
+ */
+import Img from "@/components/Img.astro";
+import Icon from "@/components/Icon.astro";
+import webflowBadge from "@/assets/inparallel/webflow-badge.png";
+import jobSuccess from "@/assets/inparallel/icons/upwork-job-success.svg";
+import { CONTACT_EMAIL, SOCIAL_PROOF } from "@/consts.ts";
+import { LOCATIONS } from "@/data/home.ts";
+---
+
+<aside class="contact-details" aria-label="Other ways to reach us">
+  <div class="contact-details_block">
+    <span class="label">
+      <span class="label_slash" aria-hidden="true">//</span>
+      <span class="label_text">Email</span>
+    </span>
+    <a class="contact-details_mail" href={`mailto:${CONTACT_EMAIL}`}>
+      {CONTACT_EMAIL}
+    </a>
+  </div>
+
+  <div class="contact-details_block">
+    <span class="label">
+      <span class="label_slash" aria-hidden="true">//</span>
+      <span class="label_text">Where we work</span>
+    </span>
+    <ul class="contact-details_places" role="list">
+      {
+        LOCATIONS.map((place) => (
+          <li class="contact-details_place">
+            <span class="contact-details_name">{place.title}</span>
+            <span class="contact-details_note">{place.text}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+
+  <div class="contact-details_block">
+    <span class="label">
+      <span class="label_slash" aria-hidden="true">//</span>
+      <span class="label_text">On record</span>
+    </span>
+    <ul class="contact-details_proof" role="list">
+      <li class="proof-chip is-webflow">
+        <Img
+          src={webflowBadge}
+          alt="Webflow"
+          class="proof-chip_badge"
+          width={44}
+          height={27}
+          variant="densities"
+          transparent
+        />
+        Certified Partner
+      </li>
+      <li class="proof-chip">
+        <Icon src={jobSuccess} class="proof-chip_icon" aria-hidden="true" />
+        <strong>{SOCIAL_PROOF.score}</strong>
+        <span>{SOCIAL_PROOF.source}</span>
+      </li>
+    </ul>
+  </div>
+</aside>
+
+<style is:global>
+  @layer components {
+    .contact-details {
+      display: flex;
+      flex-direction: column;
+      gap: 2.25rem;
+    }
+
+    .contact-details_block {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: 1rem;
+      padding-top: 1.5rem;
+      border-top: var(--border-width) solid var(--border-soft);
+    }
+
+    /* A quiet underline, and a blue one drawn across it on hover from the
+       left: one transform, nothing repainted. */
+    .contact-details_mail {
+      position: relative;
+      padding-bottom: 0.15em;
+      border-bottom: var(--border-width) solid var(--border);
+      color: var(--text);
+      font-size: clamp(1.35rem, 1.1rem + 0.8vw, 1.75rem);
+      font-weight: 500;
+      letter-spacing: -0.025em;
+      text-decoration: none;
+      overflow-wrap: anywhere;
+
+      &::after {
+        content: "";
+        position: absolute;
+        inset: auto 0 calc(var(--border-width) * -1);
+        height: var(--border-width);
+        background-color: var(--brand-500);
+        transform: scaleX(0);
+        transform-origin: 0 50%;
+        transition: transform var(--duration-slow) var(--ease-out);
+      }
+
+      @media (hover: hover) {
+        &:hover::after {
+          transform: scaleX(1);
+        }
+      }
+
+      &:focus-visible::after {
+        transform: scaleX(1);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        &::after {
+          transition: none;
+        }
+      }
+    }
+
+    .contact-details_places {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .contact-details_place {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .contact-details_name {
+      font-weight: 500;
+    }
+
+    .contact-details_note {
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+    }
+
+    .contact-details_proof {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .proof-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-height: 2.5rem;
+      padding: 0 0.875rem;
+      background-color: var(--light-100);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: 0.6rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      line-height: 1;
+      white-space: nowrap;
+
+      & span {
+        color: var(--text-muted);
+        font-weight: 400;
+      }
+
+      /* Webflow's own blue, as on the badge they issue. */
+      &.is-webflow {
+        background-color: #146ef5;
+        border-color: #146ef5;
+        color: var(--light-100);
+      }
+    }
+
+    .proof-chip_badge {
+      width: 1.35rem;
+      height: auto;
+    }
+
+    .proof-chip_icon {
+      --_size: 1.05rem;
+      color: var(--brand-500);
+    }
+  }
+</style>

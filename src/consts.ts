@@ -1,9 +1,18 @@
 /** Site name. Appended to every page title and used as `og:site_name`. */
-export const SITE_NAME = "inparallel";
+export const SITE_NAME = "inParallel";
 /** Fallback meta description for pages that don't set their own. */
 export const SITE_DESCRIPTION =
-  "inparallel is a Webflow studio with a business-first approach. We design, build and grow websites your own team can run — designed from scratch, built in code that lasts.";
-/** Canonical origin. Resolves canonical URLs, social images, and the sitemap. */
+  "inParallel is a two-person Webflow studio in Belgrade. We design, build and grow Webflow sites for B2B teams — working alongside yours, from first sketch to long after launch.";
+/**
+ * The site is private for now: clients get a link, and search engines must
+ * never list it. This keeps every page out of the index, and robots.txt and
+ * `vercel.json` do the same at their end. Going public means undoing all
+ * three, adding `sitemap()` back in `astro.config.mjs` and restoring
+ * `src/pages/_llms.txt.ts` to `llms.txt.ts`.
+ */
+export const SITE_PRIVATE = true;
+
+/** Canonical origin. Resolves canonical URLs and social images. */
 export const SITE_URL = "https://inparallel.agency";
 /** BCP 47 locale tag used to format dates and numbers. */
 export const SITE_LOCALE = "en-US";
@@ -46,32 +55,32 @@ export interface NavLink {
   children?: NavChild[];
 }
 
-/** The four service lanes, shared by the nav dropdown and the footer. */
+/** The four services and the agency offer, shared by the nav dropdown and the footer. */
 export const SERVICES_MENU: NavChild[] = [
   {
-    label: "inparallelDesign",
-    href: "/services/design",
-    description: "Strategy, copy and design your developer can build from",
+    label: "Design & Development",
+    href: "/services/design-development",
+    description: "Strategy, copy, design and build — one team, one launch day",
   },
   {
-    label: "inparallelBuild",
-    href: "/services/build",
-    description: "A Webflow build your team can actually run",
+    label: "Webflow Development",
+    href: "/services/webflow-development",
+    description: "Bring us your Figma; we build it in Webflow, pixel perfect",
   },
   {
-    label: "inparallelLaunch",
-    href: "/services/launch",
-    description: "Built, launched and handed over in weeks",
+    label: "SEO & AEO",
+    href: "/services/seo-aeo",
+    description: "Easy to find and easy to cite, on Google and in AI search",
   },
   {
-    label: "inparallel+",
-    href: "/services/plus",
-    description: "Growth work that keeps shipping after launch",
+    label: "Growth",
+    href: "/services/growth",
+    description: "New pages, experiments and releases, every month",
   },
   {
     label: "Extended team",
     href: "/extended-team",
-    description: "Two Webflow developers inside your agency's team",
+    description: "Two Webflow developers working inside your agency's team",
   },
 ];
 
@@ -84,5 +93,6 @@ export const NAV_LINKS: NavLink[] = [
     children: SERVICES_MENU,
   },
   { id: "work", label: "Our work", href: "/work" },
-  { id: "contact", label: "Contact", href: "/contact" },
+  { id: "pricing", label: "Pricing", href: "/pricing" },
+  { id: "insights", label: "Insights", href: "/blog" },
 ];

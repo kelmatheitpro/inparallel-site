@@ -1,12 +1,12 @@
 <svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="966.8" height="938" viewBox="0 0 966.8 938" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="inparallelLaunch illustration">
-<g id="Ellipse 3" opacity="0.4" filter="url(#filter0_d_0_70)">
+<g>
+<g opacity="0.4" filter="url(#filter0_d_0_70)">
 <path d="M483.4 56C719.479 56.0002 910.8 240.938 910.8 469C910.8 697.062 719.479 882 483.4 882C247.321 882 56 697.062 56 469C56 240.938 247.321 56 483.4 56Z" stroke="url(#paint0_linear_0_70)" stroke-width="2" shape-rendering="crispEdges"/>
 </g>
-<g id="Ellipse 2" opacity="0.6" filter="url(#filter1_d_0_70)">
+<g opacity="0.6" filter="url(#filter1_d_0_70)">
 <path d="M483.4 177.2C647.556 177.2 780.6 307.86 780.6 469C780.6 630.139 647.556 760.8 483.4 760.8C319.244 760.8 186.2 630.139 186.2 469C186.2 307.86 319.244 177.2 483.4 177.2Z" stroke="url(#paint1_linear_0_70)" stroke-width="2" shape-rendering="crispEdges"/>
 </g>
-<g id="Ellipse 4" filter="url(#filter2_d_0_70)">
+<g filter="url(#filter2_d_0_70)">
 <path d="M483.4 291.8C585.279 291.8 667.8 371.172 667.8 469C667.8 566.828 585.279 646.2 483.4 646.2C381.521 646.2 299 566.828 299 469C299 371.172 381.521 291.8 483.4 291.8Z" stroke="url(#paint2_linear_0_70)" stroke-width="2" shape-rendering="crispEdges"/>
 </g>
 </g>

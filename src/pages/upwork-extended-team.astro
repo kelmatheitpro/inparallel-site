@@ -1,17 +1,23 @@
 ---
 import Layout from "@/layouts/BaseLayout.astro";
-import Section from "@/components/Section.astro";
-import Heading from "@/components/Heading.astro";
-import Paragraph from "@/components/Paragraph.astro";
-import PageHero from "@/components/sections/PageHero.astro";
-import Icon from "@/components/Icon.astro";
-import arrowRight from "@/assets/inparallel/icons/arrow-right.svg";
+import ArrowCircle from "@/components/inparallel/ArrowCircle.astro";
+import PageHero from "@/components/parallel/PageHero.astro";
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import Todo from "@/components/pricing/Todo.astro";
+import Questions from "@/components/pricing/Questions.astro";
+import Band from "@/components/extended/Band.astro";
+import TeamStrokes from "@/components/extended/TeamStrokes.astro";
+import FactsBar from "@/components/extended/FactsBar.astro";
+import CardRow from "@/components/extended/CardRow.astro";
+import TickList from "@/components/extended/TickList.astro";
+import NumberedList from "@/components/extended/NumberedList.astro";
+import NotList from "@/components/extended/NotList.astro";
+import MarginCalculator from "@/components/extended/MarginCalculator.astro";
 import {
   DETAILS,
   HERO_FACTS,
   GUARANTEES,
   STEPS,
-  JOB_TYPES,
   PRICING_NOTE,
   UPWORK_MECHANICS,
   MECHANICS_NOTE,
@@ -20,369 +26,225 @@ import {
   NOT_DOING,
   FAQ,
 } from "@/data/upwork.ts";
+
+/* "Four steps, three of them ours": the first is his, the rest are ours,
+   and each says so. */
+const steps = STEPS.map((step, index) => ({
+  ...step,
+  tag: index === 0 ? "You" : "Us",
+}));
+
+const cloneLinksUnset = DETAILS.cloneOne === "#" || DETAILS.cloneTwo === "#";
 ---
 
 <Layout
-  theme="light"
+  theme="dark"
   overlap
   title="White-label Webflow for Upwork freelancers"
   description="Take the work you're turning down. We build Webflow sites under your name, in your workspace — your client never knows we exist."
 >
   <PageHero
-    eyebrow="For Upwork freelancers"
-    title="You're turning down work"
-    titleMuted="you could be taking"
+    label="For Upwork freelancers"
     lead="We build Webflow sites under your name. Your client never knows we exist, and your review stays yours."
-  />
-
-  <Section theme="dark" paddingTop="none" paddingBottom="medium">
-    <div class="facts_row">
-      {
-        HERO_FACTS.map((fact) => (
-          <div class="stat facts_stat">
-            <span class="stat_value">{fact.value}</span>
-            <span class="stat_label">{fact.label}</span>
-          </div>
-        ))
-      }
-    </div>
-
-    <div class="facts_actions">
-      <a class="cta" href={DETAILS.briefHref}>
-        Send a Figma link, get a quote in {DETAILS.quoteWithin}
-      </a>
-    </div>
-  </Section>
+  >
+    You're turning down work <br />you could be&nbsp;<span class="serif"
+      >taking</span
+    >
+    <a slot="actions" class="btn" href={DETAILS.briefHref}>
+      Send a Figma link, get a quote in {DETAILS.quoteWithin}
+    </a>
+    <TeamStrokes
+      slot="visual"
+      title="In parallel with you"
+      groups={[
+        { label: "You", count: 1, tone: "white" },
+        { label: "Us, under your name", count: 2, tone: "bright" },
+      ]}
+    />
+    <FactsBar slot="after" facts={HERO_FACTS} />
+  </PageHero>
 
   {
-    /* Straight under the hero, not at the foot of the page: these three are
-       the reason he keeps reading at all. */
+    /* Straight under the hero, not at the foot of the page: the three
+       guarantees are the reason he keeps reading at all. */
   }
-  <Section theme="light" containerClass="container-narrow">
-    <ul class="scenarios">
-      {
-        GUARANTEES.map((item) => (
-          <li class="scenario surface surface-raised">
-            <h2 class="scenario_title">{item.title}</h2>
-            <p class="text-muted">{item.text}</p>
-          </li>
-        ))
-      }
-    </ul>
-  </Section>
+  <Band theme="light" id="how-it-works">
+    <CardRow items={GUARANTEES} headingTag="h2" />
 
-  {/* ---- how it works ---------------------------------------------------- */}
-  <Section theme="light" paddingTop="none" containerClass="container-narrow">
-    <div class="section-head">
-      <Heading tag="h2" class="heading-split">
-        Four steps, <em>three of them ours</em>
-      </Heading>
-    </div>
+    <SectionHead index="01" label="How it works" headingId="steps-title">
+      Four steps, <br />three of them ours
+    </SectionHead>
+    <NumberedList items={steps} columns={4} />
+  </Band>
 
-    <ol class="steps">
-      {
-        STEPS.map((step) => (
-          <li class="step">
-            <h3 class="step_title">{step.title}</h3>
-            <p class="step_text text-muted">{step.text}</p>
-          </li>
-        ))
-      }
-    </ol>
-  </Section>
+  {/* ---- 02: the sum ---------------------------------------------------- */}
+  <Band theme="dark" id="margin" labelledby="margin-title">
+    <SectionHead index="02" label="The sum" headingId="margin-title">
+      What's left for you, <br />without asking us
+    </SectionHead>
+    <MarginCalculator />
+    <p class="band_note">{PRICING_NOTE}</p>
+  </Band>
 
-  {/* ---- the sum --------------------------------------------------------- */}
-  <Section theme="dark" containerClass="container-narrow">
-    <div class="section-head">
-      <Heading tag="h2" class="heading-split">
-        What's left for you, <em>without asking us</em>
-      </Heading>
-    </div>
-
-    <div
-      class="margin surface surface-raised"
-      data-margin
-      data-currency={DETAILS.currency}
-      data-locale={DETAILS.locale}
-    >
-      <div class="margin_inputs">
-        <label class="field">
-          <span class="field_label">The job</span>
-          <select class="field_control" data-margin-job>
-            {
-              JOB_TYPES.map((jobType) => (
-                <option
-                  value={jobType.id}
-                  data-price={jobType.price}
-                  data-hours={jobType.hours}
-                >
-                  {jobType.name}
-                </option>
-              ))
-            }
-          </select>
-        </label>
-
-        <label class="field">
-          <span class="field_label">What you charge the client</span>
-          <input
-            class="field_control"
-            type="number"
-            min="0"
-            step="100"
-            inputmode="numeric"
-            placeholder="0"
-            data-margin-charge
-          />
-        </label>
-      </div>
-
-      <div class="margin_out">
-        <div class="stat margin_stat">
-          <span class="stat_value" data-margin-keep>—</span>
-          <span class="stat_label">stays with you</span>
-        </div>
-        <div class="stat margin_stat">
-          <span class="stat_value" data-margin-share>—</span>
-          <span class="stat_label">of what you invoice</span>
-        </div>
-        <div class="stat margin_stat">
-          <span class="stat_value" data-margin-hours>—</span>
-          <span class="stat_label">back on your calendar</span>
-        </div>
-        <div class="stat margin_stat">
-          <span class="stat_value" data-margin-ours>—</span>
-          <span class="stat_label">our price for it</span>
-        </div>
-      </div>
-    </div>
-
-    <Paragraph class="text-muted margin_note">{PRICING_NOTE}</Paragraph>
-  </Section>
-
-  {/* ---- the Upwork part nobody writes down ------------------------------ */}
-  <Section theme="light" containerClass="container-narrow">
-    <div class="columns">
-      <div class="column">
-        <Heading tag="h2" variant="h3" class="column_title">
+  {/* ---- 03: the Upwork part nobody writes down, and the proof ---------- */}
+  <Band theme="light" id="upwork" labelledby="upwork-title">
+    <div class="band_split">
+      <div class="band_column">
+        <SectionHead
+          index="03"
+          label="On Upwork"
+          size="h3"
+          headingId="upwork-title"
+        >
           How this works on Upwork
-        </Heading>
-        <ul class="ticks">
-          {UPWORK_MECHANICS.map((item) => <li>{item}</li>)}
-        </ul>
-        <p class="text-muted mechanics_note">{MECHANICS_NOTE}</p>
+        </SectionHead>
+        <TickList items={UPWORK_MECHANICS} />
+        <p class="band_note">{MECHANICS_NOTE}</p>
       </div>
 
-      <div class="column">
-        <Heading tag="h2" variant="h3" class="column_title">
+      <div class="band_column">
+        <SectionHead
+          label="The proof"
+          size="h3"
+          headingId="proof-title"
+          lead="Everything we do is under someone else's name, so the only honest proof is a build you can open. Clone one and read the class names."
+        >
           Proof, since there's no portfolio
-        </Heading>
-        <Paragraph class="text-muted">
-          Everything we do is under someone else's name, so the only honest
-          proof is a build you can open. Clone one and read the class names.
-        </Paragraph>
-        <ul class="ticks">
-          {PROOF.map((item) => <li>{item}</li>)}
-        </ul>
-        <p class="proof_links">
-          <a href={DETAILS.cloneOne}>Clone the landing page build</a>
-          <a href={DETAILS.cloneTwo}>Clone the CMS build</a>
-        </p>
+        </SectionHead>
+        <TickList items={PROOF} />
+        <div class="band_notes">
+          <div class="fl-links">
+            <a class="fl-link" href={DETAILS.cloneOne}>
+              Clone the landing page build
+              <ArrowCircle bare />
+            </a>
+            <a class="fl-link" href={DETAILS.cloneTwo}>
+              Clone the CMS build
+              <ArrowCircle bare />
+            </a>
+          </div>
+          {
+            cloneLinksUnset && (
+              <Todo>
+                links to the two builds to clone (DETAILS.cloneOne and cloneTwo
+                in src/data/upwork.ts).
+              </Todo>
+            )
+          }
+        </div>
       </div>
     </div>
-  </Section>
+  </Band>
 
-  {/* ---- the first one is free to walk away from ------------------------- */}
-  <Section theme="dark" containerClass="container-narrow">
-    <div class="first">
-      <Heading tag="h2" variant="h2" class="heading-split first_title">
-        First project: <em>you pay when you're happy</em>
-      </Heading>
-      <Paragraph class="text-muted first_text">
-        You see staging before you've paid anything. If it isn't right, you
-        don't pay and neither of us owes the other a thing. The risk on a first
-        job is yours to carry otherwise, and that's the only reason people say
-        no to this.
-      </Paragraph>
-      <div class="facts_actions">
-        <a class="cta" href={DETAILS.briefHref}>
-          Send the first one
-          <Icon src={arrowRight} class="cta_arrow" />
-        </a>
-      </div>
+  {/* ---- 04: the first one is free to walk away from -------------------- */}
+  <Band theme="dark" id="first-project" labelledby="first-title">
+    <div class="fl-first">
+      <SectionHead
+        index="04"
+        label="The first project"
+        align="center"
+        headingId="first-title"
+        lead="You see staging before you've paid anything. If it isn't right, you don't pay and neither of us owes the other a thing. The risk on a first job is yours to carry otherwise, and that's the only reason people say no to this."
+      >
+        First project: <br />you pay when you're&nbsp;happy
+      </SectionHead>
+      <a class="btn" href={DETAILS.briefHref}> Send the first one </a>
     </div>
-  </Section>
+  </Band>
 
-  {/* ---- when, what not, and the questions ------------------------------- */}
-  <Section theme="light" containerClass="container-narrow">
-    <div class="section-head">
-      <Heading tag="h2" class="heading-split">
-        You'll want us <em>on one of these days</em>
-      </Heading>
+  {/* ---- 05: when, what not, and the questions -------------------------- */}
+  <Questions index="06" items={FAQ} name="freelancer-faq">
+    Six questions, <br />in your words
+    <Fragment slot="before">
+      <SectionHead index="05" label="When to call" headingId="days-title">
+        You'll want us <br />on one of these&nbsp;days
+      </SectionHead>
+      <CardRow items={SITUATIONS} />
+      <NotList items={NOT_DOING} />
+    </Fragment>
+    <div slot="foot" class="fl-closing">
+      <p class="fl-closing_line">
+        Paste a Figma link. <br />Get a quote tomorrow.
+      </p>
+      <a class="btn btn-blue" href={DETAILS.briefHref}> Send it over </a>
     </div>
-
-    <ul class="scenarios">
-      {
-        SITUATIONS.map((item) => (
-          <li class="scenario surface surface-raised">
-            <h3 class="scenario_title">{item.title}</h3>
-            <p class="text-muted">{item.text}</p>
-          </li>
-        ))
-      }
-    </ul>
-
-    <ul class="nots">
-      {NOT_DOING.map((item) => <li class="not">{item}</li>)}
-    </ul>
-
-    <div class="section-head faq_head">
-      <Heading tag="h2" class="heading-split">
-        Six questions, <em>in your words</em>
-      </Heading>
-    </div>
-
-    <ul class="faq">
-      {
-        FAQ.map((item) => (
-          <li>
-            <details class="faq_item">
-              <summary class="faq_question">{item.question}</summary>
-              <p class="faq_answer text-muted">{item.answer}</p>
-            </details>
-          </li>
-        ))
-      }
-    </ul>
-  </Section>
-
-  {/* ---- one CTA, one field ---------------------------------------------- */}
-  <Section theme="dark" containerClass="container-narrow" align="center">
-    <Heading tag="h2" class="heading-split closing_title">
-      Paste a Figma link. <em>Get a quote tomorrow.</em>
-    </Heading>
-    <div class="facts_actions">
-      <a class="cta" href={DETAILS.briefHref}>
-        Send it over
-        <Icon src={arrowRight} class="cta_arrow" />
-      </a>
-    </div>
-  </Section>
+  </Questions>
 </Layout>
 
 <style is:global>
   @layer components {
-    /* ---- the four steps ------------------------------------------------- */
-    .steps {
-      width: 100%;
-      display: grid;
-      gap: var(--space-5);
-      grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));
-      margin: 0;
-      padding: 0;
-      list-style: none;
-      counter-reset: step;
-    }
-
-    .step {
+    .fl-links {
       display: flex;
-      flex-direction: column;
-      gap: var(--space-2);
-      padding-top: var(--space-5);
-      border-top: var(--border-width) solid var(--border);
-      counter-increment: step;
+      flex-wrap: wrap;
+      gap: 0.75rem 1.75rem;
     }
 
-    .step::before {
-      content: counter(step, decimal-leading-zero);
-      color: var(--brand-500);
-      font-size: var(--text-small);
-      font-variant-numeric: tabular-nums;
-    }
-
-    .step_title {
-      font-size: var(--text-large);
-      font-weight: var(--primary-medium);
-      line-height: var(--line-height-medium);
-    }
-
-    /* ---- the sum -------------------------------------------------------- */
-    .margin {
-      width: 100%;
-      display: grid;
-      gap: var(--space-8);
-      grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
-      padding: var(--space-7);
-    }
-
-    .margin_inputs {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-5);
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: var(--space-2);
-    }
-
-    .field_label {
-      font-size: var(--text-small);
-      color: var(--text-muted);
-    }
-
-    .field_control {
-      width: 100%;
-      padding: var(--space-4);
-      border: var(--border-width) solid var(--border);
-      border-radius: var(--radius-main);
-      background-color: rgb(0 0 0 / 0.2);
+    /* A quiet underline, and a darker one drawn across it on hover from the
+       left: one transform, nothing repainted. */
+    .fl-link {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding-bottom: 0.2rem;
+      border-bottom: var(--border-width) solid var(--border);
       color: var(--text);
-      font-size: var(--text-main);
-      &:focus-visible {
-        border-color: var(--brand-300);
+      font-weight: 500;
+      text-decoration: none;
+
+      &::after {
+        content: "";
+        position: absolute;
+        inset: auto 0 calc(var(--border-width) * -1);
+        height: var(--border-width);
+        background-color: currentcolor;
+        transform: scaleX(0);
+        transform-origin: 0 50%;
+        transition: transform var(--duration-slow) var(--ease-out);
+      }
+
+      @media (hover: hover) {
+        &:hover::after {
+          transform: scaleX(1);
+        }
+      }
+
+      &:focus-visible::after {
+        transform: scaleX(1);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        &::after {
+          transition: none;
+        }
       }
     }
 
-    .margin_out {
-      display: grid;
-      gap: var(--space-5);
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      align-content: center;
-    }
-
-    .margin_stat {
-      --_stat-size: var(--h4);
-    }
-
-    .margin_note {
-      max-width: var(--max-width-small);
-      font-size: var(--text-small);
-    }
-
-    .mechanics_note,
-    .proof_links {
-      font-size: var(--text-small);
-      line-height: var(--line-height-large);
-    }
-
-    .proof_links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: var(--space-5);
-    }
-
-    /* ---- the offer that removes the risk -------------------------------- */
-    .first {
+    .fl-first {
       display: flex;
       flex-direction: column;
-      gap: var(--space-5);
-      max-width: var(--max-width-small);
+      align-items: center;
+      gap: clamp(2rem, 1.5rem + 1.5vw, 2.75rem);
     }
 
-    .closing_title {
-      text-align: center;
+    /* The page's last word, under the questions' heading. */
+    .fl-closing {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: 1.25rem;
+      margin-top: 0.75rem;
+      padding-top: 1.75rem;
+      border-top: var(--border-width) solid var(--border-soft);
+    }
+
+    .fl-closing_line {
+      margin: 0;
+      color: var(--text);
+      font-size: clamp(1.35rem, 1.15rem + 0.7vw, 1.75rem);
+      font-weight: 500;
+      letter-spacing: -0.025em;
+      line-height: 1.15;
     }
   }
 </style>

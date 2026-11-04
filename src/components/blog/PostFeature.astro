@@ -1,0 +1,473 @@
+---
+/**
+ * The newest posts, at the width of the page, one at a time. On a wide screen
+ * the cover fills the card and the title sits on it; on anything narrower the
+ * words go under the cover, so the picture is never cut to a tall crop.
+ *
+ * The bar of the post on show fills while it stays, and the next post comes
+ * when it's full, so the bar is the timer: it stops under the pointer and
+ * while the keyboard is inside. For a reader who has asked for less motion
+ * nothing advances by itself. Without JavaScript the first post simply stays;
+ * every post is listed under the hero anyway.
+ *
+ * Like the cards, each title is the link and is stretched over the whole post.
+ */
+import Img from "@/components/Img.astro";
+import ArrowCircle from "@/components/inparallel/ArrowCircle.astro";
+import PostByline from "@/components/blog/PostByline.astro";
+import { postUrl, readingMinutes } from "@/components/blog/posts.ts";
+import type { Post } from "@/utils/content.ts";
+
+interface Props {
+  posts: Post[];
+}
+
+const { posts } = Astro.props;
+---
+
+<div
+  class="post-feature"
+  role="group"
+  aria-roledescription="carousel"
+  aria-label="Latest insights"
+  data-post-feature
+>
+  <ul class="post-feature_list" role="list">
+    {
+      posts.map((post, index) => (
+        <li
+          class:list={[
+            "post-feature_slide arrow-trigger",
+            index === 0 && "is-active",
+          ]}
+          data-post-feature-slide
+        >
+          <div class="post-feature_media">
+            <Img
+              src={post.data.cover}
+              alt={post.data.coverAlt}
+              class="post-feature_cover"
+              variant="constrained"
+              sizes="(width >= 90rem) 84rem, 94vw"
+              loading={index === 0 ? "eager" : "lazy"}
+              fetchPriority={index === 0 ? "high" : "auto"}
+              decoding="async"
+            />
+          </div>
+          <div class="post-feature_body">
+            <p class="label post-feature_label">
+              <span class="label_slash" aria-hidden="true">
+                //
+              </span>
+              <span class="label_text">Latest · {post.data.category}</span>
+            </p>
+            <h2 class="post-feature_title">
+              <a class="post-feature_link" href={postUrl(post)}>
+                {post.data.title}
+              </a>
+            </h2>
+            <p class="post-feature_excerpt">{post.data.description}</p>
+            <div class="post-feature_foot">
+              <PostByline
+                author={post.data.author}
+                date={post.data.date}
+                minutes={readingMinutes(post)}
+              />
+              <span class="post-feature_more" aria-hidden="true">
+                Read the article
+                <ArrowCircle bare />
+              </span>
+            </div>
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+
+  {
+    posts.length > 1 && (
+      <div
+        class="post-feature_bars"
+        role="group"
+        aria-label="Choose a post"
+        data-post-feature-bars
+        hidden
+      >
+        {posts.map((post, index) => (
+          <button
+            type="button"
+            class="post-feature_pick"
+            aria-label={`Post ${index + 1} of ${posts.length}: ${post.data.title}`}
+            aria-current={index === 0 ? "true" : undefined}
+          >
+            <span class="post-feature_bar" />
+          </button>
+        ))}
+      </div>
+    )
+  }
+</div>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>(
+    "[data-post-feature]",
+  )) {
+    const slides = [
+      ...root.querySelectorAll<HTMLElement>("[data-post-feature-slide]"),
+    ];
+    const bars = root.querySelector<HTMLElement>("[data-post-feature-bars]");
+    const picks = [...(bars?.querySelectorAll("button") ?? [])];
+    if (!bars || slides.length < 2) continue;
+
+    let current = 0;
+    const show = (index: number) => {
+      current = (index + slides.length) % slides.length;
+      slides.forEach((slide, i) =>
+        slide.classList.toggle("is-active", i === current),
+      );
+      picks.forEach((pick, i) => {
+        if (i === current) pick.setAttribute("aria-current", "true");
+        else pick.removeAttribute("aria-current");
+      });
+    };
+
+    picks.forEach((pick, i) => pick.addEventListener("click", () => show(i)));
+
+    /* The fill is the only timer there is, so holding it holds the slider
+       and nothing has to be restarted or kept in step with it. */
+    root.addEventListener("animationend", (event) => {
+      if (event.animationName === "post-feature-fill") show(current + 1);
+    });
+
+    /* Off screen it waits, and costs the page nothing. */
+    new IntersectionObserver(([entry]) =>
+      root.classList.toggle("is-away", !entry?.isIntersecting),
+    ).observe(root);
+
+    bars.hidden = false;
+    root.classList.add("is-ready");
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .post-feature {
+      position: relative;
+      isolation: isolate;
+      overflow: clip;
+      background-color: var(--dark-900);
+      border: var(--border-width) solid rgb(255 255 255 / 0.12);
+      border-radius: var(--radius-large);
+      box-shadow: 0 2rem 4rem -2.5rem rgb(0 0 0 / 0.8);
+    }
+
+    .post-feature_list {
+      display: grid;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    /* Every post in the one cell, so the card is as tall as the tallest of
+       them and changing post moves nothing below it. The one leaving stays
+       put underneath until the one arriving has covered it. */
+    .post-feature_slide {
+      grid-area: 1 / 1;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      visibility: hidden;
+      transition:
+        opacity 0s linear 0.7s,
+        visibility 0s linear 0.7s;
+
+      &.is-active {
+        z-index: 1;
+        opacity: 1;
+        visibility: visible;
+        transition:
+          opacity 0.7s var(--ease-soft),
+          visibility 0s;
+      }
+
+      &:has(.post-feature_link:focus-visible) {
+        outline: var(--focus-width) solid var(--light-100);
+        outline-offset: -0.5rem;
+        border-radius: var(--radius-large);
+      }
+
+      /* The keyboard gets the arrow the pointer gets. */
+      &:has(.post-feature_link:focus-visible) .arrow-circle_cur {
+        translate: var(--_travel) 0;
+      }
+
+      &:has(.post-feature_link:focus-visible) .arrow-circle_next {
+        translate: 0 0;
+      }
+    }
+
+    .post-feature_media {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      overflow: clip;
+      background-color: var(--dark-900);
+    }
+
+    .post-feature_cover {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: scale 1.2s var(--ease-out);
+    }
+
+    /* The words leave quickly and arrive late, so two titles are never on
+       screen together. */
+    .post-feature_body {
+      position: relative;
+      display: flex;
+      flex: 1;
+      flex-direction: column;
+      align-items: start;
+      gap: 1rem;
+      padding: 1.5rem clamp(1.25rem, 1rem + 1.25vw, 2rem) 1.75rem;
+      opacity: 0;
+      translate: 0 0.75rem;
+      transition:
+        opacity 0.25s var(--ease-soft),
+        translate 0s linear 0.25s;
+
+      .is-active > & {
+        opacity: 1;
+        translate: 0 0;
+        transition:
+          opacity 0.5s var(--ease-soft) 0.4s,
+          translate 0.8s var(--ease-out) 0.4s;
+      }
+    }
+
+    .post-feature_label {
+      margin: 0;
+
+      /* The trim boxes are for text, not for a row of label parts. */
+      &::before,
+      &::after {
+        display: none;
+      }
+    }
+
+    .post-feature_title {
+      margin: 0;
+      font-size: clamp(1.6rem, 1.1rem + 2.1vw, 3rem);
+      font-weight: 500;
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+      text-wrap: balance;
+      text-shadow: 0 0.1em 1em rgb(6 10 19 / 0.5);
+    }
+
+    .post-feature_link {
+      color: var(--light-100);
+      text-decoration: none;
+
+      /* Stretched over the whole post, so all of it takes the click. */
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+      }
+
+      &:focus-visible {
+        outline: none;
+      }
+    }
+
+    .post-feature_excerpt {
+      max-width: 38rem;
+      margin: 0.35rem 0 0;
+      color: rgb(255 255 255 / 0.78);
+      line-height: 1.5;
+    }
+
+    .post-feature_foot {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.85rem 2rem;
+      margin-top: auto;
+      padding-top: 0.35rem;
+    }
+
+    .post-feature_more {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: var(--light-100);
+      font-weight: 500;
+    }
+
+    /* Over the cover on a narrow screen, in the corner away from the words on
+       a wide one. A bar is thin; the button round it is a finger wide. */
+    .post-feature_bars {
+      position: absolute;
+      top: 0.35rem;
+      right: 0.6rem;
+      z-index: 2;
+      display: flex;
+      gap: 0.35rem;
+
+      &[hidden] {
+        display: none;
+      }
+    }
+
+    .post-feature_pick {
+      display: grid;
+      place-items: center;
+      width: 2.5rem;
+      height: 2.75rem;
+      padding: 0;
+      border: 0;
+      background: none;
+      cursor: pointer;
+      opacity: 0.7;
+      transition: opacity 0.3s var(--ease-soft);
+
+      &[aria-current] {
+        opacity: 1;
+      }
+
+      &:focus-visible {
+        outline: var(--focus-width) solid var(--light-100);
+        outline-offset: -0.25rem;
+      }
+
+      @media (hover: hover) {
+        &:hover {
+          opacity: 1;
+        }
+      }
+    }
+
+    /* One stroke of the mark, lying down. */
+    .post-feature_bar {
+      position: relative;
+      display: block;
+      width: 100%;
+      height: 0.3rem;
+      overflow: clip;
+      background-color: rgb(255 255 255 / 0.32);
+      transform: skewX(calc(var(--slant) * -1));
+
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-color: var(--light-100);
+        transform: scaleX(0);
+        transform-origin: 0 50%;
+      }
+
+      [aria-current] > &::after {
+        transform: scaleX(1);
+      }
+    }
+
+    /* Only for a reader who hasn't asked for less motion, rather than turned
+       off for one who has: the site shortens animations to nothing there, and
+       the end of this one is what moves the slider on. */
+    @media (prefers-reduced-motion: no-preference) {
+      .post-feature.is-ready [aria-current] > .post-feature_bar::after {
+        animation: post-feature-fill 7s linear both;
+      }
+
+      .post-feature:has(:focus-visible)
+        [aria-current]
+        > .post-feature_bar::after,
+      .post-feature.is-away [aria-current] > .post-feature_bar::after {
+        animation-play-state: paused;
+      }
+
+      @media (hover: hover) {
+        .post-feature:hover [aria-current] > .post-feature_bar::after {
+          animation-play-state: paused;
+        }
+      }
+    }
+
+    @keyframes post-feature-fill {
+      from {
+        transform: scaleX(0);
+      }
+      to {
+        transform: scaleX(1);
+      }
+    }
+
+    @media (hover: hover) {
+      .post-feature_slide:hover .post-feature_cover {
+        scale: 1.03;
+      }
+    }
+
+    /* The cover fills the card and the words stand on it, only once there is
+       room for them beside what the picture shows: the card is near the
+       picture's own shape here, so nothing is cut to a tall crop either. */
+    @media (width >= 75rem) {
+      .post-feature_slide {
+        aspect-ratio: 1340 / 800;
+        justify-content: end;
+      }
+
+      .post-feature_media {
+        position: absolute;
+        inset: 0;
+        aspect-ratio: auto;
+
+        /* Dark enough in the corner behind the words to read on any cover,
+           and clear of the rest, where the picture has to stay itself. */
+        &::after {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background-image:
+            radial-gradient(
+              ellipse 72% 90% at 0% 100%,
+              rgb(6 10 19 / 0.95) 0%,
+              rgb(6 10 19 / 0.9) 50%,
+              rgb(6 10 19 / 0.48) 76%,
+              transparent 100%
+            ),
+            linear-gradient(
+              to top,
+              rgb(6 10 19 / 0.72) 0%,
+              rgb(6 10 19 / 0.22) 20%,
+              transparent 38%
+            );
+        }
+      }
+
+      .post-feature_body {
+        flex: none;
+        gap: 1.25rem;
+        max-width: min(44rem, 54%);
+        padding: clamp(2rem, 3.5vw, 3.125rem);
+      }
+
+      .post-feature_bars {
+        top: auto;
+        right: clamp(1.5rem, 3vw, 2.75rem);
+        bottom: clamp(1.5rem, 3vw, 2.5rem);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .post-feature_slide:hover .post-feature_cover {
+        scale: none;
+      }
+    }
+  }
+</style>

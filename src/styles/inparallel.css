@@ -400,3 +400,50 @@
   line-height: var(--line-height-medium);
   letter-spacing: var(--letter-spacing-tight);
 }
+
+/* --------------------------------------------------------------------------
+   Lit headings
+
+   On a dark section a heading is white lit from above, fading into the
+   brand's light blue — a vertical gradient clipped to the letters. It is the
+   whole of the "3D" look Flow Ninja's headings have: their stops are
+   #F8F8F8 → #6DA5F2, and `--brand-300` is the same light blue within a few
+   points. The faded half of a two-tone heading stays in that light, dimmer,
+   instead of dropping to a flat grey that reads as a different material.
+
+   The fill is a theme token (`--heading-fill` and friends in base.css), so it
+   follows the nearest theme: a light section inside a dark page goes back to
+   flat ink without an override here.
+   -------------------------------------------------------------------------- */
+.heading {
+  background-image: var(--heading-fill);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: var(--heading-ink);
+  /* The leading trim cuts a heading's box off at the baseline, so a
+     descender — the tail of a y, a g, a p — hangs below it. A solid fill
+     paints outside the box and nobody notices; a clipped background only
+     paints inside it, and the tail comes out empty. The padding gives the
+     tails a floor, the margin hands the space straight back, and nothing
+     around the heading moves. Flat themes set the descender to zero. */
+  padding-bottom: var(--heading-descender);
+  margin-bottom: calc(var(--heading-descender) * -1);
+}
+
+/* While a heading is being cut in, its lines are separate boxes with clips of
+   their own, and a clip keeps a line's letters out of the heading's text mask.
+   Each line takes the fill for itself until the cut is done. */
+.heading:has(+ .text) {
+  margin-bottom: calc(var(--_margin-bottom) - var(--heading-descender));
+}
+
+.heading-split em {
+  -webkit-text-fill-color: var(--heading-accent-ink);
+}
+
+/* A transparent fill would take the selection with it — the letters have to
+   come back solid while they're highlighted, or they vanish into the block. */
+.heading::selection,
+.heading ::selection {
+  -webkit-text-fill-color: var(--dark-900);
+}

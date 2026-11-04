@@ -6,6 +6,7 @@
  */
 
 import type { ImageMetadata } from "astro";
+import type { SvgComponent } from "astro/types";
 
 import veyor from "@/assets/inparallel/logos/veyor.svg";
 import shiftolic from "@/assets/inparallel/logos/shiftolic.svg";
@@ -18,6 +19,11 @@ import testimonial1 from "@/assets/inparallel/testimonial-1.png";
 import testimonial2 from "@/assets/inparallel/testimonial-2.png";
 import belgrade from "@/assets/inparallel/belgrade.png";
 import worldwide from "@/assets/inparallel/worldwide.png";
+import founders from "@/assets/inparallel/founders.webp";
+import webflowBadge from "@/assets/inparallel/webflow-badge.png";
+import jobSuccess from "@/assets/inparallel/icons/upwork-job-success.svg";
+import topRated from "@/assets/inparallel/icons/upwork-top-rated.svg";
+import { SOCIAL_PROOF } from "@/consts.ts";
 
 /* -------------------------------------------------------------------------- */
 /* Trusted by                                                                  */
@@ -254,6 +260,11 @@ export interface StudioCard {
   text: string;
   linkLabel: string;
   href: string;
+  /** Stand-ins until the studio and team shots are ready. */
+  image: ImageMetadata;
+  imageAlt: string;
+  /** A cut-out stands on the frame's floor; a photograph fills the frame. */
+  cutout?: boolean;
 }
 
 export const STUDIO_CARDS: StudioCard[] = [
@@ -262,12 +273,49 @@ export const STUDIO_CARDS: StudioCard[] = [
     text: "Design, copy, build and growth sit at the same table — yours. The two people you meet on the first call are the only two who touch your site.",
     linkLabel: "Meet the studio",
     href: "/about",
+    image: founders,
+    imageAlt: "Aleksandar and Darko",
+    cutout: true,
   },
   {
     title: "Based in Belgrade. Building worldwide.",
     text: "Our clients run from EU healthcare to US legal tech. Same honesty, wherever you are.",
     linkLabel: "See the work",
     href: "/work",
+    image: belgrade,
+    imageAlt: "Belgrade, where the studio is based",
+  },
+];
+
+/* -------------------------------------------------------------------------- */
+/* Recognition                                                                 */
+/* -------------------------------------------------------------------------- */
+
+export interface Recognition {
+  /** What was earned, as the platform words it. */
+  title: string;
+  /** Who awards it — a badge is worth nothing unattributed. */
+  issuer: string;
+  /** An inline mark, inked by the card — or, failing one, a picture. */
+  icon?: SvgComponent;
+  image?: ImageMetadata;
+}
+
+export const RECOGNITION: Recognition[] = [
+  {
+    title: "Certified Partner",
+    issuer: "Webflow",
+    image: webflowBadge,
+  },
+  {
+    title: `${SOCIAL_PROOF.score} Job Success`,
+    issuer: "Upwork",
+    icon: jobSuccess,
+  },
+  {
+    title: "Top Rated Plus",
+    issuer: "Upwork",
+    icon: topRated,
   },
 ];
 
@@ -360,17 +408,18 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
     links: [
       { label: "Work", href: "/work" },
       { label: "Services", href: "/services" },
-      { label: "Why inparallel", href: "/about" },
+      { label: "Pricing", href: "/pricing" },
+      { label: "Insights", href: "/blog" },
       { label: "Contact", href: "/contact" },
     ],
   },
   {
     title: "Services",
     links: [
-      { label: "inparallelDesign", href: "/services/design" },
-      { label: "inparallelBuild", href: "/services/build" },
-      { label: "inparallelLaunch", href: "/services/launch" },
-      { label: "inparallel+", href: "/services/plus" },
+      { label: "Design & Development", href: "/services/design-development" },
+      { label: "Webflow Development", href: "/services/webflow-development" },
+      { label: "SEO & AEO", href: "/services/seo-aeo" },
+      { label: "Growth", href: "/services/growth" },
       { label: "Extended team", href: "/extended-team" },
     ],
   },
@@ -378,8 +427,8 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
     title: "Company",
     links: [
       { label: "About the studio", href: "/about" },
-      { label: "Careers", href: "/contact" },
-      { label: "Contact", href: "/contact" },
+      { label: "Privacy policy", href: "/privacy-policy" },
+      { label: "Terms of service", href: "/terms-of-service" },
       {
         label: "hello@inparallel.agency",
         href: "mailto:hello@inparallel.agency",

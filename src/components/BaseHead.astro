@@ -1,5 +1,5 @@
 ---
-import { SITE_NAME, SITE_DESCRIPTION } from "@/consts.ts";
+import { SITE_NAME, SITE_DESCRIPTION, SITE_PRIVATE } from "@/consts.ts";
 import { isNoindexRoute } from "@/utils/seo.ts";
 import type { SeoProps } from "@/types.ts";
 
@@ -13,7 +13,8 @@ const {
   noindex,
 } = Astro.props;
 
-const isNoindex = noindex ?? isNoindexRoute(Astro.url.pathname);
+const isNoindex =
+  SITE_PRIVATE || (noindex ?? isNoindexRoute(Astro.url.pathname));
 
 const pageTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
 const canonical = new URL(Astro.url.pathname, Astro.site);
@@ -28,7 +29,7 @@ const socialImage = new URL(image, Astro.site);
 <title>{pageTitle}</title>
 <meta name="description" content={description} />
 <link rel="canonical" href={canonical} />
-{isNoindex && <meta name="robots" content="noindex, nofollow" />}
+{isNoindex && <meta name="robots" content="noindex, nofollow, noarchive" />}
 
 <meta property="og:type" content={type} />
 <meta property="og:site_name" content={SITE_NAME} />

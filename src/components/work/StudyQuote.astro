@@ -1,0 +1,144 @@
+---
+/**
+ * The client, in their own words — only when the study has a quote, and only
+ * as it was said. The back half of it is underlined twice, the parallel rule
+ * the stories on the home page use, and the speaker signs with their initial.
+ *
+ * Once the client's film is hosted (`quote.video`), a play button opens it in
+ * the page's shared dialog; the page adds the dialog when there is one.
+ */
+import PlayButton from "@/components/inparallel/PlayButton.astro";
+import type { Project } from "@/utils/content.ts";
+import { signatureOf } from "@/data/work.ts";
+
+interface Props {
+  project: Project;
+}
+
+const { data } = Astro.props.project;
+const quote = data.quote;
+
+/* Underline from the last pause in the sentence: the part after the comma is
+   the part worth reading twice. A quote without one is underlined whole. */
+const at = quote ? quote.text.lastIndexOf(", ") : -1;
+const [lead, rest] =
+  quote && at > 0
+    ? [quote.text.slice(0, at + 2), quote.text.slice(at + 2)]
+    : ["", quote?.text ?? ""];
+---
+
+{
+  quote && (
+    <figure class="study-quote">
+      <blockquote class="study-quote_text">
+        <p>
+          “{lead}
+          <mark class="study-quote_mark">{rest}”</mark>
+        </p>
+      </blockquote>
+      <figcaption class="study-quote_by">
+        <span class="study-quote_sign" aria-hidden="true">
+          {signatureOf(quote.name)}
+        </span>
+        <span class="study-quote_who">
+          <span class="study-quote_name">{quote.name}</span>
+          <span class="study-quote_meta">
+            {quote.role ? `${quote.role}, ${data.client}` : data.client},{" "}
+            {data.industry}
+          </span>
+        </span>
+        {quote.video && (
+          <PlayButton
+            size="small"
+            label={`Play ${quote.name}'s story`}
+            video={quote.video}
+            caption={`${quote.name} · ${data.client}`}
+            class="study-quote_play"
+          />
+        )}
+      </figcaption>
+    </figure>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .study-quote {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+      max-width: 58rem;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .study-quote_text {
+      margin: 0;
+
+      & p {
+        margin: 0;
+        font-size: clamp(1.6rem, 1.15rem + 1.7vw, 2.75rem);
+        font-weight: 500;
+        line-height: 1.2;
+        letter-spacing: -0.03em;
+        text-wrap: balance;
+      }
+    }
+
+    /* Underlined twice: the parallel rule, under the words that matter. */
+    .study-quote_mark {
+      background: none;
+      color: inherit;
+      background-image:
+        linear-gradient(var(--brand-500), var(--brand-500)),
+        linear-gradient(var(--brand-300), var(--brand-300));
+      background-size:
+        100% 2px,
+        100% 2px;
+      background-position:
+        0 calc(100% - 0.02em),
+        0 calc(100% + 0.16em);
+      background-repeat: no-repeat;
+      padding-bottom: 0.16em;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+
+    .study-quote_by {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      text-align: left;
+    }
+
+    .study-quote_sign {
+      padding-right: 1.1rem;
+      border-right: var(--border-width) solid var(--border);
+      color: var(--ink-900);
+      font-family: var(--serif-family);
+      font-size: 2rem;
+      font-style: italic;
+      line-height: 1;
+    }
+
+    .study-quote_who {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .study-quote_name {
+      font-weight: 500;
+    }
+
+    .study-quote_meta {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    .study-quote_play {
+      margin-left: 0.5rem;
+    }
+  }
+</style>

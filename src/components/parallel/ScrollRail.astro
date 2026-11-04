@@ -1,0 +1,59 @@
+---
+/**
+ * How far down the page you are, as the mark would draw it: two hairlines
+ * along the top edge of the screen, filling left to right as the page
+ * scrolls, the second a little behind the first.
+ *
+ * Pure CSS — a scroll-driven animation — so it costs no script and simply
+ * isn't there in a browser without scroll timelines, or for a reader who has
+ * asked for less motion.
+ */
+---
+
+<div class="scroll-rail" aria-hidden="true">
+  <i></i><i></i>
+</div>
+
+<style is:global>
+  @layer components {
+    .scroll-rail {
+      display: none;
+    }
+
+    @supports (animation-timeline: scroll()) {
+      @media (prefers-reduced-motion: no-preference) {
+        .scroll-rail {
+          position: fixed;
+          inset: 0 0 auto;
+          z-index: 120;
+          display: flex;
+          flex-direction: column;
+          gap: 2px;
+          pointer-events: none;
+
+          & > i {
+            display: block;
+            height: 2px;
+            background-color: var(--brand-500);
+            transform-origin: 0 50%;
+            transform: scaleX(0);
+            animation: scroll-rail-fill linear both;
+            animation-timeline: scroll(root block);
+          }
+
+          /* The second stroke trails the first: same pace, a step behind. */
+          & > i + i {
+            background-color: var(--brand-300);
+            animation-range: 3% 100%;
+          }
+        }
+      }
+    }
+
+    @keyframes scroll-rail-fill {
+      to {
+        transform: scaleX(1);
+      }
+    }
+  }
+</style>

@@ -1,0 +1,59 @@
+---
+/**
+ * A note left in the page where the owner still has to supply something — a
+ * price, a link, an answer.
+ *
+ * It is meant to be seen. A missing figure that looked like a real one could
+ * go live unnoticed; a dashed `TODO` in the middle of the page can't. Search
+ * the source for `TODO` to find every one before launch.
+ *
+ *   <Todo>booking link</Todo>
+ */
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"span">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<span class:list={["todo-note", className]} {...rest}>
+  <span class="todo-note_tag">TODO:</span>{" "}
+  <slot />
+</span>
+
+<style is:global>
+  @layer components {
+    /* Set on the themes themselves, so a note takes the accent of the nearest
+       section by inheritance — a light section on a dark page included. */
+    .theme-light {
+      --todo-accent: var(--brand-500);
+    }
+
+    .theme-dark {
+      --todo-accent: var(--brand-300);
+    }
+
+    .todo-note {
+      display: inline-flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 0.4em;
+      padding: 0.3em 0.6em;
+      border: 1px dashed color-mix(in srgb, currentcolor 55%, transparent);
+      border-radius: 0.4rem;
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      line-height: 1.35;
+      text-transform: none;
+      text-wrap: pretty;
+    }
+
+    .todo-note_tag {
+      color: var(--todo-accent, var(--brand-500));
+      font-weight: 600;
+      letter-spacing: 0.06em;
+    }
+  }
+</style>

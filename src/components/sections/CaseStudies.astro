@@ -1,59 +1,113 @@
 ---
-import Section from "@/components/Section.astro";
-import Heading from "@/components/Heading.astro";
-import Img from "@/components/Img.astro";
+/**
+ * "Every project, measured by its results" — two studies, each a panel and
+ * the study's card, the side swapping every other row.
+ *
+ * On a service's own page it runs in that service's colour, with the study
+ * closest to the service first.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import CaseVisual from "@/components/inparallel/CaseVisual.astro";
 import ProjectCard from "@/components/inparallel/ProjectCard.astro";
+import ProjectGallery from "@/components/inparallel/ProjectGallery.astro";
 import { getProjects } from "@/utils/content.ts";
-import caseTexture from "@/assets/inparallel/case-texture.png";
+import { laneStyle } from "@/data/service-pages.ts";
+import type { Service } from "@/data/offer.ts";
 
-/* The home page shows the first two case studies; the rest live on /work. */
-const projects = (await getProjects()).slice(0, 2);
+interface Props {
+  index?: string;
+  /** The service whose page this is, for its colour. */
+  service?: Service;
+  /** The study that leads, on a service's page. */
+  lead?: string;
+}
+
+const { index = "02", service, lead } = Astro.props;
+
+/* The studies with a panel; the rest live on /work. */
+const projects = (await getProjects())
+  .filter(({ data }) => data.media.screens)
+  .sort((a, b) => Number(b.id === lead) - Number(a.id === lead))
+  .slice(0, 2);
 ---
 
-<Section id="work" theme="dark">
-  <div class="section-head centered">
-    <Heading tag="h2" class="heading-split">
-      Every project, <em>measured by its results</em>
-    </Heading>
-  </div>
+<section
+  id="work"
+  class:list={["cases", "theme-dark", service && "has-lane on-lane"]}
+  style={service ? laneStyle(service) : undefined}
+  aria-labelledby="work-title"
+>
+  <div class="cases_inner">
+    <SectionHead
+      index={index}
+      label="Work"
+      align="center"
+      headingId="work-title"
+    >
+      Every project, <br class="cases_break" />measured by its results
+    </SectionHead>
 
-  {
-    projects.map((project, index) => (
-      /* The design alternates which side the wide panel sits on, so the row
-         reverses on every second study rather than being written out twice. */
-      <div class:list={["case_row", index % 2 === 1 && "reversed"]}>
-        <div class="case_panel surface">
-          <Img
-            src={caseTexture}
-            alt=""
-            class="surface-glow case_texture"
-            width={256}
-            height={256}
-          />
-          <span class="case_chip">
-            <span>{project.data.client}</span>
-            <span aria-hidden="true">·</span>
-            <span>{project.data.industry}</span>
-          </span>
-          {/* The design's three-up shot strip, still to be filled with the
-              screens for this project. */}
-          <span class="case_shots" aria-hidden="true">
-            <span /> <span /> <span />
-          </span>
+    {
+      projects.map((project, position) => (
+        /* The rows alternate which side the panel is on; the markup stays
+           panel-then-card so the reading order doesn't change with it. */
+        <div
+          class:list={["case_row", position % 2 === 1 && "reversed"]}
+          data-anim="rise"
+        >
+          <CaseVisual project={project} class="case_panel" />
+          <ProjectCard project={project} />
         </div>
+      ))
+    }
+  </div>
+</section>
 
-        <ProjectCard project={project} />
-      </div>
-    ))
-  }
-</Section>
+<ProjectGallery />
 
 <style is:global>
   @layer components {
+    .cases {
+      padding-block: var(--section-space-large, 8rem) var(--space-8);
+      background-color: var(--dark-900);
+
+      &.has-lane {
+        --case-tag: var(--lane-dark);
+        background-color: var(--lane-dark);
+      }
+    }
+
+    /* The section's own padding clears the bar on a jump to it, so nothing of
+       the section above is left showing between the two. Lenis, where it runs,
+       allows for the bar itself. */
+    .cases:target {
+      scroll-margin-top: var(--nav-height);
+    }
+
+    html.lenis .cases:target {
+      scroll-margin-top: 0;
+    }
+
+    .cases_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5625rem;
+    }
+
+    .cases_inner > .section-head-p {
+      margin-bottom: clamp(2rem, 1rem + 3vw, 4rem);
+    }
+
+    /* A minimum, not a height: the row eases down with the panel's width so the
+       screens keep their proportions, and the card beside it can still ask
+       for more. */
     .case_row {
       width: 100%;
+      min-height: clamp(27rem, 42vw, 31.25rem);
       display: grid;
-      gap: var(--space-5);
+      gap: 1.5625rem;
       grid-template-columns: minmax(0, 915fr) minmax(0, 400fr);
     }
 
@@ -61,82 +115,37 @@ const projects = (await getProjects()).slice(0, 2);
       grid-template-columns: minmax(0, 400fr) minmax(0, 915fr);
     }
 
-    /* Source order is panel-then-card; the reversed row swaps the columns
-       rather than the markup, so the reading order stays the same. */
     .case_row.reversed .case_panel {
       order: 2;
     }
 
-    /* ---- the wide panel ------------------------------------------------- */
-    .case_panel {
-      display: flex;
-      flex-direction: column;
-      align-items: start;
-      justify-content: space-between;
-      gap: var(--space-5);
-      height: 31.25rem;
-      padding: var(--space-5);
-      border: var(--border-width) solid var(--border);
+    .case_row + .case_row {
+      margin-top: 1.5625rem;
     }
 
-    /* A 256px tile repeated across the panel at a tenth strength, which is
-       how the design's backdrop is built. */
-    .case_texture {
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      opacity: 0.1;
-      border-radius: inherit;
-    }
-
-    .case_chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.625rem;
-      padding: 0.9375rem 1.25rem;
-      background-color: var(--dark-900);
-      border: var(--border-width) solid var(--border);
-      border-radius: 0.625rem;
-      font-size: var(--text-small);
-      font-weight: var(--primary-medium);
-      white-space: nowrap;
-    }
-
-    .case_shots {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.9375rem;
-      padding: 0.9375rem 1.25rem;
-      background-color: var(--dark-900);
-      border: var(--border-width) solid var(--border);
-      border-radius: 0.625rem;
-
-      & > span {
-        display: block;
-        width: 6.25rem;
-        height: 4.6875rem;
-        background-color: var(--light-100);
-        border-radius: var(--radius-main);
-      }
-    }
-
-    /* ---- narrower ------------------------------------------------------- */
-    @media (width < 64rem) {
+    @media (width < 62rem) {
       .case_row,
       .case_row.reversed {
+        min-height: 0;
+        gap: 1rem;
         grid-template-columns: minmax(0, 1fr);
       }
       .case_row.reversed .case_panel {
         order: 0;
       }
-      .case_panel {
-        height: auto;
-        min-height: 22rem;
+      .case_row + .case_row {
+        margin-top: 0;
       }
-      .case_shots > span {
-        width: 4.5rem;
-        height: 3.375rem;
+      .cases_inner {
+        gap: 2.5rem;
+      }
+    }
+
+    /* On a phone the second line won't fit whole, and a set break would leave
+       "results" alone on a third: the heading balances itself instead. */
+    @media (width < 30rem) {
+      .cases_break {
+        display: none;
       }
     }
   }

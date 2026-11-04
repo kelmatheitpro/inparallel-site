@@ -1,0 +1,553 @@
+---
+/**
+ * "What they had. What we shipped." — a client's old site and the one we
+ * built, one over the other, with a line to drag between them.
+ *
+ * The line is the mark: two strokes leaning at the logo's angle, and the cut
+ * between the two sites leans with them. Dragging anywhere on the picture
+ * moves it so the line runs through the pointer; the handle on it is a slider
+ * a keyboard can move too. Without the script, the two halves simply sit
+ * side by side at the middle.
+ *
+ * It shows the first study that has both an old and a new capture.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import ArrowCircle from "@/components/inparallel/ArrowCircle.astro";
+import Img from "@/components/Img.astro";
+import { getProjects } from "@/utils/content.ts";
+import { WORK_INDEX } from "@/data/work.ts";
+
+const study = (await getProjects()).find(
+  ({ data }) => data.media.before && data.media.after,
+);
+const { index, label, lead } = WORK_INDEX.compare;
+
+const before = study?.data.media.before;
+const after = study?.data.media.after;
+/* The cut leans by the picture's height times the slant; as a share of its
+   width, that depends on the picture's shape. */
+const shape = after ? after.height / after.width : 0.635;
+---
+
+{
+  study && before && after && (
+    <section
+      id="before-after"
+      class="compare-sec theme-light"
+      aria-labelledby="compare-title"
+    >
+      <div class="compare-sec_inner">
+        <SectionHead
+          index={index}
+          label={label}
+          lead={lead}
+          headingId="compare-title"
+        >
+          What they had. <br />
+          What we <span class="serif">shipped</span>.
+          <a slot="aside" class="btn btn-ghost" href="#sites">
+            See every site
+          </a>
+        </SectionHead>
+
+        <div class="compare-sec_body">
+          <figure class="compare">
+            <div
+              class="compare_frame"
+              data-compare
+              style={`--pos: 50; --_hw: ${shape.toFixed(4)}; --_ratio: ${after.width} / ${after.height};`}
+            >
+              <Img
+                src={after}
+                alt={`The ${study.data.client} website we shipped`}
+                class="compare_img"
+                variant="constrained"
+                sizes="(width >= 62rem) min(62vw, 56rem), 92vw"
+                draggable="false"
+              />
+              <div class="compare_before">
+                <Img
+                  src={before}
+                  alt={`The ${study.data.client} website before the rebuild`}
+                  class="compare_img"
+                  variant="constrained"
+                  sizes="(width >= 62rem) min(62vw, 56rem), 92vw"
+                  draggable="false"
+                />
+              </div>
+
+              <span class="compare_divider" aria-hidden="true">
+                <i />
+                <i />
+              </span>
+
+              <span
+                class="compare_handle"
+                role="slider"
+                tabindex="0"
+                aria-label={`Compare ${study.data.client}'s old and new website`}
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="50"
+                aria-valuetext="Half the old site, half the new"
+                data-compare-handle
+                hidden
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M9.5 7.5 5 12l4.5 4.5M14.5 7.5 19 12l-4.5 4.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.75"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </span>
+
+              <span class="compare_tag is-before" aria-hidden="true">
+                <span class="label_slash">//</span> What they had
+              </span>
+              <span class="compare_tag is-after" aria-hidden="true">
+                <span class="label_slash">//</span> What we shipped
+              </span>
+            </div>
+            <figcaption class="sr-only">
+              {study.data.client}'s website before the rebuild, and the one we
+              shipped.
+            </figcaption>
+          </figure>
+
+          <a
+            class="compare-card"
+            href={`/work/${study.id}`}
+            data-cursor="View case"
+          >
+            <span class="logo-chip compare-card_chip">
+              <Img
+                src={study.data.logo}
+                alt={study.data.client}
+                class="logo-chip_mark"
+                transparent
+              />
+            </span>
+            <h3 class="compare-card_title heading-split inline">
+              {study.data.headline} <em>{study.data.headlineMuted}</em>
+            </h3>
+            <div class="compare-card_foot">
+              <div class="rule-pair" data-anim="rule">
+                <i />
+                <i />
+              </div>
+              <p class="compare-card_stat">
+                <span class="compare-card_value">{study.data.stat}</span>
+                <span class="compare-card_label">{study.data.statLabel}</span>
+              </p>
+              <span class="compare-card_more">
+                Read the study
+                <ArrowCircle bare />
+              </span>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<script>
+  import { SLANT } from "@/scripts/motion.ts";
+
+  for (const frame of document.querySelectorAll<HTMLElement>(
+    "[data-compare]",
+  )) {
+    const handle = frame.querySelector<HTMLElement>("[data-compare-handle]");
+    if (!handle) continue;
+    let pos = 50;
+
+    const set = (value: number) => {
+      pos = Math.min(100, Math.max(0, value));
+      const shown = Math.round(pos);
+      frame.style.setProperty("--pos", pos.toFixed(2));
+      handle.setAttribute("aria-valuenow", String(shown));
+      handle.setAttribute(
+        "aria-valuetext",
+        `${shown}% the old site, ${100 - shown}% the new`,
+      );
+    };
+
+    /* The line leans, so where it crosses the pointer's height decides where
+       it sits: it is moved until it runs through the pointer exactly. */
+    const follow = (event: PointerEvent) => {
+      const box = frame.getBoundingClientRect();
+      const lean = box.height * SLANT;
+      const down = (event.clientY - box.top) / box.height;
+      const centre = event.clientX - box.left - lean / 2 + down * lean;
+      set(((centre + lean / 2) / (box.width + lean)) * 100);
+    };
+
+    /* A mouse takes the line at once. A finger on the picture may only be
+       scrolling the page past it, so it takes the line once it moves
+       sideways — or when it lifts again without having moved, a tap. */
+    let dragging = false;
+    let touch: { x: number; y: number } | null = null;
+    const grab = (event: PointerEvent) => {
+      dragging = true;
+      frame.setPointerCapture(event.pointerId);
+      frame.classList.add("is-dragging");
+      follow(event);
+    };
+    frame.addEventListener("pointerdown", (event) => {
+      if (event.button !== 0) return;
+      if (event.pointerType === "touch")
+        touch = { x: event.clientX, y: event.clientY };
+      else grab(event);
+    });
+    frame.addEventListener("pointermove", (event) => {
+      if (dragging) return follow(event);
+      if (!touch) return;
+      const across = Math.abs(event.clientX - touch.x);
+      const down = Math.abs(event.clientY - touch.y);
+      if (across > 6 && across > down) {
+        touch = null;
+        grab(event);
+      }
+    });
+    frame.addEventListener("pointerup", (event) => {
+      if (touch) follow(event);
+      touch = null;
+      dragging = false;
+      frame.classList.remove("is-dragging");
+    });
+    frame.addEventListener("pointercancel", () => {
+      touch = null;
+      dragging = false;
+      frame.classList.remove("is-dragging");
+    });
+
+    const steps: Record<string, number> = {
+      ArrowLeft: -2,
+      ArrowDown: -2,
+      ArrowRight: 2,
+      ArrowUp: 2,
+      PageDown: -10,
+      PageUp: 10,
+    };
+    handle.addEventListener("keydown", (event) => {
+      if (event.key in steps)
+        set(pos + steps[event.key]! * (event.shiftKey ? 5 : 1));
+      else if (event.key === "Home") set(0);
+      else if (event.key === "End") set(100);
+      else return;
+      event.preventDefault();
+    });
+
+    handle.hidden = false;
+    frame.classList.add("is-ready");
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .compare-sec {
+      padding-block: var(--section-space-large);
+      background-color: var(--light-200);
+    }
+
+    .compare-sec_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+    }
+
+    .compare-sec_body {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.25rem;
+
+      @media (width >= 62rem) {
+        grid-template-columns: minmax(0, 2.15fr) minmax(0, 1fr);
+      }
+    }
+
+    /* ---- the comparison -------------------------------------------------- */
+    .compare {
+      margin: 0;
+      padding: 0.5rem;
+      background-color: var(--light-100);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: 1.25rem;
+      box-shadow: 0 1.5rem 3rem -2rem rgb(13 25 40 / 0.35);
+    }
+
+    .compare_frame {
+      /* How far the cut leans across the picture, and where its middle sits
+         for the slider's value. In the picture's own width rather than
+         percentages, so the line can be moved with `translate` alone: dragging
+         it never lays anything out. */
+      --_lean: calc(var(--slant-tan) * var(--_hw) * 100cqw);
+      --_at: calc(
+        var(--pos) / 100 * (100cqw + var(--_lean)) - var(--_lean) / 2
+      );
+      position: relative;
+      container-type: inline-size;
+      aspect-ratio: var(--_ratio);
+      overflow: clip;
+      border-radius: 0.85rem;
+      background-color: var(--dark-900);
+      touch-action: pan-y;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* Only a picture the script is listening to says it can be dragged. */
+    .compare_frame.is-ready {
+      cursor: ew-resize;
+    }
+
+    .compare_img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+    }
+
+    .compare_before {
+      position: absolute;
+      inset: 0;
+      clip-path: polygon(
+        0 0,
+        calc(var(--_at) + var(--_lean) / 2) 0,
+        calc(var(--_at) - var(--_lean) / 2) 100%,
+        0 100%
+      );
+    }
+
+    /* The two strokes, laid along the cut. Longer than the picture is tall,
+       since they cross it at an angle. */
+    .compare_divider {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      z-index: 2;
+      display: flex;
+      gap: 0.3rem;
+      height: 125%;
+      translate: calc(var(--_at) - 50%) -50%;
+      rotate: var(--slant);
+      pointer-events: none;
+
+      & > i {
+        display: block;
+        width: 0.2rem;
+        height: 100%;
+        background-color: var(--light-100);
+        box-shadow: 0 0 0.75rem rgb(6 10 19 / 0.35);
+      }
+
+      & > i + i {
+        background-color: var(--brand-300);
+      }
+    }
+
+    /* The handle: a stroke's shape, upright arrows inside it. It rides the
+       line, and stays on the picture when the line's middle runs off it, so
+       there is always something to take hold of and to see focused. */
+    .compare_handle {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      z-index: 3;
+      display: grid;
+      place-items: center;
+      width: 3.5rem;
+      height: 2.75rem;
+      translate: calc(clamp(2.5rem, var(--_at), 100cqw - 2.5rem) - 50%) -50%;
+      color: var(--ink-900);
+      cursor: grab;
+
+      &[hidden] {
+        display: none;
+      }
+
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: 0.5rem;
+        background-color: var(--light-100);
+        box-shadow: 0 0.6rem 1.5rem rgb(6 10 19 / 0.3);
+        transform: skewX(calc(var(--slant) * -1));
+        transition: scale 0.3s var(--ease-out);
+      }
+
+      & svg {
+        width: 1.35rem;
+        height: 1.35rem;
+      }
+
+      &:focus-visible {
+        outline: none;
+
+        &::before {
+          outline: var(--focus-width) solid var(--brand-500);
+          outline-offset: var(--focus-offset);
+        }
+      }
+
+      .is-dragging & {
+        cursor: grabbing;
+
+        &::before {
+          scale: 1.08;
+        }
+      }
+    }
+
+    .compare_tag {
+      position: absolute;
+      bottom: 1rem;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45em;
+      padding: 0.5rem 0.7rem;
+      border-radius: 0.5rem;
+      font-family: var(--mono-family);
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      text-transform: uppercase;
+      pointer-events: none;
+
+      &.is-before {
+        left: 1rem;
+        background-color: rgb(6 10 19 / 0.94);
+        color: var(--light-100);
+
+        & .label_slash {
+          color: var(--brand-300);
+        }
+      }
+
+      &.is-after {
+        right: 1rem;
+        background-color: var(--light-100);
+        box-shadow: 0 0.25rem 1rem rgb(13 25 40 / 0.15);
+        color: var(--ink-900);
+
+        & .label_slash {
+          color: var(--brand-500);
+        }
+      }
+    }
+
+    /* ---- the card beside it --------------------------------------------- */
+    .compare-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: 1.5rem;
+      padding: clamp(1.5rem, 1rem + 1.5vw, 2rem);
+      background-color: var(--light-100);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: 1.25rem;
+      color: inherit;
+      text-decoration: none;
+
+      /* The stronger edge is a layer faded in over the card's own, so hover
+         repaints nothing. */
+      &::after {
+        content: "";
+        position: absolute;
+        inset: calc(var(--border-width) * -1);
+        border: var(--border-width) solid var(--border);
+        border-radius: inherit;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--duration-main);
+      }
+
+      @media (hover: hover) {
+        &:hover::after {
+          opacity: 1;
+        }
+      }
+    }
+
+    .compare-card_chip {
+      --_logo-width: 6.25rem;
+    }
+
+    .compare-card_title {
+      margin: 0;
+      font-size: clamp(1.35rem, 1.15rem + 0.6vw, 1.75rem);
+      font-weight: 500;
+      line-height: 1.2;
+      letter-spacing: -0.025em;
+      text-wrap: pretty;
+    }
+
+    .compare-card_foot {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      margin-top: auto;
+    }
+
+    .compare-card_stat {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin: 0;
+    }
+
+    .compare-card_value {
+      font-size: clamp(2.75rem, 2rem + 2.5vw, 4rem);
+      font-weight: 500;
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    .compare-card_label {
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+    }
+
+    .compare-card_more {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      color: var(--brand-500);
+      font-weight: 500;
+    }
+
+    @media (width < 48rem) {
+      .compare_tag {
+        bottom: 0.6rem;
+        padding: 0.4rem 0.55rem;
+        font-size: 0.625rem;
+
+        &.is-before {
+          left: 0.6rem;
+        }
+        &.is-after {
+          right: 0.6rem;
+        }
+      }
+
+      .compare_handle {
+        width: 2.9rem;
+        height: 2.3rem;
+      }
+    }
+  }
+</style>

@@ -39,7 +39,7 @@ const isCurrent = (href: string) =>
     </button>
 
     <nav class="nav_menu" id="nav-menu" aria-label="Main">
-      <div class="nav_menu_inner">
+      <div class="nav_menu_inner" data-lenis-prevent>
         <ul class="nav_links">
           {
             NAV_LINKS.map((link) =>
@@ -99,7 +99,7 @@ const isCurrent = (href: string) =>
           <a class="nav_email" href={`mailto:${CONTACT_EMAIL}`}>
             {CONTACT_EMAIL}
           </a>
-          <a class="nav_cta" href="/contact">Book a call</a>
+          <a class="btn btn-blue nav_cta" href="/contact">Book a call</a>
         </div>
       </div>
     </nav>
@@ -154,8 +154,9 @@ const isCurrent = (href: string) =>
 
       &.overlap[data-scrolled],
       &.overlap[data-open] {
-        background-color: color-mix(in srgb, var(--dark-900) 85%, transparent);
-        backdrop-filter: blur(12px);
+        /* Solid rather than blurred: a blur has to be redrawn on every frame
+           of every scroll, and this bar is on screen for all of them. */
+        background-color: color-mix(in srgb, var(--dark-900) 97%, transparent);
         border-bottom-color: rgb(255 255 255 / 0.1);
       }
     }
@@ -273,6 +274,21 @@ const isCurrent = (href: string) =>
 
     .nav_wrap[data-open] .nav_menu_inner {
       opacity: 1;
+    }
+
+    /* The page under an open menu is locked, so a menu taller than a short
+       screen, or a phone on its side, has to scroll itself or its last links
+       could never be reached. */
+    @media (width < 62rem) {
+      .nav_wrap[data-open] .nav_menu {
+        max-height: calc(100dvh - var(--nav-height));
+      }
+
+      .nav_wrap[data-open] .nav_menu_inner {
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: none;
+      }
     }
 
     /* Padding sits inside the box that collapses, so a closed menu measures
@@ -403,36 +419,29 @@ const isCurrent = (href: string) =>
       color: rgb(255 255 255 / 0.6);
       font-size: var(--text-small);
       text-decoration: none;
+      white-space: nowrap;
       transition: color var(--duration-main);
       @media (hover: hover) {
         &:hover {
           color: var(--light-100);
         }
       }
+
+      /* With five links in the bar, the address is the first thing to give
+         way on a narrower desktop. It's in the footer either way. */
+      @media (width >= 62rem) and (width < 76rem) {
+        display: none;
+      }
     }
 
-    /* The one magenta control in the bar, so it keeps the button treatment
-       from the design rather than the themed Lumos button. */
-    .nav_cta {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+    /* The one blue control in the bar: a button, at the bar's size. */
+    .btn.nav_cta {
+      --_pad: 1.125rem;
       min-height: 2.8125rem;
-      padding: 0.75rem 1.125rem;
       border-radius: var(--radius-main);
-      background-color: var(--brand-500);
       box-shadow: var(--shadow-button-inset);
-      color: var(--light-100);
       font-size: var(--text-small);
       font-weight: var(--primary-medium);
-      text-align: center;
-      text-decoration: none;
-      transition: background-color var(--duration-main);
-      @media (hover: hover) {
-        &:hover {
-          background-color: color-mix(in srgb, var(--brand-500), white 12%);
-        }
-      }
     }
 
     /* Wide enough for the links to sit in the bar itself. */
@@ -518,12 +527,28 @@ const isCurrent = (href: string) =>
         height: 1.25rem;
       }
 
-      [data-dropdown][data-open] .nav_submenu,
-      .nav_item.has-menu:hover .nav_submenu,
-      .nav_item.has-menu:focus-within .nav_submenu {
+      /* Open on hover, or when the chevron says so — not merely because
+         focus is inside: Escape hands focus back to the chevron, and the
+         panel has to close all the same. Keyboard users open it with the
+         chevron; its links are then a Tab away. */
+      [data-dropdown][data-open] .nav_submenu {
         opacity: 1;
         visibility: visible;
         translate: 0 0;
+      }
+
+      /* Real hover only: a tap leaves `:hover` behind on a touch screen, and
+         the chevron could then never close what it had opened. */
+      @media (hover: hover) {
+        .nav_item.has-menu:hover .nav_submenu {
+          opacity: 1;
+          visibility: visible;
+          translate: 0 0;
+        }
+
+        .nav_item.has-menu:hover .nav_chevron {
+          rotate: 180deg;
+        }
       }
 
       .nav_actions {

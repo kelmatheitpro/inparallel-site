@@ -6,7 +6,34 @@ headlineMuted: "from scratch in just 2 weeks."
 stat: "2 weeks"
 statLabel: "kickoff to launch"
 logo: ../../assets/inparallel/logos/shiftolic-mark.svg
+media:
+  card: ../../assets/inparallel/work/shiftolic/hero-card-shot.png
+  panel: ../../assets/inparallel/work/shiftolic/home-projects-bg.png
+  screens:
+    center: ../../assets/inparallel/work/shiftolic/screen-center.webp
+    left: ../../assets/inparallel/work/shiftolic/screen-left.webp
+    right: ../../assets/inparallel/work/shiftolic/screen-right.webp
+  desktop: ../../assets/inparallel/work/shiftolic/desktop.webp
+  mobile: ../../assets/inparallel/work/shiftolic/mobile.webp
+  main: ../../assets/inparallel/work/shiftolic/main.avif
+  thumbs:
+    - ../../assets/inparallel/work/shiftolic/page-thumb-how-it-works-page.webp
+    - ../../assets/inparallel/work/shiftolic/page-thumb-marketplace-page.webp
+  cardBg: ../../assets/inparallel/work/shiftolic/work-card-bg.webp
+  gallery:
+    - ../../assets/inparallel/work/shiftolic/case-study-gallery-frame-47511.avif
+    - ../../assets/inparallel/work/shiftolic/case-study-gallery-frame-47512.avif
+  pages:
+    - image: ../../assets/inparallel/work/shiftolic/page-thumb-home-page.png
+      name: "Home"
+    - image: ../../assets/inparallel/work/shiftolic/page-thumb-how-it-works-page.webp
+      name: "How it works"
+    - image: ../../assets/inparallel/work/shiftolic/page-thumb-marketplace-page.webp
+      name: "Marketplace"
+    - image: ../../assets/inparallel/work/shiftolic/page-thumb-testimonial-page.webp
+      name: "Testimonials"
 liveUrl: "https://www.shiftolic.com/"
+category: "Healthcare"
 metaDescription: "Designing and building Shiftolic's website from scratch in two weeks. Visual identity, Webflow development and a scalable CMS for a US healthcare marketplace."
 summary: "Shiftolic connects physicians, healthcare facilities and staffing agencies through one marketplace for shift scheduling, credentialing and coverage. The product had outgrown its website, and there were two weeks from kickoff to launch — design and development both, with no room to move the deadline."
 services:
@@ -14,7 +41,8 @@ services:
   - "UX & messaging"
   - "Webflow build"
   - "CMS architecture"
-  - "inparallel+ retainer"
+  - "Growth"
+timeline: "2 weeks"
 results:
   - value: "2 weeks"
     label: "kickoff to launch"
@@ -46,7 +74,7 @@ and development both, with no room to push the deadline.
 
 ## The solution
 
-inparallel took the project end to end. Design and development ran in parallel,
+inParallel took the project end to end. Design and development ran in parallel,
 with each side moving in tight one-week sprints.
 
 The first week was design: positioning, messaging structure, visual direction
@@ -67,7 +95,7 @@ and messaging that finally matched the product. The CMS was set up for the
 marketing team to manage independently, and performance was solid from day one.
 
 What started as a tight two-week project turned into an ongoing partnership
-through inparallel+, with the crew continuing to handle new pages, updates and
+through our Growth service, with us continuing to handle new pages, updates and
 improvements as Shiftolic keeps growing.
 
 ## The achievement
@@ -78,4 +106,4 @@ improvements as Shiftolic keeps growing.
 - Messaging restructured to position Shiftolic clearly for hospitals, agencies and physicians
 - Webflow build with a scalable CMS for marketing autonomy
 - Performance optimised from the first line of code
-- Ongoing partnership through inparallel+ supporting Shiftolic's continued growth
+- Ongoing partnership through our Growth service, supporting Shiftolic's continued growth

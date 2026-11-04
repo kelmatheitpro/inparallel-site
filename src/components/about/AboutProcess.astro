@@ -1,0 +1,249 @@
+---
+/**
+ * "Small crew. Clear process." — how a project runs, in three promises.
+ *
+ * Three dark cards, each with its promise set over the top and the line
+ * that backs it up along the bottom: two photographs of us at work, and the
+ * mark itself — two lit strokes on the hero's ribbed glass — where there is
+ * no third picture with only the two of us in it. On a wide screen they step
+ * down one after another, a beat apart, the way the strokes of the mark sit
+ * side by side but never level; each is wiped open along the slant as it
+ * arrives.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import Img from "@/components/Img.astro";
+import { PROCESS_CARDS } from "@/data/about.ts";
+---
+
+<section
+  class="about-process theme-light"
+  aria-labelledby="about-process-title"
+>
+  <div class="about-process_inner">
+    <SectionHead
+      index="03"
+      label="How we work"
+      align="center"
+      headingId="about-process-title"
+    >
+      Small crew. Clear process. <br />Work that speaks for&nbsp;<span
+        class="serif">itself</span
+      >.
+    </SectionHead>
+
+    <ul class="about-process_cards" role="list">
+      {
+        PROCESS_CARDS.map((card, index) => (
+          <li class="process-card" style={`--_step: ${index};`}>
+            {card.image ? (
+              <div class="process-card_media" data-anim="image">
+                <Img
+                  src={card.image}
+                  alt={card.alt ?? ""}
+                  class="process-card_photo"
+                  style={card.focus && `object-position: ${card.focus};`}
+                  variant="constrained"
+                  sizes="(width >= 62rem) 30vw, (width >= 40rem) 46vw, 92vw"
+                />
+              </div>
+            ) : (
+              <div
+                class="process-card_media process-card_mark"
+                data-anim="image"
+                aria-hidden="true"
+              >
+                <span class="process-card_stroke" />
+                <span class="process-card_stroke" />
+              </div>
+            )}
+            <div class="process-card_body">
+              <h3 class="process-card_title">
+                {card.title[0]}
+                <br />
+                {card.title[1]}
+              </h3>
+              <p class="process-card_text">{card.text}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style is:global>
+  @layer components {
+    .about-process {
+      padding-block: var(--section-space-large);
+      background-color: var(--light-200);
+    }
+
+    .about-process_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(3rem, 2rem + 3vw, 4.5rem);
+    }
+
+    .about-process_cards {
+      /* How far each card steps down from the one before it. */
+      --_drop: clamp(1.5rem, 0.5rem + 2.5vw, 3rem);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.75rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+
+      @media (width >= 40rem) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      @media (width >= 62rem) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        /* Room for the last card's step. */
+        padding-bottom: calc(2 * var(--_drop));
+      }
+    }
+
+    .process-card {
+      position: relative;
+      isolation: isolate;
+      aspect-ratio: 445 / 520;
+      overflow: clip;
+      border-radius: var(--radius-large);
+      background-color: var(--dark-900);
+      color: var(--light-100);
+      box-shadow: 0 1.75rem 3rem -2rem rgb(13 25 40 / 0.55);
+
+      @media (width >= 62rem) {
+        translate: 0 calc(var(--_step) * var(--_drop));
+      }
+
+      /* Two to a row, the odd one out sits centred under the pair rather
+         than hanging off one side. */
+      @media (40rem <= width < 62rem) {
+        &:last-child:nth-child(odd) {
+          grid-column: 1 / -1;
+          justify-self: center;
+          width: calc(50% - 0.75rem / 2);
+        }
+      }
+    }
+
+    .process-card_media {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+
+      /* Dark at the top and the foot, where the words sit, clear between. */
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(
+          180deg,
+          rgb(6 10 19 / 0.78) 0%,
+          rgb(6 10 19 / 0.2) 34%,
+          rgb(6 10 19 / 0.1) 55%,
+          rgb(6 10 19 / 0.85) 100%
+        );
+      }
+    }
+
+    .process-card_photo {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: scale 0.9s var(--ease-out);
+    }
+
+    /* The mark, at the size of the card: the hero's ribbed glass, and the
+       logo's two strokes standing in the light behind it. */
+    .process-card_mark {
+      --_h: 62%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6%;
+      background-image:
+        repeating-linear-gradient(
+          calc(90deg + var(--slant)),
+          rgb(255 255 255 / 0.04) 0 1px,
+          transparent 1px calc(1.6rem - 2px),
+          rgb(0 0 0 / 0.3) calc(1.6rem - 2px) 1.6rem
+        ),
+        radial-gradient(
+          70% 55% at 50% 55%,
+          rgb(42 109 218 / 0.45),
+          transparent 70%
+        ),
+        linear-gradient(160deg, #05080f, #0b1630);
+
+      /* The words sit on the dark top and foot, the strokes between. */
+      &::after {
+        background-image: linear-gradient(
+          180deg,
+          rgb(6 10 19 / 0.55) 0%,
+          transparent 30% 70%,
+          rgb(6 10 19 / 0.6) 100%
+        );
+      }
+    }
+
+    .process-card_stroke {
+      width: 17%;
+      height: var(--_h);
+      background-image: linear-gradient(180deg, #3b82f0, #123a85);
+      transform: skewX(calc(var(--slant) * -1));
+      box-shadow: 0 1.5rem 3rem -1rem rgb(42 109 218 / 0.5);
+      transition: translate 0.9s var(--ease-out);
+
+      & + & {
+        background-image: linear-gradient(180deg, #a8c8ff, #3d6fc4);
+      }
+    }
+
+    @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+      .process-card:hover .process-card_photo {
+        scale: 1.04;
+      }
+
+      /* The strokes step apart a little, the second a beat behind. */
+      .process-card:hover .process-card_stroke {
+        translate: -0.4rem 0;
+
+        & + .process-card_stroke {
+          translate: 0.4rem 0;
+        }
+      }
+    }
+
+    .process-card_body {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1.5rem;
+      padding: clamp(1.5rem, 1.1rem + 1vw, 2rem);
+    }
+
+    .process-card_title {
+      margin: 0;
+      font-size: clamp(1.4rem, 1.15rem + 0.7vw, 1.75rem);
+      font-weight: 500;
+      line-height: 1.08;
+      letter-spacing: -0.025em;
+      text-wrap: balance;
+    }
+
+    .process-card_text {
+      max-width: 22rem;
+      margin: 0;
+      color: rgb(255 255 255 / 0.82);
+      font-size: 0.9375rem;
+      line-height: 1.5;
+    }
+  }
+</style>

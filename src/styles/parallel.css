@@ -1,0 +1,577 @@
+/* ==========================================================================
+   Parallel — the house marks
+
+   Everything here is built from the logo's one idea: two strokes, side by
+   side, leaning at the same angle (`--slant`). Labels open with them, rules
+   come in pairs, edges are cut along them and the reveals ride them.
+   Imported into the `components` layer, ahead of every component's own
+   styles — so a component can still override a mark, and a mark still beats
+   a primitive's defaults.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   The mark — two leaning strokes, at any size. `<span class="slash-mark">`
+   with two empty `<i>` children; the script makes the moving ones.
+   -------------------------------------------------------------------------- */
+.slash-mark {
+  --_w: 0.2em;
+  --_gap: 0.14em;
+  display: inline-flex;
+  gap: var(--_gap);
+  height: 1em;
+  vertical-align: -0.1em;
+  pointer-events: none;
+
+  & > i {
+    display: block;
+    width: var(--_w);
+    height: 100%;
+    background-color: var(--brand-500);
+    transform: skewX(calc(var(--slant) * -1));
+  }
+
+  & > i + i {
+    background-color: var(--brand-300);
+  }
+}
+
+/* The blade that leads a heading's cut: the mark's two strokes, thin, just
+   ahead of the edge, over space that is still empty. Each stroke leans from
+   its foot, so its leading side runs exactly along the cut. Hidden until the
+   cut fades it in — a blade the script lets go of can never be left showing. */
+.slash-blade {
+  --_w: 0.065em;
+  --_gap: 0.07em;
+  position: absolute;
+  z-index: 2;
+  opacity: 0;
+
+  & > i {
+    transform-origin: 0 100%;
+  }
+}
+
+/* An intro — the page's first heading, its label — is hidden from the very
+   first paint and cut in by the script, so it never shows and then vanishes.
+   Only where intros run (`html.intro`, set in the head before anything paints:
+   desktop, motion allowed), and never for long: if the script hasn't armed it
+   in three seconds, it simply appears. */
+html.intro [data-intro]:not(.is-armed) {
+  visibility: hidden;
+  animation: intro-failsafe 0s 3s forwards;
+}
+
+@keyframes intro-failsafe {
+  to {
+    visibility: visible;
+  }
+}
+
+/* Whatever a reveal or a hover throws past the edge of the page — a blade, a
+   tilted card — is cut off there rather than widening the page. `clip`, not
+   `hidden`: nothing inside becomes a scroll container, so sticky still sticks. */
+main {
+  overflow-x: clip;
+}
+
+/* An open menu or dialog holds the page still underneath it. */
+html.is-locked {
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   Labels — `// 01  Work`. A section's name, said the way a developer leaves
+   a note in the code.
+   -------------------------------------------------------------------------- */
+.label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6em;
+  font-family: var(--mono-family);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* The type system's leading trim adds two pseudo-elements to every `p`, and in
+   a flex row they'd become items and push the label off the margin. */
+.label::before,
+.label::after {
+  display: none;
+}
+
+.label_slash {
+  display: inline-flex;
+  gap: 0.12em;
+  color: var(--brand-500);
+  letter-spacing: -0.04em;
+}
+
+.theme-dark .label_slash {
+  color: var(--label-slash, var(--brand-300));
+}
+
+.label_index {
+  color: var(--text);
+}
+
+/* --------------------------------------------------------------------------
+   Parallel rule — two hairlines, a few pixels apart, where anyone else
+   would draw one.
+   -------------------------------------------------------------------------- */
+.rule-pair {
+  --_gap: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--_gap);
+  width: 100%;
+
+  & > i {
+    display: block;
+    height: var(--border-width);
+    background-color: var(--border);
+  }
+
+  & > i + i {
+    background-color: var(--border-soft);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Ribs — the hero's reeded glass, as a flat texture for cards and panels.
+   Hairlines along the slant, a rib-width apart.
+   -------------------------------------------------------------------------- */
+.ribs {
+  --_rib: 1.75rem;
+  --_ink: rgb(255 255 255 / 0.05);
+  background-image: repeating-linear-gradient(calc(90deg + var(--slant)), transparent 0 calc(var(--_rib) - 1px), var(--_ink) calc(var(--_rib) - 1px) var(--_rib));
+}
+
+.theme-light .ribs,
+:root:not(.theme-dark) .ribs:not(.theme-dark *) {
+  --_ink: color-mix(in srgb, var(--ink-900) 6%, transparent);
+}
+
+/* --------------------------------------------------------------------------
+   Accent — the softer word in a heading, in Instrument Serif's italic.
+   -------------------------------------------------------------------------- */
+.serif {
+  font-family: var(--serif-family);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  /* The serif sits small beside Geist at the same size. */
+  font-size: 1.08em;
+  line-height: 0;
+}
+
+/* The sheet a picture is wiped open by (`image()` in motion.ts): a little
+   wider than the picture on both sides, so its leaning edges start and end
+   outside the frame. */
+.image-sheet {
+  position: absolute;
+  z-index: 5;
+  inset: 0 -60%;
+  transform: skewX(calc(var(--slant) * -1));
+  pointer-events: none;
+}
+
+/* --------------------------------------------------------------------------
+   A section standing on a service's deep colour: its headings light up in that
+   service's colour rather than the site's blue. Only where a lane is set; the
+   FAQ also runs on pages that have none.
+   -------------------------------------------------------------------------- */
+.on-lane {
+  --heading-fill: linear-gradient(
+    to bottom,
+    var(--light-100) 25%,
+    var(--lane-soft, var(--brand-300))
+  );
+  --heading-accent-ink: color-mix(
+    in srgb,
+    var(--lane-soft, var(--brand-300)) 55%,
+    transparent
+  );
+  --label-slash: var(--lane-soft, var(--brand-300));
+}
+
+/* --------------------------------------------------------------------------
+   Buttons — the studio's two: a solid one that says the next step, and a
+   quiet one beside it.
+
+   At rest a button is only its label. On hover the label steps aside and an
+   arrow comes in from the right, while the mark's two strokes cross the button
+   behind them, once, left to right, and don't run back when the pointer
+   leaves. `.btn_label` is wrapped round the text in `buttons.ts`; the arrow is
+   the button's own, so every button has it whatever its markup says.
+   -------------------------------------------------------------------------- */
+:root {
+  --ease-move: cubic-bezier(0.76, 0, 0.24, 1);
+  --ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+  --arrow-shape: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 12'%3E%3Cpath d='M15.53 6.53a.75.75 0 0 0 0-1.06L10.76.7a.75.75 0 1 0-1.06 1.06L13.94 6 9.7 10.24a.75.75 0 1 0 1.06 1.06l4.77-4.77ZM0 6v.75h15v-1.5H0V6Z'/%3E%3C/svg%3E");
+}
+
+.btn {
+  --_bg: var(--light-100);
+  --_bg-hover: var(--light-300);
+  --_fg: var(--ink-900);
+  --_bd: transparent;
+  --_bd-hover: var(--_bd);
+  --_sweep: color-mix(in srgb, var(--brand-500) 28%, transparent);
+  --_pad: 1.75rem;
+  --_step: 0.75rem;
+  position: relative;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.25rem;
+  padding: 0 var(--_pad);
+  overflow: clip;
+  background-color: var(--_bg);
+  border: var(--border-width) solid var(--_bd);
+  border-radius: 0.75rem;
+  color: var(--_fg);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+  transition:
+    background-color 0.35s var(--ease-soft),
+    border-color 0.35s var(--ease-soft),
+    color 0.35s var(--ease-soft),
+    scale 0.2s var(--ease-soft);
+
+  /* The sweep: the mark's two strokes, the wide one leading, drawn at the
+     right edge of a box as wide as the button, so one trip across needs no
+     measuring. It leaves by fading where it is and only then goes home, which
+     is what stops it running back over the label. */
+  &::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    inset: -1px;
+    background-image: linear-gradient(
+      to right,
+      transparent calc(100% - 2.1rem),
+      var(--_sweep) calc(100% - 2.1rem) calc(100% - 1rem),
+      transparent calc(100% - 1rem) calc(100% - 0.7rem),
+      var(--_sweep) calc(100% - 0.7rem) calc(100% - 0.25rem),
+      transparent calc(100% - 0.25rem)
+    );
+    opacity: 0;
+    transform: translateX(calc(-100% - 1.5rem)) skewX(calc(var(--slant) * -1));
+    transition:
+      opacity 0.25s var(--ease-soft),
+      transform 0s linear 0.25s;
+    pointer-events: none;
+  }
+
+  /* The arrow, parked past where it lands and moving the same way the label
+     does, so the two never meet. Its right edge sits `--_step` inside the
+     padding: it lands in the room the label left. */
+  &::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: calc(var(--_pad) - var(--_step));
+    width: 0.875em;
+    height: 0.66em;
+    margin-top: -0.33em;
+    background-color: currentcolor;
+    mask: var(--arrow-shape) center / contain no-repeat;
+    opacity: 0;
+    translate: 0.75rem 0;
+    transition:
+      translate 0.5s var(--ease-move),
+      opacity 0.3s var(--ease-soft);
+    pointer-events: none;
+  }
+
+  /* A link that leaves the site says so: its arrow points out. */
+  &[target="_blank"]::after {
+    rotate: -45deg;
+  }
+
+  @media (hover: hover) {
+    &:hover {
+      background-color: var(--_bg-hover);
+      border-color: var(--_bd-hover);
+    }
+
+    &:hover::before {
+      opacity: 1;
+      transform: translateX(4rem) skewX(calc(var(--slant) * -1));
+      transition:
+        opacity 0s,
+        transform 0.8s var(--ease-move);
+    }
+
+    &:hover .btn_label {
+      translate: calc(var(--_step) * -1) 0;
+    }
+
+    &:hover::after {
+      opacity: 1;
+      translate: 0 0;
+      transition-delay: 0.08s;
+    }
+  }
+
+  &:focus-visible .btn_label {
+    translate: calc(var(--_step) * -1) 0;
+  }
+
+  &:focus-visible::after {
+    opacity: 1;
+    translate: 0 0;
+  }
+
+  &:active {
+    scale: 0.98;
+  }
+}
+
+.btn_label {
+  display: block;
+  transition: translate 0.5s var(--ease-move);
+}
+
+.btn-blue {
+  --_bg: var(--brand-500);
+  --_bg-hover: var(--brand-600);
+  --_fg: var(--light-100);
+  --_sweep: rgb(255 255 255 / 0.2);
+}
+
+.btn-ghost {
+  --_bg: transparent;
+  --_bg-hover: color-mix(in srgb, var(--text) 6%, transparent);
+  --_fg: var(--text);
+  --_bd: var(--border);
+  --_bd-hover: color-mix(in srgb, var(--text) 85%, transparent);
+}
+
+/* Older markup still carries an icon of its own; the button draws its arrow. */
+.btn .btn_arrow {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .btn::after,
+  .btn_label {
+    transition: none;
+  }
+
+  .btn::before {
+    display: none;
+  }
+
+  .btn:active {
+    scale: 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   The circle arrow. The arrow doesn't nudge: it passes through. One leaves by
+   the far side as its twin arrives from the near one, and the circle fills
+   behind them. `ArrowCircle.astro` draws the two; anything that links takes
+   the hover, so a whole card moves the arrow in its corner.
+
+   Filled, a circle takes the text colour with the page behind it inside; a
+   card that wants its own sets `--arrow-fill` and `--arrow-ink`.
+   -------------------------------------------------------------------------- */
+.arrow-circle {
+  --_travel: 1.75rem;
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  overflow: clip;
+  border: 1.5px solid color-mix(in srgb, currentcolor 20%, transparent);
+  border-radius: 50%;
+  transition:
+    background-color 0.35s var(--ease-soft),
+    border-color 0.35s var(--ease-soft),
+    color 0.35s var(--ease-soft),
+    scale 0.2s var(--ease-soft);
+}
+
+.arrow-circle_cur,
+.arrow-circle_next {
+  grid-area: 1 / 1;
+  display: block;
+  width: 0.6875rem;
+  height: 0.75rem;
+  transition: translate 0.5s var(--ease-move);
+}
+
+.arrow-circle_next {
+  translate: calc(var(--_travel) * -1) 0;
+}
+
+.arrow-circle.is-diag {
+  --_travel: 1.375rem;
+
+  & > svg {
+    rotate: -45deg;
+  }
+
+  & > .arrow-circle_next {
+    translate: calc(var(--_travel) * -1) var(--_travel);
+  }
+}
+
+/* No circle: the same crossing, for a text link. */
+.arrow-circle.is-bare {
+  --_travel: 1.25rem;
+  --arrow-fill: transparent;
+  --arrow-ink: currentcolor;
+  width: 1.125rem;
+  height: 1.125rem;
+  border: 0;
+  border-radius: 0;
+
+  &.is-diag {
+    --_travel: 1rem;
+  }
+}
+
+/* What moves when a link is hovered. */
+:is(a, button, .arrow-trigger):focus-visible .arrow-circle {
+  background-color: var(--arrow-fill, var(--text));
+  border-color: var(--arrow-fill, var(--text));
+  color: var(--arrow-ink, var(--background));
+}
+
+:is(a, button, .arrow-trigger):focus-visible .arrow-circle_cur {
+  translate: var(--_travel) 0;
+}
+
+:is(a, button, .arrow-trigger):focus-visible .arrow-circle.is-diag > .arrow-circle_cur {
+  translate: var(--_travel) calc(var(--_travel) * -1);
+}
+
+:is(a, button, .arrow-trigger):focus-visible .arrow-circle > .arrow-circle_next {
+  translate: 0 0;
+}
+
+@media (hover: hover) {
+  :is(a, button, .arrow-trigger):hover .arrow-circle {
+    background-color: var(--arrow-fill, var(--text));
+    border-color: var(--arrow-fill, var(--text));
+    color: var(--arrow-ink, var(--background));
+  }
+
+  :is(a, button, .arrow-trigger):hover .arrow-circle_cur {
+    translate: var(--_travel) 0;
+  }
+
+  :is(a, button, .arrow-trigger):hover .arrow-circle.is-diag > .arrow-circle_cur {
+    translate: var(--_travel) calc(var(--_travel) * -1);
+  }
+
+  :is(a, button, .arrow-trigger):hover .arrow-circle > .arrow-circle_next {
+    translate: 0 0;
+  }
+}
+
+:is(a, button, .arrow-trigger):active .arrow-circle {
+  scale: 0.94;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrow-circle,
+  .arrow-circle > svg {
+    transition: none;
+  }
+
+  /* The fill still says hover; the arrow stays put. */
+  :is(a, button, .arrow-trigger):is(:hover, :focus-visible) .arrow-circle > .arrow-circle_cur {
+    translate: 0 0;
+  }
+
+  :is(a, button, .arrow-trigger):is(:hover, :focus-visible) .arrow-circle > .arrow-circle_next {
+    visibility: hidden;
+  }
+
+  :is(a, button, .arrow-trigger):active .arrow-circle {
+    scale: 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Cursor label — follows the pointer over work you can open.
+   -------------------------------------------------------------------------- */
+.cursor-label {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 80;
+  pointer-events: none;
+}
+
+.cursor-label_pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.7rem 1rem 0.7rem 0.85rem;
+  translate: 1rem 1rem;
+  scale: 0.6;
+  opacity: 0;
+  background-color: var(--light-100);
+  border-radius: 0.6rem;
+  box-shadow: 0 0.75rem 2rem rgb(6 10 19 / 0.25);
+  color: var(--ink-900);
+  font-family: var(--mono-family);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transition:
+    scale 0.35s var(--ease-out, ease),
+    opacity 0.25s;
+
+  & .slash-mark {
+    height: 0.9rem;
+    --_w: 0.2rem;
+    --_gap: 0.15rem;
+  }
+}
+
+.cursor-label.is-on .cursor-label_pill {
+  scale: 1;
+  opacity: 1;
+}
+
+/* --------------------------------------------------------------------------
+   Slanted cut — a panel whose one edge leans with the mark.
+   -------------------------------------------------------------------------- */
+.cut-right {
+  --_cut: 3rem;
+  clip-path: polygon(0 0, 100% 0, calc(100% - var(--_cut)) 100%, 0 100%);
+}
+
+.cut-left {
+  --_cut: 3rem;
+  clip-path: polygon(var(--_cut) 0, 100% 0, 100% 100%, 0 100%);
+}
+
+/* --------------------------------------------------------------------------
+   Reduced motion: whatever the scripts would have moved, stays put.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .btn::before,
+  .btn::after {
+    display: none;
+  }
+}

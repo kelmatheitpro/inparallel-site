@@ -1,7 +1,6 @@
 ---
 import type { HTMLAttributes } from "astro/types";
-import Icon from "@/components/Icon.astro";
-import arrowCircle from "@/assets/inparallel/icons/arrow-circle.svg";
+import ArrowCircle from "./ArrowCircle.astro";
 
 interface Props extends HTMLAttributes<"a"> {
   href?: string;
@@ -13,12 +12,12 @@ const { href = "#", diagonal = false, class: className, ...rest } = Astro.props;
 ---
 
 <a
-  class:list={["arrow-link", diagonal && "diagonal", className]}
+  class:list={["arrow-link", className]}
   href={href}
   {...rest}
 >
   <span class="arrow-link_label"><slot /></span>
-  <Icon src={arrowCircle} class="arrow-link_icon" />
+  <ArrowCircle diagonal={diagonal} class="arrow-link_icon" />
 </a>
 
 <style is:global>
@@ -26,7 +25,7 @@ const { href = "#", diagonal = false, class: className, ...rest } = Astro.props;
     .arrow-link {
       display: inline-flex;
       align-items: center;
-      gap: var(--space-3);
+      gap: 0.8125rem;
       color: inherit;
       font-size: var(--text-main);
       font-weight: var(--primary-semibold);
@@ -35,23 +34,33 @@ const { href = "#", diagonal = false, class: className, ...rest } = Astro.props;
       white-space: nowrap;
     }
 
-    .arrow-link_icon {
-      --_size: 2.5rem;
-      transition: transform var(--duration-main) var(--ease-out);
+    /* The label steps back as the arrow goes through. */
+    .arrow-link_label {
+      transition: translate 0.5s var(--ease-move);
     }
 
-    .arrow-link.diagonal .arrow-link_icon {
-      rotate: -45deg;
+    /* The ring stands clear of the box by more than the label's step, or the
+       label would walk into it. */
+    .arrow-link:focus-visible {
+      outline-offset: 0.75rem;
     }
 
-    /* The arrow leans the way it points, so hover reads as travel rather
-       than as a colour change. */
+    .arrow-link:focus-visible .arrow-link_label {
+      translate: -0.5rem 0;
+    }
+
     @media (hover: hover) {
-      .arrow-link:hover .arrow-link_icon {
-        transform: translateX(0.25rem);
+      .arrow-link:hover .arrow-link_label {
+        translate: -0.5rem 0;
       }
-      .arrow-link.diagonal:hover .arrow-link_icon {
-        transform: translate(0.2rem, -0.2rem);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .arrow-link_label {
+        transition: none;
+      }
+      .arrow-link:is(:hover, :focus-visible) .arrow-link_label {
+        translate: 0 0;
       }
     }
   }

@@ -1,0 +1,133 @@
+---
+/**
+ * "Born in Serbia. Working everywhere." — where the work has gone.
+ *
+ * The dotted world with arcs thrown out of Belgrade (`DotMap`), and under it
+ * the four figures, each climbing to its written value as it arrives. The
+ * infinity sign has no digits to climb, so it is simply there.
+ *
+ * The map draws itself once and then rests (see the styles below): a loop on
+ * anything inside the drawing would make the browser redo the whole of it on
+ * every frame for as long as the page is open.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import DotMap from "@/components/inparallel/DotMap.astro";
+import { ORIGIN, DESTINATIONS, REACH_STATS } from "@/data/about.ts";
+---
+
+<section class="about-map theme-dark" aria-labelledby="about-map-title">
+  <div class="about-map_inner">
+    <SectionHead
+      index="04"
+      label="Reach"
+      align="center"
+      headingId="about-map-title"
+      lead="From early-stage startups to established teams, we partner with ambitious companies across markets — from Belgrade, with EU and US time zones covered."
+    >
+      Born in Serbia. <br />Working <span class="serif">everywhere</span>.
+    </SectionHead>
+
+    <DotMap origin={ORIGIN} destinations={DESTINATIONS} class="about-map_map" />
+
+    <ul class="about-map_stats" role="list" data-anim-group>
+      {
+        REACH_STATS.map((stat) => (
+          <li class="about-map_stat" data-anim="rise">
+            <span class="about-map_value" data-anim="count">
+              {stat.value}
+            </span>
+            <span class="about-map_label">{stat.label}</span>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style is:global>
+  @layer components {
+    .about-map {
+      position: relative;
+      isolation: isolate;
+      padding-block: var(--section-space-large);
+      background-color: var(--dark-900);
+      overflow: clip;
+
+      /* A low light behind the map, so the arcs read as thrown across a
+         lit floor rather than drawn on black. */
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background-image: radial-gradient(
+          50% 45% at 50% 62%,
+          rgb(42 109 218 / 0.18),
+          transparent 70%
+        );
+      }
+    }
+
+    .about-map_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(2.5rem, 1.75rem + 2.5vw, 4rem);
+    }
+
+    .about-map_map {
+      max-width: 68rem;
+    }
+
+    /* Each spark and ring runs once, on arrival. Left looping they lay out and
+       repaint the SVG on every frame, on screen or off: 210 ms of main thread
+       a second, against 22 once they stop. */
+    .about-map
+      .dot-map.is-revealed
+      :is(.dot-map_spark, .dot-map_ping, .dot-map_home-ping) {
+      animation-iteration-count: 1;
+    }
+
+    .about-map_stats {
+      width: 100%;
+      max-width: 60rem;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: var(--space-7) var(--space-5);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      text-align: center;
+
+      @media (width >= 48rem) {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+
+    .about-map_stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .about-map_value {
+      font-size: clamp(2.5rem, 1.9rem + 2vw, 3.75rem);
+      font-weight: 500;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      font-variant-numeric: tabular-nums;
+      color: var(--light-100);
+    }
+
+    .about-map_label {
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+  }
+</style>

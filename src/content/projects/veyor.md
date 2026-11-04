@@ -6,8 +6,31 @@ headlineMuted: "with zero SEO loss."
 stat: "5"
 statLabel: "markets, one component foundation"
 logo: ../../assets/inparallel/logos/veyor-mark.svg
+media:
+  card: ../../assets/inparallel/work/veyor/hero-card-shot-1080.webp
+  screens:
+    center: ../../assets/inparallel/work/veyor/screen-center.webp
+    left: ../../assets/inparallel/work/veyor/screen-left.webp
+    right: ../../assets/inparallel/work/veyor/screen-right.webp
+  desktop: ../../assets/inparallel/work/veyor/desktop.webp
+  mobile: ../../assets/inparallel/work/veyor/mobile.webp
+  main: ../../assets/inparallel/work/veyor/main.avif
+  cardBg: ../../assets/inparallel/work/veyor/work-card-bg.webp
+  gallery:
+    - ../../assets/inparallel/work/veyor/case-study-gallery-case-study-veyor-image2.avif
+    - ../../assets/inparallel/work/veyor/case-study-gallery-case-study-veyor-image4.avif
+  pages:
+    - image: ../../assets/inparallel/work/veyor/page-home.webp
+      name: "Home"
+    - image: ../../assets/inparallel/work/veyor/page-features.webp
+      name: "Features"
+    - image: ../../assets/inparallel/work/veyor/page-construction.webp
+      name: "Construction"
+    - image: ../../assets/inparallel/work/veyor/page-about.webp
+      name: "About"
 liveUrl: "https://www.veyordigital.com/"
-metaDescription: "How inparallel rebuilt Veyor from the ground up across five markets in one month, migrating 1,000+ CMS items with zero loss of SEO or rankings."
+category: "SaaS"
+metaDescription: "How inParallel rebuilt Veyor from the ground up across five markets in one month, migrating 1,000+ CMS items with zero loss of SEO or rankings."
 summary: "Veyor Digital builds software for construction and infrastructure teams coordinating on-site logistics across regions. The site had to operate as five separate regional presences at once, each with its own SEO — rebuilt and migrated off their existing Webflow site in a single month, without losing the search authority they had already earned."
 services:
   - "Webflow build"
@@ -15,6 +38,7 @@ services:
   - "CMS migration"
   - "HubSpot & analytics integration"
   - "Motion & interaction"
+timeline: "1 month"
 results:
   - value: "5"
     label: "markets, independently optimised"

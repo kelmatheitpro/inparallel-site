@@ -1,0 +1,393 @@
+---
+/**
+ * How a service runs: its steps as tabs that run through by themselves, with
+ * an object in the service's colour beside them that takes a new shape for
+ * each one. `service-scene.ts` builds the object and runs the tabs.
+ *
+ * Without JavaScript every step simply reads one after another. Each step
+ * holds its place when it's hidden, in the same cell as the others, so the
+ * section stays the height of the longest and nothing below it moves.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import ServiceObject from "./ServiceObject.astro";
+import TitleLines from "./TitleLines.astro";
+import type { Service } from "@/data/offer.ts";
+import { laneStyle, type ServicePage } from "@/data/service-pages.ts";
+
+interface Props {
+  service: Service;
+  process: ServicePage["process"];
+  /** Two-digit position on the page, for the label. */
+  index: string;
+}
+
+const { service, process, index } = Astro.props;
+const pad = (n: number) => String(n).padStart(2, "0");
+---
+
+<section
+  id="process"
+  class="steps theme-dark on-lane"
+  style={laneStyle(service)}
+  aria-labelledby="process-title"
+  data-steps
+>
+  <div class="steps_inner">
+    <SectionHead
+      index={index}
+      label="How it runs"
+      align="center"
+      headingId="process-title"
+      lead={process.lead}
+    >
+      <TitleLines title={process.title} />
+    </SectionHead>
+
+    <div class="steps_stage">
+      <div class="steps_left">
+        <div class="steps_panes">
+          {
+            process.steps.map((step, position) => (
+              <div
+                class="steps_pane"
+                id={`step-${position + 1}`}
+                role="tabpanel"
+                tabindex="0"
+                aria-labelledby={`step-tab-${position + 1}`}
+              >
+                <span class="steps_num" aria-hidden="true">
+                  {pad(position + 1)}
+                </span>
+                <h3 class="steps_title">{step.title}</h3>
+                <p class="steps_text">{step.text}</p>
+                <ul class="steps_list" role="list">
+                  {step.deliverables.map((item, row) => (
+                    <li class="steps_item">
+                      <span>{item}</span>
+                      {row === 0 && step.when && (
+                        <span class="steps_when">{step.when}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+                {step.output && (
+                  <p class="steps_output">
+                    <span>You end up with</span>
+                    {step.output}
+                  </p>
+                )}
+              </div>
+            ))
+          }
+        </div>
+
+        <div class="steps_tabs" role="tablist" aria-label="The steps">
+          {
+            process.steps.map((step, position) => (
+              <button
+                class="steps_tab"
+                id={`step-tab-${position + 1}`}
+                type="button"
+                role="tab"
+                aria-controls={`step-${position + 1}`}
+                aria-selected={position === 0 ? "true" : "false"}
+              >
+                <span class="steps_tab_fill" aria-hidden="true" />
+                <span class="steps_tab_text">{step.tab ?? step.title}</span>
+              </button>
+            ))
+          }
+        </div>
+      </div>
+
+      <ServiceObject service={service} />
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  @layer components {
+    .steps {
+      padding-block: var(--section-space-large, 8rem);
+      /* Clip, not hidden: nothing here may scroll on its own. */
+      overflow: clip;
+      background-color: var(--lane-dark);
+    }
+
+    .steps_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
+    }
+
+    .steps_stage {
+      display: grid;
+      grid-template-columns: minmax(0, 47%) minmax(0, 1fr);
+      align-items: center;
+      gap: clamp(2rem, 1rem + 3vw, 4rem);
+    }
+
+    /* ---- the steps ------------------------------------------------------ */
+    .steps_left {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .steps_panes {
+      display: flex;
+      flex-direction: column;
+      gap: 3rem;
+    }
+
+    /* Running: every step in one cell, so the tallest sets the height. */
+    .steps.is-ready .steps_panes {
+      display: grid;
+
+      & > .steps_pane {
+        grid-area: 1 / 1;
+        visibility: hidden;
+      }
+
+      & > .steps_pane.is-on {
+        visibility: visible;
+      }
+    }
+
+    .steps_pane {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      color: var(--light-100);
+    }
+
+    .steps_num {
+      font-family: var(--mono-family);
+      font-size: 0.8125rem;
+      letter-spacing: 0.08em;
+      color: var(--lane-soft);
+    }
+
+    .steps_title {
+      margin: 0.75rem 0 0;
+      font-size: clamp(1.75rem, 1.4rem + 1vw, 2.25rem);
+      font-weight: 500;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .steps_text {
+      max-width: 34rem;
+      margin: 1.25rem 0 0;
+      color: rgb(255 255 255 / 0.72);
+      font-size: 1.0625rem;
+      line-height: 1.5;
+      text-wrap: pretty;
+    }
+
+    .steps_list {
+      margin: 1.5rem 0 0;
+      padding: 0;
+      list-style: none;
+      border-top: var(--border-width) solid rgb(255 255 255 / 0.14);
+    }
+
+    .steps_item {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-block: 0.9rem;
+      border-bottom: var(--border-width) solid rgb(255 255 255 / 0.14);
+      font-size: 1.125rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+
+    .steps_when {
+      flex: none;
+      color: rgb(255 255 255 / 0.62);
+      font-size: 0.9375rem;
+      font-weight: 400;
+    }
+
+    .steps_output {
+      margin: 1rem 0 0;
+      font-weight: 500;
+
+      & > span {
+        margin-right: 0.75rem;
+        font-family: var(--mono-family);
+        font-size: 0.75rem;
+        font-weight: 400;
+        letter-spacing: 0.06em;
+        line-height: 1.8;
+        text-transform: uppercase;
+        color: rgb(255 255 255 / 0.55);
+      }
+    }
+
+    /* The step eases in, a line at a time. */
+    .steps.is-ready .steps_pane.is-on {
+      & > .steps_num,
+      & > .steps_title,
+      & > .steps_text,
+      & > .steps_output,
+      & .steps_item {
+        animation: steps-in 0.6s var(--ease-out) both;
+      }
+
+      & > .steps_title {
+        animation-delay: 0.03s;
+      }
+
+      & > .steps_text {
+        animation-delay: 0.06s;
+      }
+
+      & .steps_item:nth-child(1) {
+        animation-delay: 0.09s;
+      }
+
+      & .steps_item:nth-child(2) {
+        animation-delay: 0.13s;
+      }
+
+      & .steps_item:nth-child(3) {
+        animation-delay: 0.17s;
+      }
+
+      & .steps_item:nth-child(4) {
+        animation-delay: 0.21s;
+      }
+
+      & > .steps_output {
+        animation-delay: 0.21s;
+      }
+    }
+
+    @keyframes steps-in {
+      from {
+        opacity: 0;
+        translate: 0 0.5rem;
+      }
+    }
+
+    /* ---- the tabs ------------------------------------------------------- */
+    .steps_tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.625rem;
+    }
+
+    /* Without JavaScript there's nothing for them to switch, and no object. */
+    .steps:not(.is-ready) :is(.steps_tabs, .scene) {
+      display: none;
+    }
+
+    .steps_tab {
+      --_on: color-mix(in oklab, var(--lane-accent) 24%, var(--lane-dark));
+      /* As bright as the lane goes with white text still AA on it. */
+      --_lit: color-mix(in oklab, var(--lane-accent) 50%, var(--lane-dark));
+      position: relative;
+      isolation: isolate;
+      padding: 0.7rem 1.15rem;
+      overflow: clip;
+      background-color: transparent;
+      border: var(--border-width) solid rgb(255 255 255 / 0.26);
+      border-radius: 6rem;
+      color: var(--light-100);
+      font-size: 0.9375rem;
+      font-weight: 500;
+      line-height: 1;
+      white-space: nowrap;
+      cursor: pointer;
+      transition:
+        background-color 0.3s var(--ease-soft),
+        border-color 0.3s var(--ease-soft);
+
+      &[aria-selected="true"] {
+        background-color: var(--_on);
+        border-color: var(--_on);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--light-100);
+        outline-offset: 3px;
+      }
+
+      @media (hover: hover) {
+        &:not([aria-selected="true"]):hover {
+          border-color: rgb(255 255 255 / 0.55);
+        }
+      }
+    }
+
+    /* The time left on a step: the fill leans the way the mark does. It slides
+       rather than grows, so only the compositor is working, and it's cut wider
+       than the pill so its leaning ends never show inside it. */
+    .steps_tab_fill {
+      position: absolute;
+      inset: 0 -1rem 0 -2rem;
+      z-index: -1;
+      background-color: var(--_lit);
+      transform: translateX(-100%) skewX(calc(var(--slant) * -1));
+      transform-origin: 0 100%;
+    }
+
+    .steps_tab[aria-selected="true"] .steps_tab_fill {
+      animation: steps-fill var(--step-time, 6.5s) linear forwards;
+    }
+
+    .steps.is-held .steps_tab_fill {
+      animation-play-state: paused;
+    }
+
+    .steps.is-static .steps_tab_fill {
+      animation: none;
+    }
+
+    .steps.is-static .steps_tab[aria-selected="true"] {
+      background-color: var(--_lit);
+      border-color: var(--_lit);
+    }
+
+    @keyframes steps-fill {
+      to {
+        transform: translateX(0) skewX(calc(var(--slant) * -1));
+      }
+    }
+
+    /* ---- narrower ------------------------------------------------------- */
+    /* The object scales itself to whatever room its stage has. */
+    @media (width < 75rem) {
+      .steps_stage {
+        grid-template-columns: minmax(0, 52%) minmax(0, 1fr);
+      }
+      .steps .scene {
+        height: 30rem;
+      }
+    }
+
+    @media (width < 62rem) {
+      .steps_stage {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .steps .scene {
+        order: -1;
+        width: 100%;
+        height: auto;
+        max-height: 27.5rem;
+        aspect-ratio: 640 / 600;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .steps.is-ready .steps_pane.is-on * {
+        animation: none !important;
+      }
+    }
+  }
+</style>

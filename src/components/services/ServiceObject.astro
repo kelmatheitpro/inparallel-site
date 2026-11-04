@@ -1,0 +1,359 @@
+---
+/**
+ * A service's object: the one thing that stands for it, in its colour, turning
+ * slowly on its axis. Beside the steps it changes shape with them; on its own
+ * it holds one shape and runs through the rest when its row is hovered.
+ * `service-scene.ts` builds it, in CSS 3D, so this is an empty stage until it's
+ * running, which is why it's decoration and hidden from assistive tech.
+ */
+import type { Service } from "@/data/offer.ts";
+
+interface Props {
+  service: Service;
+  /** Which shape it holds when it isn't beside the steps. */
+  rest?: number;
+  class?: string;
+}
+
+const { service, rest, class: className } = Astro.props;
+
+const SCENES: Record<string, string> = {
+  "design-development": "bars",
+  "webflow-development": "pages",
+  "seo-aeo": "blocks",
+  growth: "marks",
+};
+---
+
+<div
+  class:list={["scene", className]}
+  data-scene={SCENES[service.slug]}
+  data-rest={rest}
+  aria-hidden="true"
+>
+</div>
+
+<script>
+  import { initServiceScenes } from "@/scripts/service-scene.ts";
+  initServiceScenes();
+</script>
+
+<style is:global>
+  @layer components {
+    /* Only `transform` and `opacity` move in here, nothing is filtered and no
+       plate clips its contents: the compositor runs all of it. */
+    .scene {
+      --c0: color-mix(in oklab, var(--lane-accent) 26%, var(--lane-dark));
+      --c1: color-mix(in oklab, var(--lane-accent) 42%, var(--lane-dark));
+      --c2: color-mix(in oklab, var(--lane-accent) 60%, var(--lane-dark));
+      --c3: color-mix(in oklab, var(--lane-accent) 82%, var(--lane-dark));
+      --c4: color-mix(in oklab, var(--lane-soft) 90%, white);
+      --s0: color-mix(in oklab, var(--c0) 62%, black);
+      --s1: color-mix(in oklab, var(--c1) 62%, black);
+      --s2: color-mix(in oklab, var(--c2) 62%, black);
+      --s3: color-mix(in oklab, var(--c3) 62%, black);
+      --s4: color-mix(in oklab, var(--c4) 66%, var(--lane-dark));
+      position: relative;
+      height: 37.5rem;
+      transition: opacity 0.9s var(--ease-soft);
+    }
+
+    .scene:not(.is-in) {
+      opacity: 0;
+
+      & * {
+        animation-play-state: paused !important;
+      }
+    }
+
+    /* What an object is designed in, in pixels like its poses. The script
+       scales it to fit the stage, round its middle. */
+    .sc-frame {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 640px;
+      height: 600px;
+      margin: -300px 0 0 -320px;
+      perspective: 1700px;
+      perspective-origin: 50% 30%;
+    }
+
+    .sc-glow {
+      position: absolute;
+      left: 0;
+      width: 100%;
+      height: 336px;
+      margin-top: -168px;
+      border-radius: 50%;
+      background-image: radial-gradient(
+        50% 50% at 50% 50%,
+        color-mix(in srgb, var(--lane-accent) 40%, transparent),
+        transparent 70%
+      );
+      transition: opacity 1s;
+      pointer-events: none;
+    }
+
+    .sc-world {
+      position: absolute;
+      left: 50%;
+      width: 0;
+      height: 0;
+      transform-style: preserve-3d;
+    }
+
+    .sc-world i {
+      display: block;
+      position: absolute;
+    }
+
+    .sc-part {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-style: preserve-3d;
+      transition: transform 1.25s cubic-bezier(0.65, 0, 0.25, 1);
+    }
+
+    .sc-shadow {
+      position: absolute;
+      left: -240px;
+      top: -240px;
+      width: 480px;
+      height: 480px;
+      border-radius: 50%;
+      background-image: radial-gradient(
+        closest-side,
+        rgb(0 0 0 / 0.42),
+        transparent
+      );
+      transform: translateZ(-26px);
+    }
+
+    /* Launch: the ground rings as it leaves. */
+    .sc-pulse {
+      position: absolute;
+      left: -150px;
+      top: -180px;
+      width: 300px;
+      height: 360px;
+      border-radius: 24px;
+      box-shadow: inset 0 0 0 1.5px
+        color-mix(in srgb, var(--lane-soft) 70%, transparent);
+      opacity: 0;
+    }
+
+    .sc-world:is([data-step="4"]) .sc-pulse {
+      animation: sc-pulse 2.4s var(--ease-out) infinite;
+    }
+
+    @keyframes sc-pulse {
+      0% {
+        opacity: 0.8;
+        transform: translateZ(-16px) skewX(-32deg) scale(0.25);
+      }
+      100% {
+        opacity: 0;
+        transform: translateZ(-16px) skewX(-32deg) scale(0.95);
+      }
+    }
+
+    /* The bars. Their lean is the part's own, so they keep it however far a
+       pose stretches them. */
+    .sc-bar {
+      --_side: color-mix(
+        in oklab,
+        var(--lane-accent) calc(20% + var(--_i) * 16%),
+        var(--lane-dark)
+      );
+      position: absolute;
+      left: -26px;
+      width: 52px;
+      border-radius: 10px;
+      background-color: color-mix(in oklab, var(--_side) 72%, black);
+
+      &.is-top {
+        background-image: linear-gradient(
+          to bottom,
+          color-mix(
+            in oklab,
+            var(--lane-soft) calc(30% + var(--_i) * 17%),
+            var(--lane-dark)
+          ),
+          color-mix(
+            in oklab,
+            var(--lane-accent) calc(20% + var(--_i) * 20%),
+            var(--lane-dark)
+          )
+        );
+        box-shadow: inset 0 0 0 1px
+          color-mix(in srgb, var(--lane-soft) 45%, transparent);
+      }
+
+      /* Discovery: a light goes along the row, bar by bar. */
+      &.is-top::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background-image: linear-gradient(
+          to right,
+          transparent,
+          color-mix(in srgb, var(--light-100) 46%, transparent),
+          transparent
+        );
+        opacity: 0;
+      }
+    }
+
+    .sc-world[data-step="0"] .sc-bar.is-top::after {
+      animation: sc-glint 3.2s linear infinite;
+      animation-delay: calc(var(--_i) * 0.2s);
+    }
+
+    @keyframes sc-glint {
+      0% {
+        opacity: 0;
+      }
+      8% {
+        opacity: 1;
+      }
+      24%,
+      100% {
+        opacity: 0;
+      }
+    }
+
+    /* The pages. */
+    .sc-page {
+      position: absolute;
+      left: -152px;
+      top: -108px;
+      width: 304px;
+      height: 216px;
+      border-radius: 14px;
+      background-color: var(--_side);
+
+      &.is-top {
+        padding: 14px;
+        background-color: var(--_tone);
+        background-image: linear-gradient(
+          to bottom,
+          rgb(255 255 255 / 0.16),
+          transparent
+        );
+        box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.3);
+      }
+
+      /* What's on the page: a header and two lines, leaning. */
+      & > b {
+        display: block;
+        height: 8px;
+        margin-bottom: 8px;
+        border-radius: 2px;
+        background-color: rgb(255 255 255 / 0.28);
+      }
+
+      & > b:first-child {
+        width: 34%;
+        height: 14px;
+        margin-bottom: 14px;
+      }
+
+      & > b:nth-child(2) {
+        width: 72%;
+      }
+
+      & > b:nth-child(3) {
+        width: 52%;
+      }
+    }
+
+    /* The blocks. */
+    .sc-floor {
+      background-image: radial-gradient(
+        closest-side,
+        rgb(0 0 0 / 0.4),
+        transparent
+      );
+      border-radius: 50%;
+      transform: translateZ(-1px);
+    }
+
+    .sc-face {
+      &.is-top {
+        transform: translateZ(100px);
+      }
+
+      &.is-front {
+        background-image: linear-gradient(
+          to bottom,
+          color-mix(in oklab, var(--_face) 78%, black),
+          var(--_face)
+        );
+      }
+    }
+
+    /* The tag that rides the tallest block and always faces the reader. */
+    .sc-tag {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-style: preserve-3d;
+      transition: transform 1.25s cubic-bezier(0.65, 0, 0.25, 1);
+    }
+
+    .sc-tag_pill {
+      position: absolute;
+      top: -16px;
+      left: -28px;
+      width: 56px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      background-color: var(--light-100);
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgb(0 0 0 / 0.3);
+      color: var(--lane-dark);
+      font-size: 14px;
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.5s var(--ease-soft);
+    }
+
+    /* The mark: each stroke at the logo's lean, which is its part's too. */
+    .sc-stroke {
+      position: absolute;
+      border-radius: 8px;
+      background-color: var(--_side);
+
+      &.is-top {
+        background-color: var(--_tone);
+        background-image: linear-gradient(
+          to bottom,
+          rgb(255 255 255 / 0.18),
+          transparent
+        );
+        box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.22);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .scene,
+      .sc-part,
+      .sc-tag,
+      .sc-tag_pill,
+      .sc-glow {
+        transition: none;
+      }
+      .scene:not(.is-in) {
+        opacity: 1;
+      }
+      .sc-bar::after,
+      .sc-pulse {
+        animation: none !important;
+      }
+    }
+  }
+</style>

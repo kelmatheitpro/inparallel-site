@@ -1,0 +1,259 @@
+---
+/**
+ * Share the article: LinkedIn, X, or copy the link.
+ *
+ * The two networks are plain links to their own share pages, so they work
+ * without JavaScript. Copying needs the clipboard, so that button appears
+ * only once its script has run, and says so out loud when it has worked.
+ *
+ * Each button draws its icon twice, dark and light, so the pointer can cross
+ * from one to the other as a fade while the disc fills behind them.
+ */
+import SocialIcon from "@/components/inparallel/SocialIcon.astro";
+
+interface Props {
+  /** The article's canonical address. */
+  url: string;
+  title: string;
+  class?: string;
+}
+
+const { url, title, class: className } = Astro.props;
+const linkedin = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`;
+const x = `https://x.com/intent/post?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`;
+---
+
+<div class:list={["post-share", className]} data-post-share={url}>
+  <p class="label post-share_title">
+    <span class="label_slash" aria-hidden="true">//</span>
+    <span class="label_text">Share</span>
+  </p>
+  <ul class="post-share_list" role="list">
+    <li>
+      <a
+        class="post-share_btn"
+        href={linkedin}
+        target="_blank"
+        rel="noopener"
+        aria-label="Share on LinkedIn (opens in a new tab)"
+      >
+        <SocialIcon name="linkedin" />
+        <SocialIcon name="linkedin" />
+      </a>
+    </li>
+    <li>
+      <a
+        class="post-share_btn"
+        href={x}
+        target="_blank"
+        rel="noopener"
+        aria-label="Share on X (opens in a new tab)"
+      >
+        <SocialIcon name="x" />
+        <SocialIcon name="x" />
+      </a>
+    </li>
+    <li data-post-copy-item hidden>
+      <button
+        type="button"
+        class="post-share_btn"
+        aria-label="Copy the link to this article"
+        data-post-copy
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path
+            d="M10 13.5a4 4 0 0 0 5.66 0l3.18-3.18a4 4 0 0 0-5.66-5.66l-1.1 1.1M14 10.5a4 4 0 0 0-5.66 0l-3.18 3.18a4 4 0 0 0 5.66 5.66l1.1-1.1"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"></path>
+        </svg>
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          aria-hidden="true"
+          focusable="false"
+        >
+          <path
+            d="M10 13.5a4 4 0 0 0 5.66 0l3.18-3.18a4 4 0 0 0-5.66-5.66l-1.1 1.1M14 10.5a4 4 0 0 0-5.66 0l-3.18 3.18a4 4 0 0 0 5.66 5.66l1.1-1.1"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"></path>
+        </svg>
+      </button>
+    </li>
+  </ul>
+  <p
+    class="post-share_status"
+    role="status"
+    aria-live="polite"
+    data-post-copy-status
+  >
+  </p>
+</div>
+
+<script>
+  for (const share of document.querySelectorAll<HTMLElement>(
+    "[data-post-share]",
+  )) {
+    const item = share.querySelector<HTMLElement>("[data-post-copy-item]");
+    const button = share.querySelector<HTMLButtonElement>("[data-post-copy]");
+    const status = share.querySelector<HTMLElement>("[data-post-copy-status]");
+    if (!item || !button || !navigator.clipboard) continue;
+
+    let timer = 0;
+    button.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(
+          share.dataset.postShare ?? location.href,
+        );
+        if (status) status.textContent = "Link copied";
+      } catch {
+        if (status) status.textContent = "Couldn't copy the link";
+      }
+      clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        if (status) status.textContent = "";
+      }, 2400);
+    });
+    item.hidden = false;
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    /* One line on a narrow screen, the status under it only while it has
+       something to say; stacked beside the article, where it holds its room
+       so the column doesn't move when it speaks. */
+    .post-share {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem 1rem;
+
+      @media (width >= 62rem) {
+        flex-direction: column;
+        flex-wrap: nowrap;
+        align-items: start;
+        justify-content: start;
+        gap: 0.9rem;
+      }
+    }
+
+    .post-share_title {
+      margin: 0;
+
+      /* The trim boxes are for text, not for a row of label parts. */
+      &::before,
+      &::after {
+        display: none;
+      }
+    }
+
+    .post-share_list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .post-share_btn {
+      position: relative;
+      isolation: isolate;
+      display: inline-grid;
+      place-items: center;
+      width: 2.75rem;
+      height: 2.75rem;
+      padding: 0;
+      border: var(--border-width) solid var(--border);
+      border-radius: 50%;
+      background: none;
+      color: var(--text);
+      cursor: pointer;
+
+      /* The fill: comes up from a little smaller than the ring. */
+      &::before {
+        content: "";
+        position: absolute;
+        inset: calc(var(--border-width) * -1);
+        z-index: -1;
+        border-radius: 50%;
+        background-color: var(--brand-500);
+        opacity: 0;
+        transform: scale(0.82);
+        transition:
+          opacity 0.3s var(--ease-soft),
+          transform 0.4s var(--ease-out);
+      }
+
+      & > svg {
+        grid-area: 1 / 1;
+        transition: opacity 0.3s var(--ease-soft);
+      }
+
+      & > svg:last-child {
+        color: var(--light-100);
+        opacity: 0;
+      }
+
+      &:is(:focus-visible, :active)::before {
+        opacity: 1;
+        transform: none;
+      }
+
+      &:is(:focus-visible, :active) > svg:first-child {
+        opacity: 0;
+      }
+
+      &:is(:focus-visible, :active) > svg:last-child {
+        opacity: 1;
+      }
+
+      @media (hover: hover) {
+        &:hover::before {
+          opacity: 1;
+          transform: none;
+        }
+
+        &:hover > svg:first-child {
+          opacity: 0;
+        }
+
+        &:hover > svg:last-child {
+          opacity: 1;
+        }
+      }
+    }
+
+    .post-share_status {
+      flex-basis: 100%;
+      margin: 0;
+      color: var(--brand-500);
+      font-size: 0.8125rem;
+
+      &:empty {
+        display: none;
+      }
+
+      @media (width >= 62rem) {
+        flex-basis: auto;
+        min-height: 1.2em;
+
+        &:empty {
+          display: block;
+        }
+      }
+    }
+  }
+</style>

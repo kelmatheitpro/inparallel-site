@@ -8,6 +8,9 @@
  * directly.
  */
 import { initNav } from "@/scripts/nav.ts";
+import { initButtons } from "@/scripts/buttons.ts";
+import { initMotion } from "@/scripts/motion.ts";
+import { initHeroGlass } from "@/scripts/hero-glass.ts";
 import { initHeroBackdrop } from "@/scripts/hero-backdrop.ts";
 import { initTabs } from "@/scripts/tabs.ts";
 import { initReveal } from "@/scripts/reveal.ts";
@@ -18,8 +21,12 @@ import { initMarginCalculator } from "@/scripts/margin-calculator.ts";
 import { initQuoteCalculator } from "@/scripts/quote-calculator.ts";
 import { initBriefForm } from "@/scripts/brief-form.ts";
 import { initContactForm } from "@/scripts/contact-form.ts";
+import { initFloatCards } from "@/scripts/float-cards.ts";
 
 initNav();
+initButtons();
+initHeroGlass();
+void initMotion();
 initHeroBackdrop();
 initTabs();
 initReveal();
@@ -30,3 +37,4 @@ initMarginCalculator();
 initQuoteCalculator();
 initBriefForm();
 initContactForm();
+initFloatCards();

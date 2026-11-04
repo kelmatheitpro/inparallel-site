@@ -12,12 +12,7 @@ import theatre from "@/assets/inparallel/icons/theatre.svg";
 const artwork = { crew, star: theatre } as const;
 ---
 
-<Section
-  id="why"
-  theme="light"
-  class="differ"
-  containerClass="differ_container"
->
+<Section id="why" class="differ" containerClass="differ_container">
   <div class="differ_intro">
     <Heading tag="h2" variant="h1" class="heading-split">
       Same brief, <em>different altitude.</em>
@@ -120,7 +115,7 @@ const artwork = { crew, star: theatre } as const;
 
     .differ_art {
       --_size: 2.25rem;
-      color: #111111;
+      color: var(--text);
     }
 
     .differ_body {
@@ -153,13 +148,13 @@ const artwork = { crew, star: theatre } as const;
       & > span {
         position: absolute;
         display: block;
-        border: 2.25px solid #111111;
+        border: 2.25px solid var(--text);
       }
     }
 
     /* A ring inside a ring. */
     .differ_shape.target {
-      border: 2.25px solid #000000;
+      border: 2.25px solid var(--text);
       border-radius: var(--radius-round);
       padding: 0.5625rem;
 

@@ -1,0 +1,137 @@
+---
+/**
+ * A legal page: the policy as a long read.
+ *
+ * The hero names the document and when it last changed; under it, on cream,
+ * the text in a reading column (`Prose`) with its sections listed beside it,
+ * in view while the page scrolls. The text itself is markdown, passed in as
+ * the default slot with its headings, so the policy can be edited as plain
+ * prose.
+ *
+ *   <LegalPage title="Privacy policy" lead="…" headings={getHeadings()}>
+ *     <Content />
+ *   </LegalPage>
+ *
+ * Until the owner supplies the date it last changed, `updated` is left out
+ * and the hero shows a visible TODO in its place.
+ */
+import type { MarkdownHeading } from "astro";
+import PageHero from "@/components/parallel/PageHero.astro";
+import Prose from "@/components/blog/Prose.astro";
+import PostToc from "@/components/blog/PostToc.astro";
+import FormattedDate from "@/components/FormattedDate.astro";
+
+interface Props {
+  title: string;
+  lead: string;
+  headings: MarkdownHeading[];
+  /** When the document last changed. */
+  updated?: Date;
+}
+
+const { title, lead, headings, updated } = Astro.props;
+---
+
+<PageHero label="Legal" lead={lead} align="center">
+  {title}
+  <p slot="actions" class="legal-page_updated">
+    <span class="legal-page_updated-label">Last updated</span>
+    {
+      updated ? (
+        <FormattedDate date={updated} />
+      ) : (
+        <mark class="legal-page_todo">TODO: date</mark>
+      )
+    }
+  </p>
+</PageHero>
+
+<section class="legal-page theme-light" aria-label={title}>
+  <div class="legal-page_inner">
+    <div class="legal-page_side">
+      <PostToc headings={headings} title="On this page" />
+    </div>
+    <Prose class="legal-page_prose">
+      <slot />
+    </Prose>
+  </div>
+</section>
+
+<style is:global>
+  @layer components {
+    .legal-page_updated {
+      display: inline-block;
+      margin: 0;
+      padding: 0.7rem 1.1rem;
+      background-image: linear-gradient(
+        to bottom,
+        rgb(255 255 255 / 0.1),
+        rgb(255 255 255 / 0.04)
+      );
+      border: var(--border-width) solid rgb(255 255 255 / 0.14);
+      border-radius: var(--radius-main);
+      color: var(--light-100);
+      font-size: 0.9375rem;
+    }
+
+    .legal-page_updated-label {
+      margin-right: 0.5rem;
+      color: rgb(255 255 255 / 0.65);
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .legal-page_todo {
+      padding: 0.1em 0.35em;
+      background-color: var(--brand-300);
+      border-radius: 0.25rem;
+      color: var(--dark-900);
+    }
+
+    .legal-page {
+      padding-block: var(--section-space-large);
+      background-color: var(--light-200);
+    }
+
+    /* The sections beside the text on a wide screen, the pair centred in
+       the page; above it, as a box, on a narrow one. */
+    .legal-page_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: clamp(2.5rem, 2rem + 2vw, 3.5rem);
+
+      @media (width >= 62rem) {
+        grid-template-columns: 16rem minmax(0, 43rem);
+        justify-content: center;
+        column-gap: clamp(3rem, 1rem + 5vw, 7rem);
+      }
+    }
+
+    .legal-page_side {
+      padding: 0.75rem 1.25rem;
+      background-color: var(--light-100);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: var(--radius-large);
+
+      @media (width >= 62rem) {
+        position: sticky;
+        top: calc(var(--nav-height) + 1.5rem);
+        align-self: start;
+        padding: 0;
+        background: none;
+        border: 0;
+      }
+    }
+
+    /* The opening paragraph is the summary: a size up. */
+    .legal-page_prose > p:first-child {
+      color: var(--text);
+      font-size: 1.15em;
+      line-height: 1.55;
+    }
+  }
+</style>

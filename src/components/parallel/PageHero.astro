@@ -1,0 +1,225 @@
+---
+/**
+ * The opening of every inner page: the hero's reeded glass at rest.
+ *
+ * Navy, with ribs along the slant and two soft strokes of light behind them
+ * on the right — the home page's material without the canvas. A `// label`,
+ * the title cut in along the slant, a lead, and optional actions. A visual
+ * can go in the `visual` slot (it sits right on wide screens, under the copy
+ * on narrow ones); without one, the copy takes the full width.
+ *
+ *   <PageHero label="Our work" lead="…">
+ *     Built in Webflow, <br />measured after launch
+ *     <a slot="actions" class="btn" href="/contact">Book an intro call</a>
+ *     <Img slot="visual" … />
+ *   </PageHero>
+ *
+ * `accent` tints the light (a service's lane colour, say); `align="center"`
+ * centres a hero that has no visual.
+ */
+interface Props {
+  label: string;
+  lead?: string;
+  /** A colour for the light behind the glass. Defaults to the brand blue. */
+  accent?: string;
+  align?: "start" | "center";
+  /** Extra room under the copy, for a visual that overlaps the next section. */
+  tall?: boolean;
+}
+
+const { label, lead, accent, align = "start", tall = false } = Astro.props;
+const hasVisual = Astro.slots.has("visual");
+const hasActions = Astro.slots.has("actions");
+const hasAfter = Astro.slots.has("after");
+---
+
+<section
+  class:list={[
+    "page-hero theme-dark",
+    hasVisual && "has-visual",
+    `is-${align}`,
+    tall && "is-tall",
+  ]}
+  style={accent ? `--hero-accent: ${accent};` : undefined}
+>
+  <div class="page-hero_glass" aria-hidden="true"></div>
+  <div class="page-hero_inner">
+    <div class="page-hero_copy">
+      <p class="label page-hero_label" data-anim="label" data-intro>
+        <span class="label_slash" aria-hidden="true">//</span>
+        <span class="label_text">{label}</span>
+      </p>
+      <h1 class="page-hero_title heading" data-anim="slash" data-intro>
+        <slot />
+      </h1>
+      {lead && <p class="page-hero_lead">{lead}</p>}
+      {
+        hasActions && (
+          <div class="page-hero_actions">
+            <slot name="actions" />
+          </div>
+        )
+      }
+    </div>
+    {
+      hasVisual && (
+        <div class="page-hero_visual">
+          <slot name="visual" />
+        </div>
+      )
+    }
+  </div>
+  {hasAfter && <slot name="after" />}
+</section>
+
+<style is:global>
+  @layer components {
+    .page-hero {
+      --hero-accent: var(--brand-500);
+      position: relative;
+      isolation: isolate;
+      overflow: clip;
+      padding-top: calc(var(--nav-height) + clamp(3.5rem, 2rem + 5vw, 7rem));
+      padding-bottom: clamp(4rem, 2.5rem + 5vw, 7.5rem);
+      background-color: var(--dark-950);
+
+      &.is-tall {
+        padding-bottom: clamp(6rem, 4rem + 8vw, 12rem);
+      }
+    }
+
+    /* Ribs along the slant over two soft strokes of the accent — the glass. */
+    .page-hero_glass {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background-image:
+        repeating-linear-gradient(
+          calc(90deg + var(--slant)),
+          rgb(255 255 255 / 0.03) 0 1px,
+          transparent 1px calc(1.9rem - 2px),
+          rgb(0 0 0 / 0.3) calc(1.9rem - 2px) 1.9rem
+        ),
+        linear-gradient(
+          calc(90deg + var(--slant)),
+          transparent 0 66%,
+          color-mix(in srgb, var(--hero-accent) 45%, transparent) 68% 71%,
+          transparent 73% 76%,
+          color-mix(in srgb, var(--hero-accent) 65%, transparent) 78% 81%,
+          transparent 83%
+        ),
+        radial-gradient(
+          55% 80% at 82% 40%,
+          color-mix(in srgb, var(--hero-accent) 30%, transparent),
+          transparent 70%
+        ),
+        linear-gradient(100deg, #05080f 35%, #0b1630);
+
+      /* The copy side stays dark enough to read on. */
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(
+          90deg,
+          rgb(6 10 19 / 0.85) 0%,
+          rgb(6 10 19 / 0.4) 50%,
+          transparent 75%
+        );
+      }
+
+      .is-center & {
+        background-image:
+          repeating-linear-gradient(
+            calc(90deg + var(--slant)),
+            rgb(255 255 255 / 0.03) 0 1px,
+            transparent 1px calc(1.9rem - 2px),
+            rgb(0 0 0 / 0.3) calc(1.9rem - 2px) 1.9rem
+          ),
+          radial-gradient(
+            60% 70% at 50% 110%,
+            color-mix(in srgb, var(--hero-accent) 40%, transparent),
+            transparent 70%
+          ),
+          linear-gradient(180deg, #05080f, #0b1630);
+
+        &::after {
+          background-image: radial-gradient(
+            70% 60% at 50% 40%,
+            rgb(6 10 19 / 0.7),
+            transparent 80%
+          );
+        }
+      }
+    }
+
+    .page-hero_inner {
+      /* The site's container: the Lumos width, the site margin either side. */
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: center;
+      gap: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+
+      .has-visual & {
+        @media (width >= 62rem) {
+          grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+        }
+      }
+    }
+
+    .page-hero_copy {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: 1.6rem;
+      max-width: 52rem;
+
+      .is-center & {
+        align-items: center;
+        margin-inline: auto;
+        text-align: center;
+      }
+    }
+
+    .page-hero_label {
+      margin: 0;
+    }
+
+    .page-hero_title {
+      margin: 0;
+      padding-top: 0;
+      font-size: clamp(2.6rem, 1.6rem + 4vw, 5rem);
+      font-weight: 500;
+      line-height: 1;
+      letter-spacing: -0.045em;
+      text-wrap: balance;
+    }
+
+    .page-hero_lead {
+      max-width: 36rem;
+      margin: 0;
+      color: rgb(255 255 255 / 0.7);
+      font-size: clamp(1.05rem, 0.95rem + 0.35vw, 1.25rem);
+      line-height: 1.55;
+      text-wrap: pretty;
+    }
+
+    .page-hero_actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.5rem;
+
+      .is-center & {
+        justify-content: center;
+      }
+    }
+
+    .page-hero_visual {
+      position: relative;
+      min-width: 0;
+    }
+  }
+</style>

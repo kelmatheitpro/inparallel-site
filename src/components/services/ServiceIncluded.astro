@@ -1,0 +1,87 @@
+---
+/**
+ * What a service covers, as one ruled list ticked with the mark in the
+ * service's colours. The terms it comes on are in the hero's card, so this
+ * is only the work.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import LaneTick from "./LaneTick.astro";
+import TitleLines from "./TitleLines.astro";
+import type { Service } from "@/data/offer.ts";
+import { laneStyle, type ServicePage } from "@/data/service-pages.ts";
+
+interface Props {
+  service: Service;
+  included: NonNullable<ServicePage["included"]>;
+  index: string;
+}
+
+const { service, included, index } = Astro.props;
+---
+
+<section
+  id="included"
+  class="included theme-light"
+  style={laneStyle(service)}
+  aria-labelledby="included-title"
+>
+  <div class="included_inner">
+    <SectionHead
+      index={index}
+      label="What's included"
+      headingId="included-title"
+      lead={included.lead}
+    >
+      <TitleLines title={included.title} />
+    </SectionHead>
+
+    <ul class="included_list" role="list" data-anim-group data-stagger="0.05">
+      {
+        included.items.map((item) => (
+          <li class="included_item" data-anim="rise">
+            <LaneTick />
+            {item}
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style is:global>
+  @layer components {
+    .included {
+      padding-block: var(--section-space-large, 8rem);
+      background-color: var(--light-200);
+    }
+
+    .included_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(2.5rem, 1.5rem + 2.5vw, 3.5rem);
+    }
+
+    /* Three columns of ticks, ruled like the list on the home page's lanes. */
+    .included_list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(min(18rem, 100%), 1fr));
+      column-gap: clamp(1.5rem, 1rem + 2vw, 3rem);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border-top: var(--border-width) solid var(--border-soft);
+    }
+
+    .included_item {
+      display: flex;
+      align-items: center;
+      gap: 0.875rem;
+      padding-block: 1.1rem;
+      border-bottom: var(--border-width) solid var(--border-soft);
+      font-size: 1.0625rem;
+      line-height: 1.35;
+    }
+  }
+</style>

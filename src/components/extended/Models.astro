@@ -1,0 +1,169 @@
+---
+/**
+ * The two ways an agency engagement runs, as the logo's two strokes: two
+ * cards side by side, each led by one stroke of the mark — the deep one,
+ * then the light one.
+ *
+ * The questions that settle the choice between them are answered inside
+ * each card, on rows that line up across the pair, so the two can be read
+ * against each other the way a table would be.
+ */
+import { MODELS, MODEL_TABLE } from "@/data/extended-team.ts";
+
+const answer = (
+  row: (typeof MODEL_TABLE)[number],
+  model: (typeof MODELS)[number],
+) => (model.id === "capacity" ? row.capacity : row.fixed);
+---
+
+<ul class="models" role="list" data-anim-group>
+  {
+    MODELS.map((model, index) => (
+      <li
+        class:list={["model-card", index === 0 ? "is-first" : "is-second"]}
+        data-anim="rise"
+      >
+        <span class="model-card_head" aria-hidden="true">
+          <span class="model-card_stroke" />
+          <span class="model-card_index">
+            {String(index + 1).padStart(2, "0")}
+          </span>
+        </span>
+        <h3 class="model-card_name">{model.name}</h3>
+        <p class="model-card_text">{model.text}</p>
+        <dl class="model-card_facts">
+          {MODEL_TABLE.map((row) => (
+            <div class="model-card_fact">
+              <dt>{row.question}</dt>
+              <dd>{answer(row, model)}</dd>
+            </div>
+          ))}
+        </dl>
+        <p class="model-card_billing">{model.billing}</p>
+      </li>
+    ))
+  }
+</ul>
+
+<style is:global>
+  @layer components {
+    .models {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-5);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+
+      /* Side by side, each card's parts share rows with the other's. */
+      @media (width >= 48rem) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(5, auto);
+        row-gap: 0;
+      }
+    }
+
+    .model-card {
+      display: grid;
+      grid-template-rows: subgrid;
+      grid-row: span 5;
+      row-gap: 1rem;
+      padding: clamp(1.5rem, 1.1rem + 1.5vw, 2.5rem);
+      background-color: var(--dark-850);
+      border: var(--border-width) solid rgb(255 255 255 / 0.08);
+      border-radius: 1.25rem;
+
+      @media (width < 48rem) {
+        display: flex;
+        flex-direction: column;
+      }
+    }
+
+    .model-card_head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    /* One stroke of the mark per card: deep blue, then light blue. */
+    .model-card_stroke {
+      --_h: 3.25rem;
+      width: calc(var(--_h) * var(--slant-tan) + 0.85rem);
+      height: var(--_h);
+      clip-path: polygon(
+        calc(var(--_h) * var(--slant-tan)) 0,
+        100% 0,
+        calc(100% - var(--_h) * var(--slant-tan)) 100%,
+        0 100%
+      );
+      background-color: var(--brand-500);
+
+      .is-second & {
+        background-color: var(--brand-300);
+      }
+    }
+
+    .model-card_index {
+      color: var(--text-faded);
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+    }
+
+    .model-card_name {
+      margin: 0;
+      font-size: clamp(1.4rem, 1.15rem + 0.8vw, 1.9rem);
+      font-weight: 500;
+      letter-spacing: -0.025em;
+      line-height: 1.1;
+    }
+
+    .model-card_text {
+      margin: 0;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .model-card_facts {
+      display: flex;
+      flex-direction: column;
+      margin: 0.5rem 0 0;
+      border-top: var(--border-width) solid var(--border-soft);
+    }
+
+    .model-card_fact {
+      display: grid;
+      grid-template-columns: minmax(7rem, 0.6fr) minmax(0, 1fr);
+      gap: 1rem;
+      padding-block: 0.85rem;
+      border-bottom: var(--border-width) solid var(--border-soft);
+      font-size: 0.9375rem;
+      line-height: 1.45;
+
+      & dt {
+        color: var(--text-faded);
+        font-family: var(--mono-family);
+        font-size: 0.6875rem;
+        letter-spacing: 0.06em;
+        line-height: 1.6;
+        text-transform: uppercase;
+      }
+
+      & dd {
+        margin: 0;
+      }
+    }
+
+    .model-card_billing {
+      align-self: end;
+      margin: 0.5rem 0 0;
+      color: var(--brand-300);
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.02em;
+      line-height: 1.6;
+    }
+  }
+</style>

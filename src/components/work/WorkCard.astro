@@ -1,0 +1,212 @@
+---
+/**
+ * One site on the work grid: its picture, then its mark and its number.
+ *
+ * A written-up study is a link to its page. A client whose study isn't
+ * written yet (`status: soon`) gets the same card without the link, and says
+ * so where the number would be — there is no figure to show for it yet.
+ */
+import StudyPanel from "@/components/work/StudyPanel.astro";
+import Img from "@/components/Img.astro";
+import type { Project } from "@/utils/content.ts";
+import { logoHeight } from "@/data/work.ts";
+
+interface Props {
+  project: Project;
+}
+
+const { project } = Astro.props;
+const { id, data } = project;
+const live = data.status === "live";
+const Tag = live ? "a" : "article";
+---
+
+<Tag
+  class:list={["work-card", !live && "is-soon"]}
+  href={live ? `/work/${id}` : undefined}
+  data-cursor={live ? "View case" : undefined}
+>
+  <div class="work-card_mount" data-anim="image">
+    <StudyPanel
+      project={project}
+      size="card"
+      tag={data.category}
+      sizes="(width >= 48rem) min(46vw, 41rem), 92vw"
+      windowSizes="(width >= 48rem) min(33vw, 29rem), 74vw"
+    />
+  </div>
+
+  <div class="work-card_meta">
+    <h3 class="work-card_name">
+      <Img
+        src={data.logo}
+        alt={data.client}
+        class="work-card_logo"
+        style={`--_h: ${logoHeight(data.logo)};`}
+        transparent
+      />
+    </h3>
+    {
+      live ? (
+        <p class="work-card_figure">
+          <span class="work-card_value">{data.stat}</span>
+          <span class="work-card_label">{data.statLabel}</span>
+        </p>
+      ) : (
+        <p class="work-card_soon">
+          <span class="slash-mark" aria-hidden="true">
+            <i />
+            <i />
+          </span>
+          {data.statLabel}
+        </p>
+      )
+    }
+    <p class="work-card_industry">{data.industry}</p>
+  </div>
+</Tag>
+
+<style is:global>
+  @layer components {
+    .work-card {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      height: 100%;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* A mount around the picture, the way the stories' stills are set. The
+       edge that lights up on hover is a second one faded in over it: a border
+       changing colour repaints the whole card on every frame. */
+    .work-card_mount {
+      position: relative;
+      padding: 0.5rem;
+      background-color: rgb(255 255 255 / 0.035);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: 1.25rem;
+
+      &::after {
+        content: "";
+        position: absolute;
+        inset: calc(var(--border-width) * -1);
+        border: var(--border-width) solid
+          color-mix(in srgb, var(--brand-300) 50%, transparent);
+        border-radius: inherit;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--duration-main);
+      }
+    }
+
+    @media (hover: hover) {
+      a.work-card:hover .work-card_mount::after {
+        opacity: 1;
+      }
+    }
+
+    /* The focus ring goes round the picture, where the eye already is. */
+    a.work-card:focus-visible {
+      outline: none;
+
+      & .work-card_mount {
+        outline: var(--focus-width) solid var(--brand-300);
+        outline-offset: var(--focus-offset);
+      }
+    }
+
+    /* Mark and number on one line, industry and what the number counts on
+       the next — the two columns reading straight down. The mark's column is
+       as wide as the mark and the industry under it; the number takes the
+       rest, so a long label wraps on its own side. */
+    .work-card_meta {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      grid-template-areas:
+        "name figure"
+        "industry figure";
+      align-items: start;
+      column-gap: 1.5rem;
+      row-gap: 0.6rem;
+      padding-inline: 0.5rem;
+    }
+
+    .work-card_name {
+      grid-area: name;
+      display: flex;
+      align-items: center;
+      min-height: 2rem;
+      margin: 0;
+    }
+
+    .work-card_logo {
+      width: auto;
+      height: var(--_h, 1.6rem);
+      max-width: 11rem;
+    }
+
+    .work-card_industry {
+      grid-area: industry;
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+    }
+
+    .work-card_figure {
+      grid-area: figure;
+      display: flex;
+      flex-direction: column;
+      align-items: end;
+      gap: 0.35rem;
+      margin: 0;
+      text-align: right;
+    }
+
+    .work-card_value {
+      background-image: var(--heading-fill);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: var(--heading-ink);
+      font-size: clamp(1.75rem, 1.4rem + 1vw, 2.5rem);
+      font-weight: 500;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      white-space: nowrap;
+    }
+
+    .work-card_label {
+      max-width: 14rem;
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+      line-height: 1.35;
+    }
+
+    /* In the number's place, and at the number's end of the row. */
+    .work-card_soon {
+      grid-area: figure;
+      justify-self: end;
+      align-self: start;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      margin: 0;
+      padding: 0.5rem 0.75rem;
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: 0.5rem;
+      color: var(--text-muted);
+      font-family: var(--mono-family);
+      font-size: 0.6875rem;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      text-transform: uppercase;
+      white-space: nowrap;
+
+      & .slash-mark {
+        height: 0.8rem;
+        --_w: 0.13rem;
+        --_gap: 0.1rem;
+      }
+    }
+  }
+</style>

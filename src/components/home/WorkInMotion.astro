@@ -1,0 +1,266 @@
+---
+/**
+ * "The work in motion, not just screenshots" — clients on camera.
+ *
+ * Two recorded stories, each a still with the client's mark and — once the
+ * film is hosted — a play button that opens it in the shared dialog. Under
+ * each, the quote, with the part that matters underlined twice — a parallel
+ * rule — and the speaker's initials signed beside their name.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import Img from "@/components/Img.astro";
+import PlayButton from "@/components/inparallel/PlayButton.astro";
+import { VIDEO_STORIES } from "@/data/parallel.ts";
+import { laneStyle } from "@/data/service-pages.ts";
+import type { Service } from "@/data/offer.ts";
+
+interface Props {
+  index?: string;
+  /** The service whose page this is, for its ink. */
+  service?: Service;
+}
+
+const { index = "05", service } = Astro.props;
+---
+
+<section
+  id="stories"
+  class:list={["stories", "theme-light", service && "has-lane"]}
+  style={service ? laneStyle(service) : undefined}
+  aria-labelledby="stories-title"
+>
+  <div class="stories_inner">
+    <SectionHead
+      index={index}
+      label="Client stories"
+      align="center"
+      headingId="stories-title"
+    >
+      The work in motion, <br />not just screenshots
+    </SectionHead>
+
+    <div class="stories_grid">
+      {
+        VIDEO_STORIES.map((story) => (
+          <figure class="story">
+            <div class="story_frame">
+              <div class="story_still" data-anim="image">
+                <Img
+                  src={story.poster}
+                  alt={`${story.name} of ${story.client}, recording a video about working with us`}
+                  class="story_poster"
+                  variant="constrained"
+                  sizes="(width >= 64rem) 42vw, 92vw"
+                />
+                <Img
+                  src={story.logo}
+                  alt={story.client}
+                  class="story_logo"
+                  transparent
+                />
+                {story.video && (
+                  <PlayButton
+                    size="tile"
+                    label={`Play ${story.name}'s story`}
+                    video={story.video}
+                    poster={story.poster.src}
+                    caption={`${story.name} · ${story.client}`}
+                    class="story_play"
+                  />
+                )}
+              </div>
+            </div>
+
+            <blockquote class="story_quote">
+              <p>
+                “{story.quote[0]}
+                <mark class="story_mark">{story.quote[1]}”</mark>
+              </p>
+            </blockquote>
+
+            <figcaption class="story_by">
+              <span class="story_sign" aria-hidden="true">
+                {story.initials}
+              </span>
+              <span class="story_who">
+                <span class="story_name">{story.name}</span>
+                <span class="story_meta">
+                  {story.client}, {story.industry}
+                </span>
+              </span>
+            </figcaption>
+          </figure>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  @layer components {
+    .stories.has-lane {
+      --text: var(--lane-dark);
+      color: var(--text);
+    }
+
+    .stories {
+      padding-block: var(--section-space-large, 8rem);
+      background-color: var(--light-200);
+    }
+
+    .stories_inner {
+      /* The site's container: the Lumos width, the site margin either side. */
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(3rem, 2rem + 3vw, 4.5rem);
+    }
+
+    .stories_grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(26rem, 100%), 1fr));
+      gap: clamp(2rem, 1rem + 3vw, 3.5rem);
+    }
+
+    .story {
+      display: flex;
+      flex-direction: column;
+      gap: 1.75rem;
+      margin: 0;
+    }
+
+    /* A soft white mount around the still, like a print on a wall. The mount
+       stands from the start and the picture is wiped in inside it: wiped
+       together, the mount's shadow would be cut off by the clip and jump in
+       the moment the clip came away. */
+    .story_frame {
+      aspect-ratio: 16 / 10;
+      padding: 0.5rem;
+      background-color: var(--light-100);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: 1.25rem;
+      box-shadow: 0 1.5rem 3rem -2rem rgb(13 25 40 / 0.35);
+    }
+
+    .story_still {
+      position: relative;
+      height: 100%;
+      overflow: clip;
+      border-radius: 0.85rem;
+
+      /* The mark stands on a plain shade at the top of the still, rather than
+         a shadow filter of its own. */
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: linear-gradient(
+          to bottom,
+          rgb(6 10 19 / 0.42),
+          transparent 34%
+        );
+        pointer-events: none;
+      }
+    }
+
+    .story_poster {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .story_logo {
+      position: absolute;
+      z-index: 1;
+      top: 1.1rem;
+      left: 1.1rem;
+      width: auto;
+      /* Smaller with the still, so the mark never reaches the face. */
+      height: clamp(1.15rem, 0.75rem + 2vw, 1.6rem);
+      filter: brightness(0) invert(1);
+    }
+
+    .story_play {
+      position: absolute;
+      z-index: 1;
+      top: 0.9rem;
+      right: 0.9rem;
+    }
+
+    @media (hover: hover) {
+      .story_frame:hover .story_play {
+        scale: 1.08;
+
+        &::after {
+          opacity: 1;
+        }
+      }
+    }
+
+    .story_quote {
+      margin: 0;
+
+      & p {
+        margin: 0;
+        font-size: clamp(1.25rem, 1rem + 0.8vw, 1.75rem);
+        font-weight: 500;
+        line-height: 1.3;
+        letter-spacing: -0.02em;
+        text-wrap: pretty;
+      }
+    }
+
+    /* Underlined twice: the parallel rule, under the words that matter. Both
+       lines sit between this line's tails and the tops of the line below, so
+       a quote running over two lines never has a rule through its letters. */
+    .story_mark {
+      background: none;
+      color: inherit;
+      background-image:
+        linear-gradient(var(--brand-500), var(--brand-500)),
+        linear-gradient(var(--brand-300), var(--brand-300));
+      background-size:
+        100% 1.5px,
+        100% 1.5px;
+      background-position:
+        0 calc(100% - 0.13em),
+        0 100%;
+      background-repeat: no-repeat;
+      padding-bottom: 0.2em;
+      -webkit-box-decoration-break: clone;
+      box-decoration-break: clone;
+    }
+
+    .story_by {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+    }
+
+    .story_sign {
+      padding-right: 1.1rem;
+      border-right: var(--border-width) solid var(--border);
+      font-family: var(--serif-family);
+      font-style: italic;
+      font-size: 1.75rem;
+      line-height: 1;
+      color: var(--ink-900);
+    }
+
+    .story_who {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .story_name {
+      font-weight: 500;
+    }
+
+    .story_meta {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+  }
+</style>

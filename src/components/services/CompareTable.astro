@@ -1,0 +1,363 @@
+---
+/**
+ * "Side by side" — the four services on the same rows.
+ *
+ * A real table, so a screen reader names each cell by its row and its
+ * service. Over it, one column at a time is lifted onto a pane of its
+ * service's colour; the pane follows the pointer, keyboard focus or a tap
+ * across the columns, leaning into each colour as it goes. Without
+ * JavaScript the table stands on its own and nothing is lifted.
+ *
+ * On a phone the table scrolls sideways under its row labels, which stay put.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import ArrowCircle from "@/components/inparallel/ArrowCircle.astro";
+import LaneTick from "./LaneTick.astro";
+import Copy from "./Copy.astro";
+import { SERVICES_P } from "@/data/offer.ts";
+import { COMPARE_ROWS, laneStyle } from "@/data/service-pages.ts";
+
+interface Props {
+  index: string;
+}
+
+const { index } = Astro.props;
+---
+
+<section
+  id="compare"
+  class="compare theme-dark"
+  aria-labelledby="compare-title"
+>
+  <div class="compare_inner">
+    <SectionHead
+      index={index}
+      label="Compare"
+      align="center"
+      headingId="compare-title"
+      lead="The four next to each other, on the questions people ask first."
+    >
+      Side by side
+    </SectionHead>
+
+    <div
+      class="compare_frame"
+      role="region"
+      aria-labelledby="compare-title"
+      tabindex="0"
+      data-compare
+    >
+      <span class="compare_lift" aria-hidden="true"></span>
+      <table class="compare_table">
+        <caption class="sr-only">The four services compared</caption>
+        <thead>
+          <tr>
+            <td class="compare_corner"></td>
+            {
+              SERVICES_P.map((service, col) => (
+                <th
+                  scope="col"
+                  class="compare_service"
+                  data-col={col}
+                  style={laneStyle(service)}
+                >
+                  <LaneTick />
+                  <span>{service.name}</span>
+                </th>
+              ))
+            }
+          </tr>
+        </thead>
+        <tbody>
+          {
+            COMPARE_ROWS.map((row) => (
+              <tr>
+                <th scope="row" class="compare_label">
+                  {row.label}
+                </th>
+                {row.values.map((value, col) => (
+                  <td data-col={col} style={laneStyle(SERVICES_P[col]!)}>
+                    {value === true ? (
+                      <span class="compare_yes">
+                        <svg viewBox="0 0 16 16" aria-hidden="true">
+                          <path d="M3 8.5 6.5 12 13 4.5" />
+                        </svg>
+                        <span class="sr-only">Included</span>
+                      </span>
+                    ) : value === false ? (
+                      <span class="compare_no">
+                        <span aria-hidden="true">—</span>
+                        <span class="sr-only">Not included</span>
+                      </span>
+                    ) : (
+                      <Copy text={value} />
+                    )}
+                  </td>
+                ))}
+              </tr>
+            ))
+          }
+        </tbody>
+        <tfoot>
+          <tr>
+            <td class="compare_corner"></td>
+            {
+              SERVICES_P.map((service, col) => (
+                <td data-col={col}>
+                  <a class="compare_link" href={`/services/${service.slug}`}>
+                    Explore<span class="sr-only"> {service.name}</span>
+                    <ArrowCircle bare />
+                  </a>
+                </td>
+              ))
+            }
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</section>
+
+<script>
+  for (const frame of document.querySelectorAll<HTMLElement>(
+    "[data-compare]",
+  )) {
+    const lift = frame.querySelector<HTMLElement>(".compare_lift");
+    const table = frame.querySelector<HTMLTableElement>("table");
+    const heads = [...frame.querySelectorAll<HTMLElement>("thead [data-col]")];
+    if (!lift || !table || !heads.length) continue;
+    let active = 0;
+
+    /* The pane sits behind the chosen column: as wide as its heading, as tall
+       as the table, and a little proud of it top and bottom. */
+    const place = () => {
+      const head = heads[active];
+      if (!head) return;
+      const box = frame.getBoundingClientRect();
+      const cell = head.getBoundingClientRect();
+      const rows = table.getBoundingClientRect();
+      lift.style.setProperty(
+        "--x",
+        `${cell.left - box.left + frame.scrollLeft}px`,
+      );
+      lift.style.setProperty("--w", `${cell.width}px`);
+      lift.style.setProperty("--y", `${rows.top - box.top}px`);
+      lift.style.setProperty("--h", `${rows.height}px`);
+      const style = getComputedStyle(head);
+      lift.style.setProperty(
+        "--lift-dark",
+        style.getPropertyValue("--lane-dark"),
+      );
+      lift.style.setProperty(
+        "--lift-accent",
+        style.getPropertyValue("--lane-accent"),
+      );
+    };
+
+    const choose = (target: EventTarget | null) => {
+      const cell = (target as Element | null)?.closest<HTMLElement>(
+        "[data-col]",
+      );
+      if (!cell || !frame.contains(cell)) return;
+      const col = Number(cell.dataset.col);
+      if (col === active) return;
+      active = col;
+      place();
+    };
+
+    frame.addEventListener("pointerover", (event) => choose(event.target));
+    frame.addEventListener("focusin", (event) => choose(event.target));
+    new ResizeObserver(place).observe(table);
+    place();
+    frame.classList.add("is-ready");
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .compare {
+      padding-block: var(--section-space-large, 8rem);
+      background-color: var(--dark-900);
+    }
+
+    .compare_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(3rem, 2rem + 3vw, 4.5rem);
+    }
+
+    .compare_frame {
+      position: relative;
+      isolation: isolate;
+      width: 100%;
+      padding-block: 1.25rem;
+      overflow-x: auto;
+      scrollbar-width: thin;
+
+      &:focus-visible {
+        outline: var(--focus-width) solid var(--brand-300);
+        outline-offset: var(--focus-offset);
+        border-radius: 0.5rem;
+      }
+    }
+
+    /* ---- the pane ------------------------------------------------------- */
+    .compare_lift {
+      position: absolute;
+      z-index: 0;
+      top: 0;
+      left: 0;
+      width: var(--w, 0);
+      height: calc(var(--h, 0) + 2.5rem);
+      translate: var(--x, 0) calc(var(--y, 0) - 1.25rem);
+      opacity: 0;
+      border: var(--border-width) solid
+        color-mix(in srgb, var(--lift-accent, #fff) 35%, transparent);
+      border-radius: 1rem;
+      background-color: var(--lift-dark, var(--dark-800));
+      background-image:
+        repeating-linear-gradient(
+          calc(90deg + var(--slant)),
+          transparent 0 calc(1.75rem - 1px),
+          rgb(255 255 255 / 0.05) calc(1.75rem - 1px) 1.75rem
+        ),
+        radial-gradient(
+          140% 40% at 50% 0%,
+          color-mix(in srgb, var(--lift-accent, #fff) 40%, transparent),
+          transparent 70%
+        ),
+        linear-gradient(
+          180deg,
+          color-mix(
+            in srgb,
+            var(--lift-accent, #fff) 16%,
+            var(--lift-dark, #000)
+          ),
+          var(--lift-dark, #000) 60%
+        );
+      box-shadow: 0 2rem 3rem -1.5rem rgb(0 0 0 / 0.6);
+      transition:
+        translate 0.55s var(--ease-out),
+        width 0.55s var(--ease-out),
+        background-color 0.55s var(--ease-out),
+        border-color 0.55s var(--ease-out),
+        opacity 0.4s;
+
+      .is-ready > & {
+        opacity: 1;
+      }
+    }
+
+    /* ---- the table ------------------------------------------------------ */
+    .compare_table {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      min-width: 52rem;
+      border-collapse: collapse;
+      table-layout: fixed;
+
+      & th,
+      & td {
+        padding: 1.05rem 1.25rem;
+        border-bottom: var(--border-width) solid rgb(255 255 255 / 0.08);
+        text-align: left;
+        vertical-align: top;
+        font-size: 0.9375rem;
+        line-height: 1.4;
+        font-weight: 400;
+      }
+
+      & thead th,
+      & thead td {
+        padding-top: 0.5rem;
+        border-bottom-color: rgb(255 255 255 / 0.16);
+      }
+
+      & tfoot td {
+        padding-block: 1.25rem 0.5rem;
+        border-bottom: 0;
+      }
+    }
+
+    .compare_corner {
+      width: 22%;
+    }
+
+    .compare_service {
+      font-size: 1rem;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+
+      & .lane-tick {
+        display: flex;
+        margin-bottom: 0.75rem;
+      }
+    }
+
+    .compare_table .compare_label {
+      color: var(--text-muted);
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .compare_yes {
+      display: inline-flex;
+      color: var(--lane-accent);
+
+      & svg {
+        width: 1.15rem;
+        height: 1.15rem;
+        fill: none;
+        stroke: currentcolor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+    }
+
+    .compare_no {
+      color: var(--text-muted);
+    }
+
+    .compare_link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      color: var(--text);
+      font-weight: 500;
+      text-decoration: none;
+
+      &:focus-visible {
+        outline: var(--focus-width) solid var(--brand-300);
+        outline-offset: 0.3rem;
+        border-radius: 0.25rem;
+      }
+    }
+
+    /* On a phone the labels hold still while the services scroll past. */
+    @media (width < 62rem) {
+      .compare_label,
+      .compare_corner {
+        position: sticky;
+        left: 0;
+        z-index: 2;
+        background-color: var(--dark-900);
+      }
+      .compare_corner {
+        width: 9.5rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .compare_lift {
+        transition: none;
+      }
+    }
+  }
+</style>

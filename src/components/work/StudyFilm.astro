@@ -1,0 +1,192 @@
+---
+/**
+ * The client on camera, for a study with a film rather than a written quote:
+ * the still, and a play button that opens the film in the page's shared dialog
+ * (the page adds the dialog when there is a film).
+ *
+ * The whole still is a way in for a pointer. The white square in its corner is
+ * the one a keyboard and a screen reader get, the same control the film cards
+ * use across the site. What is said under it is the film's title, not a quote:
+ * nothing here is put in the speaker's mouth.
+ */
+import Img from "@/components/Img.astro";
+import PlayButton from "@/components/inparallel/PlayButton.astro";
+import type { Project } from "@/utils/content.ts";
+import { STUDY_FILMS, signatureOf } from "@/data/work.ts";
+
+interface Props {
+  project: Project;
+}
+
+const { id, data } = Astro.props.project;
+const film = STUDY_FILMS[id];
+---
+
+{
+  film && (
+    <figure class="study-film">
+      <div class="study-film_frame" data-anim="image">
+        <Img
+          src={film.poster}
+          alt={`${film.speaker} on camera, over the ${data.client} website`}
+          class="study-film_still"
+          variant="constrained"
+          sizes="(width >= 62rem) 58rem, 92vw"
+        />
+        <button
+          class="study-film_hit"
+          type="button"
+          tabindex="-1"
+          aria-hidden="true"
+          data-cursor="Play film"
+          data-lightbox-open
+          data-youtube={film.youtube}
+          data-caption={`${film.speaker} · ${data.client}`}
+        />
+        <PlayButton
+          size="tile"
+          label={`Play ${film.speaker}'s film`}
+          youtube={film.youtube}
+          caption={`${film.speaker} · ${data.client}`}
+          class="study-film_play"
+        />
+      </div>
+      <figcaption class="study-film_by">
+        <span class="study-film_sign" aria-hidden="true">
+          {signatureOf(film.speaker)}
+        </span>
+        <span class="study-film_who">
+          <span class="study-film_name">{film.speaker}</span>
+          <span class="study-film_meta">
+            {data.client}, {film.line}
+          </span>
+        </span>
+      </figcaption>
+    </figure>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .study-film {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.75rem;
+      width: 100%;
+      max-width: 58rem;
+      margin: 0 auto;
+    }
+
+    /* Set like the films on the home page: a mount around the picture. The
+       shape is the film's own picture, cut clear of the black bars the still
+       carries down either side. */
+    .study-film_frame {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 5 / 3;
+      padding: 0.5rem;
+      background-color: var(--light-100);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: 1.25rem;
+      box-shadow: 0 1.5rem 3rem -2rem rgb(13 25 40 / 0.35);
+    }
+
+    .study-film_still {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 0.85rem;
+      transition: scale 0.9s var(--ease-out);
+    }
+
+    .study-film_hit {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      background: none;
+      border: 0;
+      cursor: pointer;
+    }
+
+    .study-film_play {
+      position: absolute;
+      top: 1.4rem;
+      right: 1.4rem;
+      z-index: 2;
+    }
+
+    /* The shared tile grows its ring with a shadow. A shadow repaints on every
+       frame it moves, so here the tile only scales. */
+    @media (hover: hover) {
+      .study-film_play.play-button.tile:hover {
+        box-shadow: 0 2px 4px rgb(0 0 0 / 0.18);
+      }
+
+      .study-film_frame:has(.study-film_hit:hover) {
+        & .study-film_still {
+          scale: 1.02;
+        }
+
+        & .study-film_play {
+          scale: 1.08;
+        }
+      }
+    }
+
+    .study-film_by {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      text-align: left;
+    }
+
+    .study-film_sign {
+      flex: none;
+      padding-right: 1.1rem;
+      border-right: var(--border-width) solid var(--border);
+      color: var(--ink-900);
+      font-family: var(--serif-family);
+      font-size: 2rem;
+      font-style: italic;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .study-film_who {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+    }
+
+    .study-film_name {
+      font-weight: 500;
+    }
+
+    .study-film_meta {
+      color: var(--text-muted);
+      font-size: 0.875rem;
+    }
+
+    @media (width < 48rem) {
+      .study-film_play {
+        top: 1rem;
+        right: 1rem;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .study-film_still {
+        transition: none;
+      }
+
+      .study-film_frame:has(.study-film_hit:hover) .study-film_still {
+        scale: none;
+      }
+    }
+  }
+</style>

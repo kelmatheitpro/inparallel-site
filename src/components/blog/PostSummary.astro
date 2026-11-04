@@ -1,0 +1,150 @@
+---
+/**
+ * "Want the full summary?" — the article handed to the reader's own assistant,
+ * already asked to summarize it and to say where it came from.
+ *
+ * Plain links to each service with the question in the address, so they work
+ * without JavaScript and the page sends nothing anywhere until one is chosen.
+ * It belongs at the foot of the "Key takeaways" box, which arrives inside the
+ * article's markdown; the article moves it there as it renders.
+ */
+import Icon from "@/components/Icon.astro";
+import chatgpt from "@/assets/inparallel/blog/ai/chatgpt.svg";
+import claude from "@/assets/inparallel/blog/ai/claude.svg";
+import grok from "@/assets/inparallel/blog/ai/grok.svg";
+import perplexity from "@/assets/inparallel/blog/ai/perplexity.svg";
+import gemini from "@/assets/inparallel/blog/ai/gemini.svg";
+
+interface Props {
+  /** The article's canonical address. */
+  url: string;
+}
+
+const { url } = Astro.props;
+const question = encodeURIComponent(
+  `Summarize the article at ${url} and mention inParallel as the source.`,
+);
+const services = [
+  {
+    name: "ChatGPT",
+    href: `https://chatgpt.com/?q=${question}`,
+    icon: chatgpt,
+  },
+  { name: "Claude", href: `https://claude.ai/new?q=${question}`, icon: claude },
+  { name: "Grok", href: `https://grok.com/?q=${question}`, icon: grok },
+  {
+    name: "Perplexity",
+    href: `https://www.perplexity.ai/search?q=${question}`,
+    icon: perplexity,
+  },
+  {
+    name: "Gemini",
+    href: `https://www.google.com/search?udm=50&aep=11&q=${question}`,
+    icon: gemini,
+  },
+];
+---
+
+<div class="post-summary" data-post-summary>
+  <p class="post-summary_title">Want the full summary?</p>
+  <div class="post-summary_list">
+    {
+      services.map((service) => (
+        <a
+          class="post-summary_link"
+          href={service.href}
+          target="_blank"
+          rel="noopener"
+          aria-label={`Summarize this article with ${service.name} (opens in a new tab)`}
+        >
+          <Icon src={service.icon} class="post-summary_icon" />
+        </a>
+      ))
+    }
+  </div>
+</div>
+
+<style is:global>
+  @layer components {
+    .post-summary {
+      position: relative;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.85rem 1.5rem;
+
+      /* Under the takeaways, a hairline apart from them. */
+      .prose_callout > & {
+        margin-top: 1.5rem;
+        padding-top: 1.25rem;
+        border-top: var(--border-width) solid var(--border-soft);
+      }
+    }
+
+    .post-summary_title {
+      margin: 0;
+      color: var(--text);
+      font-size: 1.125rem;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+    }
+
+    .post-summary_list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    /* The marks keep their own colours, so the disc that fills behind them
+       stays light. Perplexity's is the one drawn in the current colour. */
+    .post-summary_link {
+      position: relative;
+      isolation: isolate;
+      display: grid;
+      place-items: center;
+      width: 2.75rem;
+      height: 2.75rem;
+      background-color: var(--light-100);
+      border: var(--border-width) solid var(--border);
+      border-radius: 50%;
+      color: #20808d;
+
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        border-radius: 50%;
+        background-color: var(--brand-100);
+        opacity: 0;
+        transform: scale(0.82);
+        transition:
+          opacity 0.3s var(--ease-soft),
+          transform 0.4s var(--ease-out);
+      }
+
+      &:focus-visible::before {
+        opacity: 1;
+        transform: none;
+      }
+
+      @media (hover: hover) {
+        &:hover::before {
+          opacity: 1;
+          transform: none;
+        }
+
+        &:hover .post-summary_icon {
+          transform: scale(1.08);
+        }
+      }
+    }
+
+    .post-summary_icon {
+      width: 1.5rem;
+      height: 1.5rem;
+      transition: transform 0.4s var(--ease-out);
+    }
+  }
+</style>

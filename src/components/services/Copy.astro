@@ -1,0 +1,35 @@
+---
+/**
+ * A line of copy from the services data. Anything from a `TODO:` onwards is
+ * copy the owner still has to supply, so it is set apart — mono, in a dashed
+ * box — where a review of the page can't miss it, and the sentence before it
+ * reads as normal.
+ */
+interface Props {
+  text: string;
+}
+
+const { text } = Astro.props;
+const at = text.indexOf("TODO:");
+const before = at < 0 ? text : text.slice(0, at);
+const todo = at < 0 ? "" : text.slice(at);
+---
+
+{before}{todo && <span class="svc-todo">{todo}</span>}
+
+<style is:global>
+  @layer components {
+    .svc-todo {
+      display: inline-block;
+      padding: 0.1em 0.45em;
+      border: 1px dashed currentcolor;
+      border-radius: 0.35em;
+      font-family: var(--mono-family);
+      font-size: 0.8em;
+      font-weight: 500;
+      letter-spacing: 0;
+      line-height: 1.5;
+      opacity: 0.85;
+    }
+  }
+</style>

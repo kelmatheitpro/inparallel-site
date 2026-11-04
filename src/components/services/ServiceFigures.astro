@@ -1,0 +1,456 @@
+---
+/**
+ * "Measured after launch, not before." — the figures behind a service.
+ *
+ * The stage pins while the room under it scrolls: four lanes draw round the
+ * mark, one after another, each a parallelogram at the mark's own slant, and
+ * each closes on the place its figure hangs from (`figures()` in `motion.ts`).
+ * All of it is in the markup finished, so with no script or no motion this is
+ * a plain picture with its four figures beside it, and no pin.
+ *
+ * A lane starts on its own right-hand edge, at the height of its figure, so
+ * the line returns to exactly the point the figure's leader leaves from.
+ *
+ * Without a `service` it's the whole studio's: the site's own colours, and one
+ * lane in each service's.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import { SERVICES_P, type Service } from "@/data/offer.ts";
+import { laneStyle, type Result } from "@/data/service-pages.ts";
+
+interface Props {
+  /** The service whose page this is, for its colour. */
+  service?: Service;
+  results: Result[];
+  index: string;
+}
+
+const { service, results, index } = Astro.props;
+
+const colours = service
+  ? laneStyle(service)
+  : `--lane-dark: var(--dark-900); --lane-accent: var(--brand-500); --lane-soft: var(--brand-300); ${SERVICES_P.map(({ theme }, lane) => `--_c${lane}: ${theme.accent};`).join(" ")}`;
+
+const TAN = 0.6249;
+const CX = 360;
+const CY = 340;
+const RADIUS = 26;
+const END = 772;
+
+/* Outside in. `y` is where its figure sits. */
+const LANES = [
+  { halfW: 190, halfH: 300, y: 118, width: 15 },
+  { halfW: 158, halfH: 256, y: 240, width: 13 },
+  { halfW: 126, halfH: 212, y: 362, width: 11 },
+  { halfW: 94, halfH: 168, y: 478, width: 9 },
+];
+
+const round = (n: number) => Math.round(n * 100) / 100;
+
+/** The corners, clockwise from the top right. */
+const corners = (halfW: number, halfH: number) => {
+  const lean = halfH * TAN;
+  return [
+    [CX + halfW + lean, CY - halfH],
+    [CX + halfW - lean, CY + halfH],
+    [CX - halfW - lean, CY + halfH],
+    [CX - halfW + lean, CY - halfH],
+  ] as [number, number][];
+};
+
+/** A point `distance` from `from` towards `to`. */
+const toward = (
+  [x, y]: [number, number],
+  [tx, ty]: [number, number],
+  distance: number,
+): [number, number] => {
+  const length = Math.hypot(tx - x, ty - y);
+  return [
+    x + ((tx - x) / length) * distance,
+    y + ((ty - y) / length) * distance,
+  ];
+};
+
+/** The loop, from `start` on the right-hand edge, round and back to it. */
+const lanePath = (halfW: number, halfH: number, y?: number) => {
+  const c = corners(halfW, halfH);
+  const lean = (CY - (y ?? CY)) * TAN;
+  const start: [number, number] = [CX + halfW + lean, y ?? CY];
+  const turn = (corner: number) => {
+    const here = c[corner]!;
+    const from = toward(here, c[(corner + 3) % 4]!, RADIUS);
+    const to = toward(here, c[(corner + 1) % 4]!, RADIUS);
+    return `L${round(from[0])} ${round(from[1])}Q${round(here[0])} ${round(here[1])} ${round(to[0])} ${round(to[1])}`;
+  };
+  return (
+    `M${round(start[0])} ${round(start[1])}` +
+    turn(1) +
+    turn(2) +
+    turn(3) +
+    turn(0) +
+    `L${round(start[0])} ${round(start[1])}`
+  );
+};
+
+const anchor = ({ halfW, y }: (typeof LANES)[number]) =>
+  CX + halfW + (CY - y) * TAN;
+
+/* The mark in the middle: the logo's two strokes. */
+const stroke = (x: number) => {
+  const h = 74;
+  const lean = h * TAN;
+  const w = 34;
+  return `M${x + lean} ${CY - h}L${x + lean + w} ${CY - h}L${x - lean + w} ${CY + h}L${x - lean} ${CY + h}Z`;
+};
+const mark = stroke(CX - 46) + stroke(CX + 12);
+---
+
+<section
+  id="results"
+  class="figures theme-dark on-lane"
+  style={colours}
+  aria-labelledby="results-title"
+>
+  <div class="figures_head">
+    <SectionHead
+      index={index}
+      label="Results"
+      align="center"
+      headingId="results-title"
+    >
+      Measured <span class="serif">after</span> launch, <br />not before.
+    </SectionHead>
+  </div>
+
+  <div class="figures_track" data-scrub="figures">
+    <div class="figures_stage">
+      <div class="figures_box">
+        <svg class="figures_art" viewBox="-30 20 830 640" aria-hidden="true">
+          {
+            LANES.map(({ halfW, halfH, width }) => (
+              <path
+                class="figures_rail"
+                d={lanePath(halfW, halfH)}
+                stroke-width={width}
+              />
+            ))
+          }
+          {
+            LANES.map((lane, position) => (
+              <>
+                <path
+                  class:list={["figures_lane", `is-${position}`]}
+                  d={lanePath(lane.halfW, lane.halfH, lane.y)}
+                  pathLength="1"
+                  stroke-width={lane.width}
+                  data-figure-lane
+                />
+                <path
+                  class="figures_lead"
+                  d={`M${round(anchor(lane))} ${lane.y}L${END} ${lane.y}`}
+                  pathLength="1"
+                  data-figure-lead
+                />
+                <circle
+                  class="figures_node"
+                  cx={round(anchor(lane))}
+                  cy={lane.y}
+                  r={lane.width / 2 + 3}
+                  data-figure-node
+                />
+              </>
+            ))
+          }
+          <path class="figures_mark_fill" d={mark} data-figure-fill></path>
+          <path
+            class="figures_mark_line"
+            d={mark}
+            pathLength="1"
+            data-figure-outline></path>
+        </svg>
+
+        <ul class="figures_list" role="list">
+          {
+            results.slice(0, LANES.length).map((result, position) => (
+              <li
+                class:list={["figure", `is-${position}`]}
+                style={`--_y: ${round(((LANES[position]!.y - 20) / 640) * 100)}%;`}
+                data-figure
+              >
+                <span class="figure_value">{result.value}</span>
+                <span class="figure_label">{result.label}</span>
+                {result.client && (
+                  <span class="figure_client">{result.client}</span>
+                )}
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style is:global>
+  @layer components {
+    .figures {
+      --_c0: var(--lane-accent);
+      --_c1: var(--lane-soft);
+      --_c2: color-mix(in oklab, var(--lane-accent) 62%, var(--lane-dark));
+      --_c3: var(--light-100);
+      padding-top: var(--section-space-large, 8rem);
+      /* Clip, not hidden: the stage has to be able to stick. */
+      overflow: clip;
+      background-color: var(--lane-dark);
+    }
+
+    .figures_head {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+    }
+
+    /* The room the scroll runs through. Only while it's running: a reader
+       without it gets the finished picture and moves on. */
+    .figures_track.is-running {
+      height: 440vh;
+      height: 440svh;
+
+      & > .figures_stage {
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        height: 100svh;
+        margin-top: 0;
+      }
+    }
+
+    .figures_stage {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
+      padding: 5.5rem var(--site-margin) 1.5rem;
+      padding-bottom: 2rem;
+    }
+
+    .figures_box {
+      position: relative;
+      width: min(68.75rem, 100%, calc((100svh - 8rem) * 1000 / 640));
+      aspect-ratio: 1000 / 640;
+      container-type: inline-size;
+
+      /* The light behind the mark. */
+      &::before {
+        content: "";
+        position: absolute;
+        left: 38%;
+        top: 50%;
+        width: 100%;
+        aspect-ratio: 1;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background-image: radial-gradient(
+          50% 50% at 50% 50%,
+          color-mix(in srgb, var(--lane-accent) 16%, transparent),
+          transparent 70%
+        );
+        pointer-events: none;
+      }
+    }
+
+    .figures_art {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 83%;
+      height: 100%;
+      max-width: none;
+      overflow: visible;
+      fill: none;
+    }
+
+    .figures_rail {
+      stroke: var(--lane-soft);
+      stroke-opacity: 0.08;
+    }
+
+    .figures_lane {
+      stroke-dasharray: 1;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+
+      &.is-0 {
+        stroke: var(--_c0);
+      }
+      &.is-1 {
+        stroke: var(--_c1);
+      }
+      &.is-2 {
+        stroke: var(--_c2);
+      }
+      &.is-3 {
+        stroke: var(--_c3);
+      }
+    }
+
+    .figures_lead {
+      stroke: var(--lane-soft);
+      stroke-opacity: 0.5;
+      stroke-width: 1;
+      stroke-dasharray: 1;
+    }
+
+    .figures_node {
+      fill: var(--lane-dark);
+      stroke: var(--lane-soft);
+      stroke-width: 2;
+    }
+
+    .figures_mark_fill {
+      fill: var(--lane-soft);
+    }
+
+    .figures_mark_line {
+      stroke: var(--lane-soft);
+      stroke-width: 1.6;
+      stroke-linejoin: round;
+      stroke-dasharray: 1;
+    }
+
+    /* ---- the figures ---------------------------------------------------- */
+    .figures_list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    /* Hung by its figure's middle, so the leader lands on the figure at any
+       size. */
+    .figure {
+      --_size: clamp(1.5rem, 3.5cqw, 2.375rem);
+      position: absolute;
+      left: 81%;
+      top: var(--_y);
+      width: 19%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      translate: 0 calc(var(--_size) * -0.525);
+      color: var(--light-100);
+    }
+
+    .figure_value {
+      font-size: var(--_size);
+      font-weight: 500;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+    }
+
+    .figure_label {
+      font-size: clamp(0.8125rem, 1.45cqw, 1rem);
+      line-height: 1.3;
+    }
+
+    .figure_client {
+      color: rgb(255 255 255 / 0.55);
+      font-size: clamp(0.75rem, 1.2cqw, 0.875rem);
+      line-height: 1.3;
+    }
+
+    /* A short window has less room between the leaders than a figure needs. */
+    @media (width >= 62rem) and (height < 36rem) {
+      .figure_client {
+        display: none;
+      }
+    }
+
+    /* ---- narrower ------------------------------------------------------- */
+    /* Too narrow to hang four figures beside the picture: the picture alone,
+       then the figures under it, sized so the two fit one screen. */
+    @media (width < 62rem) {
+      .figures_stage {
+        padding-top: 5rem;
+      }
+
+      .figures_box {
+        width: 100%;
+        aspect-ratio: auto;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.25rem;
+        container-type: normal;
+
+        &::before {
+          left: 50%;
+          top: 30%;
+          width: min(140%, 34rem);
+        }
+      }
+
+      /* Its box holds room for the leaders on the right, which aren't drawn
+         here, so it's moved over to centre the lanes. */
+      .figures_art {
+        position: relative;
+        width: min(100%, 100svh - 21rem, 30rem);
+        height: auto;
+        aspect-ratio: 830 / 640;
+        translate: 3% 0;
+      }
+
+      .figures_lead {
+        display: none;
+      }
+
+      .figures_list {
+        width: min(100%, 26rem);
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 1rem;
+      }
+
+      .figure {
+        position: static;
+        width: auto;
+        translate: none;
+      }
+
+      .figure_value {
+        font-size: 1.625rem;
+      }
+    }
+
+    @media (40rem <= width < 62rem) {
+      .figures_list {
+        width: 100%;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+
+    /* A phone on its side: side by side, or the two wouldn't fit. */
+    @media (width < 62rem) and (height < 30rem) {
+      .figures_stage {
+        padding-top: calc(var(--nav-height) + 0.5rem);
+        padding-bottom: 0.5rem;
+      }
+
+      .figures_box {
+        flex-direction: row;
+        justify-content: center;
+      }
+
+      .figures_art {
+        flex: none;
+        width: auto;
+        height: calc(100svh - var(--nav-height) - 1.25rem);
+        translate: none;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .figures_track.is-running {
+        height: auto;
+      }
+    }
+  }
+</style>

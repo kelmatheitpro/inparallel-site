@@ -1,51 +1,83 @@
 ---
 import Icon from "@/components/Icon.astro";
 import Img from "@/components/Img.astro";
-import Heading from "@/components/Heading.astro";
 import jobSuccess from "@/assets/inparallel/icons/upwork-job-success.svg";
 import SocialIcon from "@/components/inparallel/SocialIcon.astro";
 import logo from "@/assets/inparallel/logo.svg";
-import footerGlow from "@/assets/inparallel/footer-glow.svg";
-import glowLine from "@/assets/inparallel/glow-line.svg";
-import arrowCircle from "@/assets/inparallel/icons/arrow-circle.svg";
-import arrowDiagonal from "@/assets/inparallel/icons/arrow-diagonal.svg";
+import footerGlow from "@/assets/inparallel/footer-glow.webp";
+import footerLines from "@/assets/inparallel/footer-lines.svg";
+import glowLine from "@/assets/inparallel/glow-line.webp";
 import { SITE_NAME, CONTACT_EMAIL, SOCIAL_PROOF } from "@/consts.ts";
 import { FOOTER_COLUMNS, SOCIALS, LOCATIONS } from "@/data/home.ts";
+import { getProjects } from "@/utils/content.ts";
+import ViewToggle from "@/components/parallel/ViewToggle.astro";
 
 const year = new Date().getFullYear();
+
+/* The closing ask points at /contact; on that page it would point at itself. */
+const onContact = Astro.url.pathname.replace(/\/+$/, "") === "/contact";
+
+/* The studies past the two the home page leads with, so the cards don't
+   repeat the screens right above them. */
+const samples = (await getProjects()).slice(2).flatMap(({ data }) => {
+  const shot = data.media.card ?? data.media.desktop;
+  return shot ? [shot] : [];
+});
 ---
 
 <footer class="footer_wrap theme-dark" id="contact">
+  {
+    /* The bloom is a picture and the two lines are vectors, cut from one piece
+       of artwork. The bloom is all blur, which a small file holds perfectly and
+       a live SVG filter would redraw on every tile; the lines have to stay
+       sharp at any density, and without a filter they cost nothing. */
+  }
   <Img src={footerGlow} class="footer_glow" transparent />
+  <Img src={footerLines} class="footer_glow" transparent />
   <Img src={glowLine} class="footer_line" transparent />
 
   <div class="footer_inner">
     {/* ---- closing call to action ---------------------------------------- */}
-    <div class="footer_cta">
+    <div class="footer_cta" hidden={onContact}>
       <div class="footer_cta_body">
-        <Heading tag="h2" variant="h3" class="heading-split">
-          Every great website <em>starts with a conversation</em>
-        </Heading>
+        <h2 class="footer_cta_title heading" data-anim="slash">
+          Let's build the site <br />your product&nbsp;deserves.
+        </h2>
+        <p class="footer_cta_text">
+          A 30-minute call. You leave with a plan and an estimate — whether you
+          hire us or not.
+        </p>
 
         <div class="footer_cta_actions">
-          <a class="footer_button" href={`mailto:${CONTACT_EMAIL}`}
-            >Book a call</a
-          >
-          <a class="footer_mail" href={`mailto:${CONTACT_EMAIL}`}>
-            {CONTACT_EMAIL}
-            <Icon src={arrowCircle} class="footer_mail_icon" />
+          <a class="btn" href="/contact">
+            Book an intro call
           </a>
+          <a class="btn btn-ghost" href="/work">See our work</a>
         </div>
       </div>
 
       {
-        /* The three tilted cards the design floats beside the heading — the
-           work samples that drop in here are still to come. */
+        /* Three screens from the studies, floating beside the heading: each
+           drifts on its own, and they shy away from the pointer (the outer
+           span is the shy part, `float-cards.ts`, the inner the drift). */
       }
-      <div class="footer_cards" aria-hidden="true">
-        <span class="footer_card one"></span>
-        <span class="footer_card two"></span>
-        <span class="footer_card three"></span>
+      <div class="footer_cards" aria-hidden="true" data-float-cards>
+        {
+          ["one", "two", "three"].map((position, index) => (
+            <span class:list={["footer_card", position]} data-float-card>
+              <span class="footer_card_face">
+                {samples[index] && (
+                  <Img
+                    src={samples[index]}
+                    class="footer_card_screen"
+                    variant="constrained"
+                    sizes="13rem"
+                  />
+                )}
+              </span>
+            </span>
+          ))
+        }
       </div>
     </div>
 
@@ -135,9 +167,25 @@ const year = new Date().getFullYear();
 
       <form class="footer_brief" data-brief novalidate>
         <h3 class="footer_brief_title">Have a brief ready?</h3>
-        <p class="footer_brief_text">
-          Send it over — same-day estimate, no strings.
-        </p>
+
+        {
+          /* The form's answer takes the place of this line rather than a new
+             one under the field, so saying it moves nothing on the page.
+             Announced rather than just shown, so the outcome reaches someone
+             who isn't looking at the field. */
+        }
+        <div class="footer_brief_note">
+          <p class="footer_brief_text">
+            Send it over — same-day estimate, no strings.
+          </p>
+          <p
+            class="footer_brief_status"
+            data-brief-status
+            role="status"
+            aria-live="polite"
+          >
+          </p>
+        </div>
 
         <div class="footer_brief_row">
           <label class="sr-only" for="brief-email">Your email address</label>
@@ -148,35 +196,76 @@ const year = new Date().getFullYear();
             type="email"
             inputmode="email"
             autocomplete="email"
-            placeholder={CONTACT_EMAIL}
+            placeholder="you@company.com"
             required
           />
-          <button class="footer_brief_send" type="submit">
+          <button class="btn btn-blue footer_brief_send" type="submit">
             Send
-            <Icon src={arrowDiagonal} class="footer_brief_arrow" />
           </button>
         </div>
-
-        {
-          /* Announced rather than just shown, so the outcome reaches someone
-             who isn't looking at the field. */
-        }
-        <p
-          class="footer_brief_status"
-          data-brief-status
-          role="status"
-          aria-live="polite"
-        >
-        </p>
       </form>
     </div>
 
     <div class="footer_bottom">
-      <p>&copy; {year} inparallel studio. All rights reserved.</p>
-      <p class="footer_bottom_note">Made in Webflow, obviously.</p>
+      <p>&copy; {year} inParallel. All rights reserved.</p>
+      <ViewToggle />
+      <p class="footer_bottom_note">
+        <span class="slash-mark" aria-hidden="true"><i></i><i></i></span>
+        Designed and built in parallel.
+      </p>
+    </div>
+
+    {
+      /* The name, as wide as the footer, sinking off its bottom edge. The
+         logo is the mask and a lit gradient the ink, so it reads as light on
+         the page rather than one more thing to read. */
+    }
+    <div
+      class="footer_wordmark"
+      aria-hidden="true"
+      data-wordmark
+      style={`--_mark: url("${logo.src}")`}
+    >
+      <i class="footer_wordmark_lamp"></i>
     </div>
   </div>
 </footer>
+
+<script>
+  /* The hero's lamp, once more: a light behind the name that follows the
+     pointer across the footer and fades when it leaves. Fine pointers only;
+     the name reads the same without it. The light is slid, not redrawn: the
+     letters are a mask as wide as the page, and repainting under it on every
+     move is the kind of work that makes a page stutter. */
+  const mark = document.querySelector<HTMLElement>("[data-wordmark]");
+  const lamp = mark?.querySelector<HTMLElement>(".footer_wordmark_lamp");
+  const footer = mark?.closest("footer");
+  const fine = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+  const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (mark && lamp && footer && fine && !still) {
+    let frame = 0;
+    let x = 0;
+    let y = 0;
+    const paint = () => {
+      frame = 0;
+      const box = mark.getBoundingClientRect();
+      lamp.style.transform = `translate(${x - box.left}px, ${y - box.top}px)`;
+    };
+    footer.addEventListener(
+      "pointermove",
+      (event) => {
+        x = event.clientX;
+        y = event.clientY;
+        mark.classList.add("is-lit");
+        if (!frame) frame = requestAnimationFrame(paint);
+      },
+      { passive: true },
+    );
+    footer.addEventListener("pointerleave", () =>
+      mark.classList.remove("is-lit"),
+    );
+  }
+</script>
 
 <style is:global>
   @layer components {
@@ -245,59 +334,32 @@ const year = new Date().getFullYear();
       display: flex;
       flex-direction: column;
       align-items: start;
-      gap: var(--space-8);
+      gap: 1.5rem;
+    }
+
+    .footer_cta_title {
+      margin: 0;
+      padding-top: 0;
+      font-size: clamp(2.25rem, 1.5rem + 2.6vw, 4rem);
+      font-weight: 500;
+      line-height: 1.02;
+      letter-spacing: -0.04em;
+    }
+
+    .footer_cta_text {
+      max-width: 30rem;
+      margin: 0;
+      color: rgb(255 255 255 / 0.65);
+      font-size: 1.0625rem;
+      line-height: 1.55;
     }
 
     .footer_cta_actions {
       display: flex;
       flex-wrap: wrap;
       align-items: center;
-      gap: var(--space-5);
-    }
-
-    .footer_button {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1.25rem 2.25rem;
-      background-color: var(--brand-500);
-      border-radius: var(--radius-main);
-      box-shadow: var(--shadow-button-inset);
-      color: var(--light-100);
-      font-size: var(--text-main);
-      font-weight: var(--primary-medium);
-      text-decoration: none;
-      filter: drop-shadow(var(--shadow-brand));
-      transition:
-        background-color var(--duration-main),
-        translate var(--duration-main) var(--ease-out);
-      @media (hover: hover) {
-        &:hover {
-          translate: 0 -2px;
-          background-color: color-mix(in srgb, var(--brand-500), white 12%);
-        }
-      }
-    }
-
-    .footer_mail {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-3);
-      color: inherit;
-      font-size: var(--text-main);
-      font-weight: var(--primary-semibold);
-      text-decoration: none;
-    }
-
-    .footer_mail_icon {
-      --_size: 2rem;
-      transition: transform var(--duration-main) var(--ease-out);
-    }
-
-    @media (hover: hover) {
-      .footer_mail:hover .footer_mail_icon {
-        transform: translateX(0.25rem);
-      }
+      gap: 0.75rem;
+      margin-top: 0.75rem;
     }
 
     /* Three cards pinned to one box so their tilts don't disturb the row. */
@@ -311,31 +373,79 @@ const year = new Date().getFullYear();
     .footer_card {
       position: absolute;
       display: block;
-      background-color: var(--light-100);
-      border-radius: 0.75rem;
-      box-shadow: 0 18px 40px rgb(0 0 0 / 0.35);
 
       &.one {
+        --_tilt: -6deg;
+        --_time: 6.5s;
+        --_wait: 0s;
+        --_rise: 0.55rem;
         top: 0.5rem;
         left: 0;
         width: 13rem;
         height: 8rem;
-        rotate: -6deg;
       }
       &.two {
+        --_tilt: -9deg;
+        --_time: 5.2s;
+        --_wait: -2.1s;
+        --_rise: 0.8rem;
         top: 6.5rem;
         right: 0;
         width: 7rem;
         height: 5rem;
-        rotate: -9deg;
       }
       &.three {
+        --_tilt: 3deg;
+        --_time: 7.4s;
+        --_wait: -4.3s;
+        --_rise: 0.65rem;
         top: 9.5rem;
         left: 3.5rem;
         width: 9rem;
         height: 5.75rem;
-        rotate: 3deg;
       }
+    }
+
+    /* Each at its own pace, so they never settle into a rhythm. Only `translate`
+       and `rotate`: the compositor runs this without the page doing anything. */
+    .footer_card_face {
+      display: block;
+      width: 100%;
+      height: 100%;
+      overflow: clip;
+      background-color: var(--light-100);
+      border: var(--border-width) solid rgb(255 255 255 / 0.15);
+      border-radius: 0.75rem;
+      box-shadow: 0 18px 40px rgb(0 0 0 / 0.35);
+      rotate: var(--_tilt);
+      animation: footer-float var(--_time) ease-in-out var(--_wait) infinite
+        alternate;
+
+      .is-away & {
+        animation-play-state: paused;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        animation: none;
+      }
+    }
+
+    @keyframes footer-float {
+      from {
+        translate: -0.15rem calc(var(--_rise) * -1);
+        rotate: calc(var(--_tilt) - 1.4deg);
+      }
+      to {
+        translate: 0.15rem var(--_rise);
+        rotate: calc(var(--_tilt) + 1.4deg);
+      }
+    }
+
+    .footer_card_screen {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
     }
 
     /* ---- sitemap --------------------------------------------------------- */
@@ -425,6 +535,13 @@ const year = new Date().getFullYear();
       display: grid;
       gap: var(--space-8);
       grid-template-columns: repeat(auto-fit, minmax(min(9rem, 100%), 1fr));
+
+      /* In a row of three the last column holds the email address, which can't
+         break, so it takes the width it needs and the other two share the
+         rest. Left to thirds it runs past the page's margin. */
+      @media (width >= 36rem) {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) max-content;
+      }
     }
 
     .footer_column {
@@ -449,15 +566,59 @@ const year = new Date().getFullYear();
       list-style: none;
     }
 
+    /* The link in hand comes up and draws its line out from the left, and the
+       rest of its column steps back. All of it is opacity and a transform, so
+       a pointer running down the column costs no paint. */
     .footer_link {
+      position: relative;
+      display: inline-block;
       color: var(--light-100);
       font-size: var(--text-small);
       text-decoration: none;
-      transition: color var(--duration-main);
+      opacity: 0.85;
+      transition: opacity 0.3s ease;
+
+      &::after {
+        content: "";
+        position: absolute;
+        inset: auto 0 -0.125rem;
+        height: 1px;
+        background-color: currentcolor;
+        transform: scaleX(0);
+        transform-origin: 0 50%;
+        transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+        pointer-events: none;
+      }
+
+      &:focus-visible {
+        opacity: 1;
+      }
+
+      &:focus-visible::after {
+        transform: scaleX(1);
+      }
+
       @media (hover: hover) {
         &:hover {
-          color: var(--brand-300);
+          opacity: 1;
         }
+
+        &:hover::after {
+          transform: scaleX(1);
+        }
+      }
+    }
+
+    @media (hover: hover) {
+      .footer_column:has(.footer_link:hover) .footer_link:not(:hover) {
+        opacity: 0.4;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .footer_link,
+      .footer_link::after {
+        transition: none;
       }
     }
 
@@ -503,7 +664,7 @@ const year = new Date().getFullYear();
       z-index: 1;
       display: flex;
       flex-direction: column;
-      gap: 0.125rem;
+      gap: var(--space-2);
     }
 
     .footer_place_title {
@@ -529,6 +690,20 @@ const year = new Date().getFullYear();
     .footer_brief_title {
       font-size: var(--h6);
       font-weight: var(--primary-medium);
+    }
+
+    /* The line and the answer share one cell, and trade places by fading. */
+    .footer_brief_note {
+      display: grid;
+
+      & > * {
+        grid-area: 1 / 1;
+        transition: opacity 0.25s var(--ease-soft);
+      }
+
+      &:has(.footer_brief_status:not(:empty)) .footer_brief_text {
+        opacity: 0;
+      }
     }
 
     .footer_brief_text {
@@ -561,41 +736,26 @@ const year = new Date().getFullYear();
         border-color: var(--brand-300);
         outline: none;
       }
-    }
-
-    .footer_brief_send {
-      display: inline-flex;
-      align-items: center;
-      gap: var(--space-2);
-      padding: 0.875rem 1.25rem;
-      background-color: var(--brand-500);
-      border: 0;
-      border-radius: var(--radius-main);
-      color: var(--light-100);
-      font-size: var(--text-small);
-      font-weight: var(--primary-medium);
-      white-space: nowrap;
-      transition: background-color var(--duration-main);
-      @media (hover: hover) {
-        &:hover {
-          background-color: color-mix(in srgb, var(--brand-500), white 12%);
-        }
+      &[aria-invalid="true"] {
+        border-color: #ff8080;
       }
     }
 
-    .footer_brief_arrow {
-      --_size: 0.625rem;
-      width: 0.625rem;
-      height: auto;
+    /* The site's button, at the height of the field it sits beside. */
+    .btn.footer_brief_send {
+      --_pad: 1.25rem;
+      align-self: stretch;
+      min-height: 0;
+      border-radius: var(--radius-main);
+      font-size: var(--text-small);
+      font-weight: var(--primary-medium);
     }
 
-    /* Empty until the form has something to say, so it takes no room. */
     .footer_brief_status {
-      font-size: var(--text-tiny);
-      line-height: var(--line-height-large);
+      font-size: var(--text-small);
 
       &:empty {
-        display: none;
+        opacity: 0;
       }
       &[data-ok] {
         color: var(--brand-300);
@@ -618,7 +778,56 @@ const year = new Date().getFullYear();
     }
 
     .footer_bottom_note {
-      color: rgb(255 255 255 / 0.35);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: rgb(255 255 255 / 0.45);
+
+      & .slash-mark {
+        height: 0.8rem;
+        --_w: 0.14rem;
+        --_gap: 0.12rem;
+      }
+    }
+
+    /* ---- wordmark -------------------------------------------------------- */
+    /* Sized off the logo's own proportions, and pulled down through the
+       footer's bottom padding so the lower fifth of the letters is cut off
+       by the page's edge. */
+    .footer_wordmark {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 670.97 / 119;
+      margin-bottom: calc(var(--space-8) * -1 - 3.25vw);
+      background-image: linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--brand-300) 30%, transparent),
+        transparent 90%
+      );
+      -webkit-mask: var(--_mark) center / 100% 100% no-repeat;
+      mask: var(--_mark) center / 100% 100% no-repeat;
+
+      /* The lamp: a soft light under the letters, wherever the pointer is. */
+      &.is-lit .footer_wordmark_lamp {
+        opacity: 1;
+      }
+    }
+
+    /* Centred on its own top left corner, which is the point the script moves. */
+    .footer_wordmark_lamp {
+      position: absolute;
+      top: -18rem;
+      left: -18rem;
+      width: 36rem;
+      height: 36rem;
+      background-image: radial-gradient(
+        closest-side,
+        color-mix(in srgb, var(--brand-300) 75%, transparent),
+        transparent 70%
+      );
+      opacity: 0;
+      transition: opacity 0.8s var(--ease-out);
+      will-change: transform;
     }
 
     /* ---- narrower --------------------------------------------------------- */
@@ -640,9 +849,9 @@ const year = new Date().getFullYear();
       .footer_brief_row {
         flex-wrap: wrap;
       }
-      .footer_brief_send {
+      .btn.footer_brief_send {
         width: 100%;
-        justify-content: center;
+        min-height: 2.875rem;
       }
     }
   }

@@ -1,0 +1,461 @@
+---
+/**
+ * "Know someone who needs a better site?" — the referral programme, worked
+ * out in front of the reader.
+ *
+ * A native range input does the work, so it is keyboard- and screen
+ * reader-operable as it stands; it sits invisible over a drawn track. The
+ * track is a row of ticks leaning at the slant, lit up to the chosen size,
+ * with the mark's two strokes as the handle and the services' starting
+ * prices marked underneath. The payout under "You earn" is announced as it
+ * changes.
+ *
+ * Dragging asks the browser for very little: the handle and the bubble move on
+ * `translate`, against the track's own width (`cqw`), and the only layout left
+ * is the figures' own text.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import Todo from "@/components/pricing/Todo.astro";
+import { REFERRAL, REFERRAL_MARKS, usd, usdShort } from "@/data/pricing.ts";
+
+interface Props {
+  index?: string;
+}
+
+const { index = "04" } = Astro.props;
+const { share, min, max, step, start } = REFERRAL;
+
+const at = (value: number) => (value - min) / (max - min);
+const ticks = Math.round((max - min) / step) + 1;
+const percent = `${Math.round(share * 100)}%`;
+---
+
+<section
+  id="referrals"
+  class="referral theme-dark"
+  aria-labelledby="referral-title"
+>
+  <div class="referral_glow" aria-hidden="true"></div>
+  <div class="referral_inner">
+    <SectionHead
+      index={index}
+      label="Referrals"
+      align="center"
+      headingId="referral-title"
+      lead={`Introduce them. If they sign, ${percent} of their first project is yours.`}
+    >
+      Know someone who <br />needs a better site?
+    </SectionHead>
+
+    <div
+      class="referral_calc"
+      data-referral
+      data-share={share}
+      data-anim="rise"
+    >
+      <div class="referral_result">
+        <output
+          class="referral_earn"
+          for="referral-range"
+          aria-live="polite"
+          data-referral-earn
+        >
+          <span class="referral_earn_label">You earn</span>{" "}
+          <span class="referral_amount" data-referral-amount>
+            {usd(start * share)}
+          </span>
+        </output>
+        <p class="referral_note">
+          when they sign a <strong data-referral-project>{usd(start)}</strong> project
+        </p>
+      </div>
+
+      <div
+        class="referral_slider"
+        style={`--p: ${at(start)}; --ticks: ${ticks - 1};`}
+        data-referral-slider
+      >
+        <div class="referral_track">
+          <div class="referral_ticks" aria-hidden="true">
+            {
+              Array.from({ length: ticks }, (_, i) => (
+                <span
+                  class:list={["referral_tick", i % 5 === 0 && "is-major"]}
+                  style={`--i: ${i};`}
+                />
+              ))
+            }
+          </div>
+          <span class="referral_handle" aria-hidden="true"><i></i><i></i></span>
+          <span class="referral_bubble" aria-hidden="true" data-referral-bubble>
+            {usdShort(start)}
+          </span>
+          <input
+            class="referral_input"
+            id="referral-range"
+            type="range"
+            min={min}
+            max={max}
+            step={step}
+            value={start}
+            aria-label="Size of the project you refer"
+            aria-valuetext={usd(start)}
+            data-referral-input
+          />
+        </div>
+
+        <div class="referral_marks" aria-hidden="true">
+          {
+            REFERRAL_MARKS.map((mark) => (
+              <span class="referral_mark" style={`--at: ${at(mark.at)};`}>
+                <span class="referral_mark_name">{mark.name}</span>
+                <span class="referral_mark_price">
+                  from {usdShort(mark.at)}
+                </span>
+              </span>
+            ))
+          }
+          <span class="referral_mark is-end" style="--at: 1;">
+            <span class="referral_mark_price">{usdShort(max)}+</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="referral_cta">
+      <a class="btn" href="/contact"> Make an introduction </a>
+      <p class="referral_fine">
+        Or take a month of Growth for your own site. Paid the week their project
+        kicks off.
+      </p>
+      <Todo class="referral_todo">
+        confirm inParallel runs this programme as written: {percent} of a referred
+        client's first project, or a month of Growth, paid the week their project
+        kicks off.
+      </Todo>
+    </div>
+  </div>
+</section>
+
+<script>
+  const money = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  });
+
+  for (const root of document.querySelectorAll<HTMLElement>(
+    "[data-referral]",
+  )) {
+    const input = root.querySelector<HTMLInputElement>("[data-referral-input]");
+    const slider = root.querySelector<HTMLElement>("[data-referral-slider]");
+    const amount = root.querySelector<HTMLElement>("[data-referral-amount]");
+    const project = root.querySelector<HTMLElement>("[data-referral-project]");
+    const bubble = root.querySelector<HTMLElement>("[data-referral-bubble]");
+    if (!input || !slider || !amount || !project || !bubble) continue;
+
+    const share = Number(root.dataset.share);
+    const min = Number(input.min);
+    const max = Number(input.max);
+
+    const update = () => {
+      const value = Math.min(max, Math.max(min, Number(input.value)));
+      /* The top of the scale stands for anything bigger. */
+      const top = value >= max;
+      const plus = top ? "+" : "";
+      slider.style.setProperty("--p", String((value - min) / (max - min)));
+      amount.textContent = `${money.format(value * share)}${plus}`;
+      project.textContent = `${money.format(value)}${plus}`;
+      bubble.textContent = `$${Math.round(value / 1000)}k${plus}`;
+      input.setAttribute(
+        "aria-valuetext",
+        top ? `${money.format(max)} or more` : money.format(value),
+      );
+    };
+
+    input.addEventListener("input", update);
+    update();
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .referral {
+      position: relative;
+      isolation: isolate;
+      padding-block: var(--section-space-large, 8rem);
+      overflow: clip;
+      background-color: var(--dark-950);
+    }
+
+    /* A light low in the middle, under the figure. No ribs here: the ticks
+       already lean at the slant, and a texture at the same angle would
+       swallow them. */
+    .referral_glow {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background-image: radial-gradient(
+        45% 55% at 50% 58%,
+        rgb(42 109 218 / 0.35),
+        transparent 70%
+      );
+    }
+
+    .referral_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(3rem, 2rem + 3vw, 4.5rem);
+    }
+
+    .referral_calc {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(2.5rem, 2rem + 2vw, 3.75rem);
+    }
+
+    /* ---- the figure ----------------------------------------------------- */
+    .referral_result {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.9rem;
+      text-align: center;
+    }
+
+    .referral_earn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .referral_earn_label {
+      color: var(--text-muted);
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .referral_amount {
+      background-image: linear-gradient(
+        to bottom,
+        var(--light-100) 30%,
+        var(--brand-300)
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: clamp(4rem, 2.4rem + 6.5vw, 8.5rem);
+      font-weight: 500;
+      line-height: 1;
+      letter-spacing: -0.06em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .referral_note {
+      margin: 0;
+      color: var(--text-muted);
+
+      & strong {
+        color: var(--text);
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+    }
+
+    /* ---- the slider ----------------------------------------------------- */
+    .referral_slider {
+      width: 100%;
+      padding-top: 3rem;
+    }
+
+    .referral_track {
+      position: relative;
+      height: 2.6rem;
+      /* A container, so `cqw` below is the track's width. */
+      container-type: inline-size;
+    }
+
+    .referral_ticks {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* Each tick leans from its foot, and is lit while it is at or below the
+       chosen size: the sum turns a whole step past the value into zero. */
+    .referral_tick {
+      position: absolute;
+      bottom: 0;
+      left: calc(var(--i) / var(--ticks) * 100%);
+      width: 2px;
+      height: 55%;
+      margin-left: -1px;
+      background-color: var(--brand-300);
+      transform: skewX(calc(var(--slant) * -1));
+      transform-origin: bottom;
+      opacity: clamp(
+        0.2,
+        calc((var(--p) - var(--i) / var(--ticks)) * 1000 + 1),
+        1
+      );
+
+      &.is-major {
+        height: 100%;
+      }
+    }
+
+    /* The handle is the mark: two strokes, standing on the chosen size. */
+    .referral_handle {
+      position: absolute;
+      bottom: -0.35rem;
+      left: 0;
+      display: flex;
+      gap: 0.22rem;
+      height: calc(100% + 0.7rem);
+      translate: calc(var(--p) * 100cqw - 45%) 0;
+      pointer-events: none;
+
+      & > i {
+        display: block;
+        width: 0.32rem;
+        background-color: var(--light-100);
+        border-radius: 1px;
+        transform: skewX(calc(var(--slant) * -1));
+      }
+
+      & > i:first-child {
+        background-color: var(--brand-500);
+      }
+    }
+
+    .referral_slider:has(.referral_input:focus-visible) .referral_handle {
+      outline: 2px solid var(--brand-300);
+      outline-offset: 0.4rem;
+      border-radius: 0.2rem;
+    }
+
+    .referral_bubble {
+      position: absolute;
+      bottom: calc(100% + 1rem);
+      left: 0;
+      translate: calc(clamp(2rem, var(--p) * 100cqw, 100cqw - 2rem) - 50%) 0;
+      padding: 0.35rem 0.6rem;
+      background-color: var(--light-100);
+      border-radius: 0.4rem;
+      color: var(--ink-900);
+      font-family: var(--mono-family);
+      font-size: 0.8125rem;
+      font-weight: 600;
+      line-height: 1;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* The real control, laid over the drawing. Wider than the track by one
+       thumb, so the thumb's centre lands exactly on the value's tick. */
+    .referral_input {
+      --_thumb: 1.5rem;
+      position: absolute;
+      top: -3rem;
+      left: calc(var(--_thumb) / -2);
+      width: calc(100% + var(--_thumb));
+      height: calc(100% + 3.5rem);
+      margin: 0;
+      opacity: 0;
+      cursor: pointer;
+      appearance: none;
+      background: transparent;
+
+      &::-webkit-slider-runnable-track {
+        height: 100%;
+      }
+
+      &::-webkit-slider-thumb {
+        appearance: none;
+        width: var(--_thumb);
+        height: 6rem;
+      }
+
+      &::-moz-range-thumb {
+        width: var(--_thumb);
+        height: 6rem;
+        border: 0;
+      }
+    }
+
+    .referral_marks {
+      position: relative;
+      height: 3.25rem;
+      margin-top: 0.9rem;
+    }
+
+    .referral_mark {
+      position: absolute;
+      top: 0;
+      left: calc(var(--at) * 100%);
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      padding-left: 0.65rem;
+      border-left: 1px solid var(--border);
+
+      &.is-end {
+        left: auto;
+        right: 0;
+        align-items: end;
+        padding-left: 0;
+        padding-right: 0;
+        border-left: 0;
+      }
+    }
+
+    .referral_mark_name {
+      font-size: 0.875rem;
+      font-weight: 500;
+      line-height: 1.15;
+    }
+
+    .referral_mark_price {
+      color: var(--text-muted);
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+    }
+
+    /* ---- the ask -------------------------------------------------------- */
+    .referral_cta {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+      text-align: center;
+    }
+
+    .referral_fine {
+      max-width: 34rem;
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+    }
+
+    .referral_todo {
+      max-width: 34rem;
+      color: var(--text-muted);
+      text-align: left;
+    }
+
+    /* ---- narrower ------------------------------------------------------- */
+    @media (width < 48rem) {
+      .referral_mark_name {
+        max-width: 6.5rem;
+        font-size: 0.75rem;
+      }
+    }
+  }
+</style>

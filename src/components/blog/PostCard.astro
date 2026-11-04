@@ -1,0 +1,223 @@
+---
+/**
+ * One post in a grid: the cover, the topic and reading time, the title, and
+ * the byline. The whole card is the link — the title carries it, stretched
+ * over the card, so a screen reader hears the title once and the card still
+ * takes a click anywhere.
+ *
+ * Colours come from the section's theme, so the card works on the cream
+ * index and on the navy "Continue reading" band alike.
+ */
+import Img from "@/components/Img.astro";
+import PostByline from "@/components/blog/PostByline.astro";
+import { postUrl, readingMinutes, topicSlug } from "@/components/blog/posts.ts";
+import type { Post } from "@/utils/content.ts";
+
+interface Props {
+  post: Post;
+}
+
+const { post } = Astro.props;
+const { title, cover, category, date, author } = post.data;
+const minutes = readingMinutes(post);
+---
+
+<article class="post-card" data-topic={topicSlug(category)}>
+  <div class="post-card_media">
+    <Img
+      src={cover}
+      alt=""
+      class="post-card_cover"
+      variant="constrained"
+      sizes="(width >= 90rem) 27rem, (width >= 62rem) 30vw, (width >= 40rem) 46vw, 92vw"
+    />
+  </div>
+  <div class="post-card_body">
+    <p class="post-card_meta">
+      <span class="post-card_topic">{category}</span>
+      <span class="post-card_time">{minutes} min read</span>
+    </p>
+    <h3 class="post-card_title">
+      <a class="post-card_link" href={postUrl(post)}>{title}</a>
+    </h3>
+    <PostByline
+      author={author}
+      date={date}
+      minutes={minutes}
+      showMinutes={false}
+      class="post-card_byline"
+    />
+  </div>
+</article>
+
+<style is:global>
+  @layer components {
+    .post-card {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      height: 100%;
+    }
+
+    .post-card_media {
+      position: relative;
+      aspect-ratio: 16 / 10;
+      overflow: clip;
+      border-radius: var(--radius-large);
+      background-color: var(--dark-900);
+      box-shadow: 0 1.25rem 2.5rem -2rem rgb(13 25 40 / 0.45);
+
+      /* The two strokes cross the cover once, under the pointer — the button
+         sweep, at the size of a picture. Parked well left of it: skewed this
+         tall, the strokes' tops lean several rem to the right of their feet.
+         Like the button's, they leave by fading where they are and only then
+         go home, so they never run back across the picture. */
+      &::after {
+        content: "";
+        position: absolute;
+        inset: -10% auto -10% 0;
+        width: 2.5rem;
+        background-image: linear-gradient(
+          90deg,
+          rgb(255 255 255 / 0.18) 0 45%,
+          transparent 45% 62%,
+          rgb(255 255 255 / 0.1) 62%
+        );
+        opacity: 0;
+        transform: translateX(-16rem) skewX(calc(var(--slant) * -1));
+        transition:
+          opacity 0.25s var(--ease-soft),
+          transform 0s linear 0.25s;
+        pointer-events: none;
+      }
+    }
+
+    /* Laid over the box rather than in it: a cover taller than 16:10 would
+       otherwise push the box to its own height and break the row. */
+    .post-card_cover {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: scale 0.9s var(--ease-out);
+    }
+
+    .post-card_body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      flex: 1;
+    }
+
+    .post-card_meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin: 0;
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+
+      /* The trim boxes are for text, not for a row of labels. */
+      &::before,
+      &::after {
+        display: none;
+      }
+    }
+
+    .post-card_topic {
+      color: var(--brand-500);
+
+      .theme-dark & {
+        color: var(--brand-300);
+      }
+    }
+
+    .post-card_title {
+      margin: 0;
+      font-size: clamp(1.2rem, 1.1rem + 0.35vw, 1.4rem);
+      font-weight: 500;
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+      text-wrap: balance;
+      transition: opacity 0.3s var(--ease-soft);
+    }
+
+    .post-card_link {
+      color: inherit;
+      text-decoration: none;
+
+      /* Stretched over the whole card, so all of it takes the click. */
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+      }
+
+      &:focus-visible {
+        outline: none;
+      }
+    }
+
+    .post-card:has(.post-card_link:focus-visible) {
+      outline: var(--focus-width) solid var(--text);
+      outline-offset: 0.5rem;
+      border-radius: var(--radius-large);
+    }
+
+    .post-card_byline {
+      margin-top: auto;
+      padding-top: 0.25rem;
+    }
+
+    /* The same answer to the pointer and to the keyboard. */
+    .post-card:has(.post-card_link:focus-visible) .post-card_cover {
+      scale: 1.04;
+    }
+
+    .post-card:has(.post-card_link:focus-visible) .post-card_media::after {
+      opacity: 1;
+      transform: translateX(40rem) skewX(calc(var(--slant) * -1));
+      transition:
+        opacity 0s,
+        transform 0.9s var(--ease-move);
+    }
+
+    @media (hover: hover) {
+      .post-card:hover .post-card_cover {
+        scale: 1.04;
+      }
+
+      /* Further than any card is wide, so the strokes leave by the far edge. */
+      .post-card:hover .post-card_media::after {
+        opacity: 1;
+        transform: translateX(40rem) skewX(calc(var(--slant) * -1));
+        transition:
+          opacity 0s,
+          transform 0.9s var(--ease-move);
+      }
+
+      .post-card:hover .post-card_title {
+        opacity: 0.72;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .post-card_media::after {
+        display: none;
+      }
+
+      .post-card:hover .post-card_cover,
+      .post-card:has(.post-card_link:focus-visible) .post-card_cover {
+        scale: none;
+      }
+    }
+  }
+</style>

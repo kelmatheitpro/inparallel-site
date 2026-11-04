@@ -1,6 +1,6 @@
 <svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="1440" height="914" viewBox="0 0 1440 914" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="bloom" clip-path="url(#hero-bloom-clip)">
-<g id="Rectangle 1" filter="url(#hero-bloom-blur)">
+<g clip-path="url(#hero-bloom-clip)">
+<g filter="url(#hero-bloom-blur)">
 <path d="M1095 0H1440L1332.5 828.5H599L1095 0Z" fill="url(#hero-bloom-fill)"/>
 </g>
 </g>

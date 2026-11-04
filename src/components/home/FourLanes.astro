@@ -1,0 +1,491 @@
+---
+/**
+ * "Four ways we move your website forward" — the services as four lanes.
+ *
+ * The lanes are the mark's stroke four times over: tall parallelograms
+ * leaning at the logo's angle, side by side, each in its service's colour.
+ * They are the tabs. The one chosen fills with its colour and the reeded
+ * texture; the others wait in a pale wash of theirs. What the chosen lane
+ * covers opens underneath.
+ *
+ * A tablist with roving focus: arrow keys move between lanes, Home and End
+ * jump to the ends, and only the chosen lane is in the tab order.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import { SERVICES_P } from "@/data/offer.ts";
+---
+
+<section
+  id="services"
+  class="lanes theme-light"
+  aria-labelledby="services-title"
+>
+  <div class="lanes_inner">
+    <SectionHead
+      index="03"
+      label="Services"
+      align="center"
+      headingId="services-title"
+    >
+      Four ways we move <br class="lanes_break" />your website forward
+    </SectionHead>
+
+    <div class="lanes_stage" data-lanes>
+      <div
+        class="lanes_track"
+        role="tablist"
+        aria-label="Services"
+        data-anim-group
+        data-stagger="0.09"
+      >
+        {
+          SERVICES_P.map((service, index) => (
+            <button
+              type="button"
+              class="lane"
+              role="tab"
+              data-anim="rise"
+              id={`lane-tab-${service.slug}`}
+              aria-controls={`lane-panel-${service.slug}`}
+              aria-selected={index === 0 ? "true" : "false"}
+              tabindex={index === 0 ? 0 : -1}
+              style={`--lane-dark: ${service.theme.dark}; --lane-accent: ${service.theme.accent}; --lane-soft: ${service.theme.soft}; --i: ${index};`}
+            >
+              <span class="lane_shape ribs" aria-hidden="true" />
+              <span class="lane_index" aria-hidden="true">
+                {String(index + 1).padStart(2, "0")}
+              </span>
+              <span class="lane_name">{service.name}</span>
+            </button>
+          ))
+        }
+      </div>
+
+      <div class="lanes_panels">
+        {
+          SERVICES_P.map((service, index) => (
+            <div
+              class="lane-panel"
+              role="tabpanel"
+              id={`lane-panel-${service.slug}`}
+              aria-labelledby={`lane-tab-${service.slug}`}
+              hidden={index !== 0}
+              style={`--lane-accent: ${service.theme.accent}; --lane-dark: ${service.theme.dark};`}
+            >
+              <div class="lane-panel_lead">
+                <h3 class="lane-panel_title">
+                  {service.headline[0]}
+                  <br />
+                  {service.headline[1]}
+                </h3>
+                <p class="lane-panel_text">{service.text}</p>
+                <a
+                  class="btn btn-ghost lane-panel_link"
+                  href={`/services/${service.slug}`}
+                >
+                  Explore {service.name}
+                </a>
+              </div>
+              <div class="lane-panel_facts">
+                <ul class="lane-panel_list" role="list">
+                  {service.includes.map((item) => (
+                    <li>
+                      <span class="lane-panel_tick" aria-hidden="true" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <dl class="lane-panel_stats">
+                  {service.stats.map((stat) => (
+                    <div class="lane-panel_stat">
+                      <dt>{stat.label}</dt>
+                      <dd>{stat.value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  for (const stage of document.querySelectorAll<HTMLElement>("[data-lanes]")) {
+    const tabs = [...stage.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const track = tabs[0]?.parentElement;
+    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const select = (tab: HTMLButtonElement, focus = false) => {
+      for (const other of tabs) {
+        const on = other === tab;
+        other.setAttribute("aria-selected", String(on));
+        other.tabIndex = on ? 0 : -1;
+        const panel = document.getElementById(
+          other.getAttribute("aria-controls") ?? "",
+        );
+        if (panel) panel.hidden = !on;
+      }
+      if (focus) tab.focus();
+      /* On a phone the lanes scroll sideways; bring the chosen one in. */
+      if (track && track.scrollWidth > track.clientWidth)
+        tab.scrollIntoView({
+          block: "nearest",
+          inline: "start",
+          behavior: still ? "auto" : "smooth",
+        });
+    };
+    tabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => select(tab));
+      tab.addEventListener("keydown", (event) => {
+        const last = tabs.length - 1;
+        const to =
+          event.key === "ArrowRight" || event.key === "ArrowDown"
+            ? index === last
+              ? 0
+              : index + 1
+            : event.key === "ArrowLeft" || event.key === "ArrowUp"
+              ? index === 0
+                ? last
+                : index - 1
+              : event.key === "Home"
+                ? 0
+                : event.key === "End"
+                  ? last
+                  : -1;
+        if (to < 0) return;
+        event.preventDefault();
+        select(tabs[to]!, true);
+      });
+    });
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .lanes {
+      padding-block: var(--section-space-large, 8rem);
+      background-color: var(--light-200);
+    }
+
+    .lanes_inner {
+      /* The site's container: the Lumos width, the site margin either side. */
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(3rem, 2rem + 3vw, 4.5rem);
+    }
+
+    /* ---- the four lanes ------------------------------------------------- */
+    .lanes_track {
+      --_h: clamp(11rem, 6rem + 14vw, 22rem);
+      /* How far each lane's top runs ahead of its foot. */
+      --_lean: calc(var(--_h) * var(--slant-tan));
+      --_gap: clamp(0.5rem, 0.3rem + 0.6vw, 1rem);
+      display: flex;
+      height: var(--_h);
+    }
+
+    .lane {
+      position: relative;
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 1.25rem 1.5rem 1.4rem;
+      border: 0;
+      background: none;
+      color: var(--ink-900);
+      text-align: left;
+      font: inherit;
+      cursor: pointer;
+      clip-path: polygon(
+        var(--_lean) 0,
+        100% 0,
+        calc(100% - var(--_lean)) 100%,
+        0 100%
+      );
+      /* Lifted with `translate`, which the entrance's transform never touches,
+         so the two can't take turns. */
+      transition:
+        translate 0.6s var(--ease-out),
+        color 0.4s var(--ease-soft);
+
+      /* A clipped shape can't carry an outline, so focus shows on what's
+         inside it: the name underlined, the stroke a shade deeper. */
+      &:focus-visible {
+        outline: none;
+
+        & .lane_name {
+          text-decoration: underline;
+          text-decoration-thickness: 2px;
+          text-underline-offset: 0.2em;
+        }
+
+        & .lane_shape {
+          filter: brightness(0.9) saturate(1.3);
+        }
+      }
+
+      @media (hover: hover) {
+        &:hover {
+          translate: 0 -0.4rem;
+        }
+      }
+    }
+
+    /* Neighbours overlap by the lean, less the gap, so the strokes stand an
+       even distance apart all the way up. (A grid can't take a negative gap.) */
+    .lane + .lane {
+      margin-left: calc(var(--_gap) - var(--_lean));
+    }
+
+    .lane_shape {
+      --_ink: color-mix(in srgb, var(--lane-dark) 10%, transparent);
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background-color: color-mix(
+        in srgb,
+        var(--lane-accent) 16%,
+        var(--light-100)
+      );
+
+      /* The chosen lane's fill is on every lane, faded out: a gradient can't
+         be tweened, a layer's opacity can. */
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-color: var(--lane-dark);
+        background-image:
+          repeating-linear-gradient(
+            calc(90deg + var(--slant)),
+            transparent 0 calc(1.75rem - 1px),
+            rgb(255 255 255 / 0.07) calc(1.75rem - 1px) 1.75rem
+          ),
+          radial-gradient(
+            120% 80% at 70% 0%,
+            color-mix(in srgb, var(--lane-accent) 70%, transparent),
+            transparent 70%
+          ),
+          linear-gradient(
+            200deg,
+            color-mix(in srgb, var(--lane-accent) 35%, var(--lane-dark)),
+            var(--lane-dark) 70%
+          );
+        opacity: 0;
+        transition: opacity 0.6s var(--ease-out);
+      }
+    }
+
+    .lane_index {
+      align-self: end;
+      margin-right: calc(var(--_lean) * 0.1);
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      opacity: 0.6;
+    }
+
+    /* The lane's left edge leans in as it rises, so the name — two lines
+       high at the foot — steps in by the share of the lean it climbs. */
+    .lane_name {
+      margin-left: calc(var(--_lean) * 0.22);
+      max-width: 12ch;
+      font-size: clamp(1.05rem, 0.75rem + 1vw, 1.75rem);
+      font-weight: 500;
+      line-height: 1.05;
+      letter-spacing: -0.03em;
+    }
+
+    /* The chosen lane: its colour, the reeded light, and lifted. */
+    .lane[aria-selected="true"] {
+      color: var(--light-100);
+      translate: 0 -0.75rem;
+
+      & .lane_shape::before {
+        opacity: 1;
+      }
+
+      & .lane_index {
+        opacity: 0.85;
+      }
+    }
+
+    /* ---- the chosen lane's details ------------------------------------- */
+    /* All four panels share one cell, so the tallest sets the height and
+       changing lanes never moves what's below. The ones not chosen keep
+       their room but are hidden from sight, focus and screen readers. */
+    .lanes_panels {
+      display: grid;
+      margin-top: clamp(2.5rem, 1.5rem + 2.5vw, 4rem);
+    }
+
+    .lanes_panels > .lane-panel[hidden] {
+      display: grid !important;
+      visibility: hidden;
+      animation: none;
+    }
+
+    .lane-panel {
+      grid-area: 1 / 1;
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+      gap: clamp(2rem, 1rem + 4vw, 6rem);
+      animation: lane-panel-in 0.7s var(--ease-out) both;
+    }
+
+    @keyframes lane-panel-in {
+      from {
+        opacity: 0;
+        translate: 0 1rem;
+      }
+    }
+
+    .lane-panel_lead {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: 1.25rem;
+    }
+
+    .lane-panel_title {
+      margin: 0;
+      font-size: clamp(1.75rem, 1.3rem + 1.6vw, 2.75rem);
+      font-weight: 500;
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+    }
+
+    .lane-panel_text {
+      max-width: 34rem;
+      margin: 0;
+      color: var(--text-muted);
+      font-size: 1.0625rem;
+      line-height: 1.55;
+    }
+
+    .lane-panel_link {
+      margin-top: 0.5rem;
+    }
+
+    .lane-panel_facts {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .lane-panel_list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      border-top: var(--border-width) solid var(--border-soft);
+
+      & li {
+        display: flex;
+        align-items: center;
+        gap: 0.875rem;
+        padding-block: 1rem;
+        border-bottom: var(--border-width) solid var(--border-soft);
+        font-size: 1rem;
+      }
+    }
+
+    /* The list's bullet is the mark's stroke, in the lane's colour. */
+    .lane-panel_tick {
+      flex: none;
+      /* Both strokes lean past the box: this keeps the pair on the rule's
+         start, and clear of the words. */
+      margin-inline: 0.28rem 0.35rem;
+      width: 0.3rem;
+      height: 0.9rem;
+      background-color: var(--lane-dark);
+      transform: skewX(calc(var(--slant) * -1));
+      box-shadow: 0.45rem 0 0
+        color-mix(in srgb, var(--lane-accent) 80%, var(--lane-dark));
+    }
+
+    .lane-panel_stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 2.5rem;
+      margin: 0;
+    }
+
+    .lane-panel_stat {
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 0.4rem;
+
+      & dd {
+        margin: 0;
+        font-size: clamp(1.75rem, 1.4rem + 1.2vw, 2.5rem);
+        font-weight: 500;
+        letter-spacing: -0.035em;
+        line-height: 1;
+      }
+
+      & dt {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+      }
+    }
+
+    /* ---- narrower ------------------------------------------------------- */
+    /* Four lanes still side by side, but narrow: the longest word has to fit
+       the stroke's width at the name's height. */
+    @media (width >= 48rem) and (width < 62rem) {
+      .lane_name {
+        margin-left: calc(var(--_lean) * 0.18);
+        font-size: 1.05rem;
+      }
+    }
+
+    /* The narrowest phones can't hold the second line whole; rather than leave
+       "forward" alone on a third, the heading balances itself. */
+    @media (width < 23.5rem) {
+      .lanes_break {
+        display: none;
+      }
+    }
+
+    @media (width < 48rem) {
+      .lanes_track {
+        --_h: 9.5rem;
+        overflow-x: auto;
+        overflow-y: visible;
+        padding: 1rem var(--site-margin) 0.5rem;
+        margin-inline: calc(var(--site-margin) * -1);
+        height: auto;
+        scroll-snap-type: x mandatory;
+        scroll-padding-inline: var(--site-margin);
+        scrollbar-width: none;
+      }
+      .lane {
+        flex: 0 0 16rem;
+        height: var(--_h);
+        scroll-snap-align: start;
+      }
+      .lane-panel {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .lane,
+      .lane_shape::before,
+      .lane-panel {
+        transition: none;
+        animation: none;
+      }
+
+      .lane[aria-selected="false"]:hover {
+        translate: none;
+      }
+    }
+  }
+</style>

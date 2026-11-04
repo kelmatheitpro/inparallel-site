@@ -1,0 +1,122 @@
+---
+/**
+ * The mid-page ask: "Have a project in mind?" on a band of reeded glass.
+ *
+ * Full width, navy, with the hero's ribs laid flat across it and a light
+ * behind them on the right — the same material, at rest. Copy left, the one
+ * button right; the proof under the heading is the studio's own, from
+ * `SOCIAL_PROOF`.
+ */
+import { SOCIAL_PROOF } from "@/consts.ts";
+
+interface Props {
+  title?: [string, string];
+  href?: string;
+  button?: string;
+}
+
+const {
+  title = ["Have a project in mind?", "Let's talk it through."],
+  href = "/contact",
+  button = "Book an intro call",
+} = Astro.props;
+---
+
+<section class="cta-band theme-dark" aria-label="Book an intro call">
+  <div class="cta-band_glass ribs" aria-hidden="true"></div>
+  <div class="cta-band_inner">
+    <div class="cta-band_copy">
+      <h2 class="cta-band_title heading" data-anim="slash">
+        {title[0]}
+        <br />
+        {title[1]}
+      </h2>
+      <p class="cta-band_meta">
+        <span class="slash-mark" aria-hidden="true"><i></i><i></i></span>
+        {`${SOCIAL_PROOF.score} ${SOCIAL_PROOF.source} · free 30-minute intro`}
+      </p>
+    </div>
+    <a class="btn" href={href}>
+      {button}
+    </a>
+  </div>
+</section>
+
+<style is:global>
+  @layer components {
+    .cta-band {
+      position: relative;
+      isolation: isolate;
+      overflow: clip;
+      padding-block: clamp(3.5rem, 2.5rem + 3vw, 5.5rem);
+      background-color: var(--dark-950);
+    }
+
+    .cta-band_glass {
+      --_rib: 2.25rem;
+      --_ink: rgb(255 255 255 / 0.06);
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+
+      /* The light behind the ribs, low on the right where the button is. */
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background-image:
+          radial-gradient(
+            40% 90% at 82% 70%,
+            rgb(42 109 218 / 0.45),
+            transparent 70%
+          ),
+          radial-gradient(
+            30% 60% at 12% 0%,
+            rgb(139 183 255 / 0.14),
+            transparent 70%
+          );
+      }
+    }
+
+    .cta-band_inner {
+      /* The site's container: the Lumos width, the site margin either side. */
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-6);
+    }
+
+    .cta-band_copy {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .cta-band_title {
+      margin: 0;
+      padding-top: 0;
+      font-size: clamp(2rem, 1.4rem + 2vw, 3.25rem);
+      font-weight: 500;
+      line-height: 1.04;
+      letter-spacing: -0.035em;
+    }
+
+    .cta-band_meta {
+      margin: 0;
+      color: rgb(255 255 255 / 0.6);
+      font-size: 0.875rem;
+
+      & .slash-mark {
+        height: 0.8rem;
+        margin-right: 0.35rem;
+        vertical-align: -0.08rem;
+        --_w: 0.14rem;
+        --_gap: 0.12rem;
+      }
+    }
+  }
+</style>

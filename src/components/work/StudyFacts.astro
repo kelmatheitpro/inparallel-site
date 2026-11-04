@@ -1,0 +1,130 @@
+---
+/**
+ * The study's particulars, under its hero: who, what kind of business, what
+ * we did, how long it took and when. A fact the study doesn't state isn't
+ * drawn — a blank is better than a guess.
+ */
+import type { Project } from "@/utils/content.ts";
+
+interface Props {
+  project: Project;
+}
+
+const { data } = Astro.props.project;
+
+const facts = [
+  { term: "Client", value: data.client },
+  { term: "Industry", value: data.industry },
+  data.timeline && { term: "Timeline", value: data.timeline },
+  data.year && { term: "Year", value: String(data.year) },
+].filter((fact): fact is { term: string; value: string } => Boolean(fact));
+
+/* On a wide screen the facts run four to a row and the services take what is
+   left of it — unless that's a single column, which is too narrow for a list,
+   and they get a row of their own. */
+const left = 4 - (facts.length % 4);
+const span = left >= 2 ? left : 4;
+---
+
+<div class="study-facts">
+  <div class="rule-pair" data-anim="rule"><i></i><i></i></div>
+  <dl class="study-facts_list">
+    {
+      facts.map((fact) => (
+        <div class="study-facts_item">
+          <dt class="label">
+            <span class="label_slash" aria-hidden="true">
+              //
+            </span>
+            <span class="label_text">{fact.term}</span>
+          </dt>
+          <dd>{fact.value}</dd>
+        </div>
+      ))
+    }
+    {
+      data.services.length > 0 && (
+        <div class="study-facts_item is-services" style={`--_span: ${span};`}>
+          <dt class="label">
+            <span class="label_slash" aria-hidden="true">
+              //
+            </span>
+            <span class="label_text">Services</span>
+          </dt>
+          <dd>
+            <ul class="study-facts_services" role="list">
+              {data.services.map((service) => (
+                <li>{service}</li>
+              ))}
+            </ul>
+          </dd>
+        </div>
+      )
+    }
+  </dl>
+</div>
+
+<style is:global>
+  @layer components {
+    .study-facts {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin: clamp(3rem, 2rem + 3vw, 5rem) auto 0;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(1.5rem, 1rem + 1.5vw, 2.25rem);
+    }
+
+    .study-facts_list {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1.75rem 2rem;
+      margin: 0;
+
+      @media (width >= 62rem) {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+    }
+
+    .study-facts_item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      min-width: 0;
+
+      & dd {
+        margin: 0;
+        color: var(--light-100);
+        font-size: 1rem;
+        font-weight: 500;
+        line-height: 1.4;
+      }
+
+      &.is-services {
+        grid-column: 1 / -1;
+
+        @media (width >= 62rem) {
+          grid-column: span var(--_span);
+        }
+      }
+    }
+
+    .study-facts_services {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+
+      & li {
+        padding: 0.35rem 0.75rem;
+        border: var(--border-width) solid rgb(255 255 255 / 0.14);
+        border-radius: 2rem;
+        background-color: rgb(255 255 255 / 0.04);
+        font-size: 0.875rem;
+        font-weight: 400;
+        white-space: nowrap;
+      }
+    }
+  }
+</style>

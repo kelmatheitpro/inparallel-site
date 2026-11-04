@@ -1,0 +1,250 @@
+---
+/**
+ * The site itself, as it shipped: a browser and a phone side by side, then
+ * more of it in rows.
+ *
+ * The browser holds the first screen, the sharpest capture there is of the
+ * largest picture on the page; walking down the home page is the hero's job.
+ * The rows take the other pages and the collages. Every picture keeps its own
+ * shape and is shown whole: each row shares its width out by the pictures'
+ * proportions, so a row's pictures come out the same height with nothing
+ * cropped to make them fit.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import Img from "@/components/Img.astro";
+import BrowserFrame from "@/components/work/BrowserFrame.astro";
+import type { Project } from "@/utils/content.ts";
+
+interface Props {
+  project: Project;
+}
+
+const { data } = Astro.props.project;
+const { media, client } = data;
+
+const screen = media.desktop ?? media.card;
+
+/* The pages come first and whole; the slider opened from the hero has them
+   too, but a reader who never opens it should still see the site go past its
+   home page. The home page itself is in the browser just above. */
+const shots = media.pages.length
+  ? media.pages.slice(1).map(({ image, name }) => ({
+      image,
+      alt: `The ${name} page of the ${client} website`,
+    }))
+  : media.thumbs.map((image) => ({
+      image,
+      alt: `A page of the ${client} website`,
+    }));
+const collages = media.gallery.map((image) => ({
+  image,
+  alt: `Screens of the ${client} website, laid out at an angle`,
+}));
+const tiles = [...shots, ...collages];
+
+/* Two to a row while there are enough to keep it that way: the largest they
+   can be shown whole. Three close a row of five, and fill a row of their own
+   when three is all there is. */
+const paired = tiles.length % 2 ? tiles.length - 3 : tiles.length;
+const rows = [
+  ...tiles
+    .slice(0, Math.max(0, paired))
+    .flatMap((_, at, list) => (at % 2 ? [] : [list.slice(at, at + 2)])),
+  tiles.slice(Math.max(0, paired)),
+].filter((row) => row.length);
+---
+
+{
+  (screen || tiles.length > 0) && (
+    <section
+      id="the-site"
+      class="study-gallery theme-dark"
+      aria-labelledby="gallery-title"
+    >
+      <div class="study-gallery_inner">
+        <SectionHead
+          label="The site"
+          headingId="gallery-title"
+          lead="The home page on a laptop and on a phone, then the pages behind it."
+        >
+          {client}, as <span class="serif">shipped</span>
+        </SectionHead>
+
+        {screen && (
+          <div
+            class:list={["study-gallery_devices", media.mobile && "has-phone"]}
+          >
+            <BrowserFrame
+              image={screen}
+              alt={`The ${client} home page`}
+              url={data.liveUrl}
+              ratio="16 / 10"
+              sizes="(width >= 62rem) min(72vw, 66rem), 92vw"
+              class="study-gallery_browser"
+            />
+            {media.mobile && (
+              <div class="study-gallery_phone">
+                <Img
+                  src={media.mobile}
+                  alt={`The ${client} website on a phone`}
+                  class="study-gallery_phone_img"
+                  variant="constrained"
+                  sizes="(width >= 62rem) 17.5rem, min(62vw, 16rem)"
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {rows.length > 0 && (
+          <ul class="study-gallery_tiles" role="list">
+            {rows.map((row) => (
+              <li>
+                <ul
+                  class:list={[
+                    "study-gallery_row",
+                    row.length === 3 && "is-three",
+                  ]}
+                  role="list"
+                >
+                  {row.map(({ image, alt }) => (
+                    <li
+                      class="study-gallery_tile"
+                      style={`--_ratio: ${(image.width / image.height).toFixed(4)};`}
+                      data-anim="image"
+                    >
+                      <Img
+                        src={image}
+                        alt={alt}
+                        class="study-gallery_img"
+                        variant="constrained"
+                        sizes={
+                          row.length === 3
+                            ? "(width >= 62rem) min(31vw, 28rem), (width >= 48rem) 46vw, 92vw"
+                            : row.length === 2
+                              ? "(width >= 48rem) min(46vw, 42rem), 92vw"
+                              : "(width >= 90rem) 84rem, 92vw"
+                        }
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .study-gallery {
+      padding-block: var(--section-space-large);
+      background-color: var(--dark-900);
+    }
+
+    .study-gallery_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(2rem, 1.25rem + 2vw, 3rem);
+    }
+
+    .study-gallery_inner > .section-head-p {
+      margin-bottom: clamp(0.5rem, 0rem + 1.5vw, 1.5rem);
+    }
+
+    /* ---- browser and phone ---------------------------------------------- */
+    .study-gallery_devices {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      align-items: end;
+      gap: clamp(1.25rem, 0.75rem + 1.5vw, 2rem);
+
+      &.has-phone {
+        @media (width >= 62rem) {
+          grid-template-columns: minmax(0, 1fr) minmax(0, 17.5rem);
+        }
+      }
+    }
+
+    .study-gallery_phone {
+      justify-self: center;
+      width: min(100%, 17.5rem);
+      padding: 0.45rem;
+      background-color: #05080f;
+      border: var(--border-width) solid rgb(255 255 255 / 0.14);
+      border-radius: 2.25rem;
+      box-shadow: 0 2rem 4rem -1.5rem rgb(0 0 0 / 0.6);
+
+      @media (width < 62rem) {
+        width: min(62%, 16rem);
+      }
+    }
+
+    .study-gallery_phone_img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-radius: 1.85rem;
+    }
+
+    /* ---- the rows ------------------------------------------------------- */
+    .study-gallery_tiles,
+    .study-gallery_row {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .study-gallery_tiles {
+      --_gap: clamp(1rem, 0.5rem + 1.25vw, 1.5rem);
+      display: flex;
+      flex-direction: column;
+      gap: var(--_gap);
+    }
+
+    .study-gallery_row {
+      display: flex;
+      flex-direction: column;
+      gap: var(--_gap);
+
+      @media (width >= 48rem) {
+        flex-direction: row;
+      }
+    }
+
+    /* A row of three on a tablet would be three thumbnails: the third takes a
+       row of its own under the other two. */
+    @media (width >= 48rem) and (width < 62rem) {
+      .study-gallery_row.is-three {
+        flex-wrap: wrap;
+
+        & > .study-gallery_tile:last-child {
+          flex-basis: 100%;
+        }
+      }
+    }
+
+    /* A tile's share of the row is its own width for its height, which is what
+       brings every tile in the row to one height. */
+    .study-gallery_tile {
+      flex: var(--_ratio) 1 0;
+      min-width: 0;
+      aspect-ratio: var(--_ratio);
+      overflow: clip;
+      border-radius: 0.9rem;
+      background-color: var(--dark-800);
+    }
+
+    .study-gallery_img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  }
+</style>

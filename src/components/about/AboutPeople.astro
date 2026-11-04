@@ -1,0 +1,281 @@
+---
+/**
+ * "The two of us." — two co-founders, as the mark's two strokes.
+ *
+ * Neither of us has a lane: both of us plan, design, build and ship every
+ * project. So the two are drawn the same way — the same stroke, the same
+ * title, the same line — and differ only in name, the way the logo's strokes
+ * differ only in where they stand. Each of us in front of our stroke, the
+ * words under the picture rather than over it.
+ *
+ * A hover only ever scales the cut-out and fades a layer in, both of which the
+ * compositor does alone: no filter, no blend mode, nothing repainted.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import ArrowCircle from "@/components/inparallel/ArrowCircle.astro";
+import Img from "@/components/Img.astro";
+import { PEOPLE, CO_FOUNDER } from "@/data/about.ts";
+---
+
+<section
+  id="people"
+  class="about-people theme-dark"
+  aria-labelledby="about-people-title"
+>
+  <div class="about-people_inner">
+    <SectionHead
+      index="02"
+      label="The studio"
+      headingId="about-people-title"
+      lead="Two co-founders and no split of roles. We both work on all of it — strategy, design, the Webflow build, launch and growth — so whoever you talk to knows your project end to end."
+    >
+      The two of <span class="serif">us</span>.
+    </SectionHead>
+
+    <ul class="about-people_list" role="list">
+      {
+        PEOPLE.map((person) => (
+          <li class="about-person">
+            <div class="about-person_frame">
+              <span class="about-person_stroke" aria-hidden="true">
+                <span class="about-person_ribs" />
+                <span class="about-person_lit" />
+              </span>
+              <Img
+                src={person.photo}
+                alt={`${person.name}, arms folded`}
+                class="about-person_photo"
+                variant="constrained"
+                sizes="(width >= 48rem) 30vw, 80vw"
+                transparent
+              />
+            </div>
+
+            <div class="about-person_body">
+              <p class="label about-person_role">
+                <span class="label_slash" aria-hidden="true">
+                  //
+                </span>
+                <span class="label_text">{CO_FOUNDER.role}</span>
+              </p>
+              <h3 class="about-person_name">{person.name}</h3>
+              <p class="about-person_line">{CO_FOUNDER.line}</p>
+              {person.linkedin && (
+                <a
+                  class="about-person_link"
+                  href={person.linkedin}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  {person.name.split(" ")[0]} on LinkedIn
+                  <span class="sr-only">(opens in a new tab)</span>
+                  <ArrowCircle bare diagonal />
+                </a>
+              )}
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style is:global>
+  @layer components {
+    .about-people {
+      padding-block: var(--section-space-large);
+      background-color: var(--dark-900);
+      overflow: clip;
+    }
+
+    .about-people_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(3rem, 2rem + 3vw, 4.5rem);
+    }
+
+    .about-people_list {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: clamp(3rem, 2rem + 3vw, 4rem) var(--space-7);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+
+      @media (width >= 48rem) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    .about-person {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+    }
+
+    /* ---- the stroke and the cut-out ------------------------------------- */
+    .about-person_frame {
+      --_h: clamp(20rem, 14rem + 14vw, 28rem);
+      --_lean: calc(var(--_h) * var(--slant-tan));
+      --_t: 46%;
+      position: relative;
+      height: var(--_h);
+      border-bottom: var(--border-width) solid rgb(255 255 255 / 0.12);
+    }
+
+    /* One stroke of the mark, centred on the frame at mid-height and as
+       tall as it, so the lean is the logo's at every width. */
+    .about-person_stroke {
+      position: absolute;
+      top: 8%;
+      bottom: 0;
+      left: calc(50% - var(--_lean) * 0.46 - var(--_t) / 2);
+      width: calc(var(--_t) + var(--_lean) * 0.92);
+      clip-path: polygon(
+        calc(var(--_lean) * 0.92) 0,
+        100% 0,
+        calc(100% - var(--_lean) * 0.92) 100%,
+        0 100%
+      );
+      background-image:
+        radial-gradient(
+          60% 50% at 60% 30%,
+          rgb(255 255 255 / 0.2),
+          transparent 70%
+        ),
+        linear-gradient(180deg, var(--_top), var(--_bottom));
+      /* The same stroke for both of us. */
+      --_top: #3b82f0;
+      --_bottom: #123a85;
+
+      /* The shade behind the cut-out, lifting it off the stroke. */
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(
+          34% 62% at 50% 62%,
+          rgb(6 10 19 / 0.42),
+          transparent 72%
+        );
+      }
+    }
+
+    .about-person_ribs {
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        calc(90deg + var(--slant)),
+        transparent 0 calc(1.9rem - 1px),
+        rgb(255 255 255 / 0.07) calc(1.9rem - 1px) 1.9rem
+      );
+    }
+
+    /* The stroke lighting up under the pointer: a layer faded in. */
+    .about-person_lit {
+      position: absolute;
+      inset: 0;
+      background-color: rgb(255 255 255 / 0.08);
+      opacity: 0;
+      transition: opacity 0.6s var(--ease-out);
+    }
+
+    .about-person_photo {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      z-index: 1;
+      width: auto;
+      max-width: none;
+      height: 100%;
+      translate: -50% 0;
+      object-fit: contain;
+      object-position: bottom;
+      transform-origin: 50% 100%;
+      transition: scale 0.9s var(--ease-out);
+    }
+
+    @media (hover: hover) and (prefers-reduced-motion: no-preference) {
+      .about-person:hover .about-person_photo {
+        scale: 1.03;
+      }
+      .about-person:hover .about-person_lit {
+        opacity: 1;
+      }
+    }
+
+    /* ---- the words ------------------------------------------------------ */
+    .about-person_body {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: 0.85rem;
+      max-width: 34rem;
+    }
+
+    .about-person_role {
+      margin: 0;
+    }
+
+    .about-person_name {
+      margin: 0;
+      font-size: clamp(1.75rem, 1.35rem + 1.2vw, 2.5rem);
+      font-weight: 500;
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+    }
+
+    .about-person_line {
+      margin: 0;
+      color: var(--text-muted);
+      font-size: clamp(1.05rem, 1rem + 0.25vw, 1.2rem);
+      line-height: 1.45;
+    }
+
+    /* A quiet underline, and a brighter one drawn across it on hover from
+       the left: one transform, nothing repainted. */
+    .about-person_link {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 0.4rem;
+      padding-bottom: 0.2rem;
+      border-bottom: var(--border-width) solid rgb(255 255 255 / 0.25);
+      color: var(--light-100);
+      font-weight: 500;
+      text-decoration: none;
+
+      &::after {
+        content: "";
+        position: absolute;
+        inset: auto 0 calc(var(--border-width) * -1);
+        height: var(--border-width);
+        background-color: var(--brand-300);
+        transform: scaleX(0);
+        transform-origin: 0 50%;
+        transition: transform var(--duration-slow) var(--ease-out);
+      }
+
+      @media (hover: hover) {
+        &:hover::after {
+          transform: scaleX(1);
+        }
+      }
+
+      &:focus-visible::after {
+        transform: scaleX(1);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .about-person_photo,
+      .about-person_lit,
+      .about-person_link::after {
+        transition: none;
+      }
+    }
+  }
+</style>

@@ -1,31 +1,29 @@
 ---
 import Layout from "@/layouts/BaseLayout.astro";
-import Hero from "@/components/sections/Hero.astro";
+import HeroParallel from "@/components/home/HeroParallel.astro";
+import WorkTracks from "@/components/home/WorkTracks.astro";
 import Trusted from "@/components/sections/Trusted.astro";
 import CaseStudies from "@/components/sections/CaseStudies.astro";
-import VideoTestimonials from "@/components/sections/VideoTestimonials.astro";
-import Services from "@/components/sections/Services.astro";
-import WaysWeDiffer from "@/components/sections/WaysWeDiffer.astro";
-import MidCta from "@/components/sections/MidCta.astro";
-import Studio from "@/components/sections/Studio.astro";
-import Reviews from "@/components/sections/Reviews.astro";
+import ProofBand from "@/components/sections/ProofBand.astro";
+import FourLanes from "@/components/home/FourLanes.astro";
+import RelayParallel from "@/components/home/RelayParallel.astro";
+import CtaBand from "@/components/parallel/CtaBand.astro";
+import WorkInMotion from "@/components/home/WorkInMotion.astro";
+import TwoStrokes from "@/components/home/TwoStrokes.astro";
 import Lightbox from "@/components/inparallel/Lightbox.astro";
 ---
 
-<Layout
-  theme="light"
-  overlap
-  title="Webflow studio for teams that treat the web as a growth channel"
->
-  <Hero />
+<Layout theme="dark" overlap title="Your Webflow team, in parallel with yours">
+  <HeroParallel booking="/contact" />
+  <WorkTracks />
   <Trusted />
   <CaseStudies />
-  <VideoTestimonials />
-  <Services />
-  <WaysWeDiffer />
-  <MidCta />
-  <Studio />
-  <Reviews />
+  <ProofBand />
+  <FourLanes />
+  <RelayParallel />
+  <CtaBand />
+  <WorkInMotion />
+  <TwoStrokes />
   {/* One dialog serves every play button above it. */}
   <Lightbox />
 </Layout>

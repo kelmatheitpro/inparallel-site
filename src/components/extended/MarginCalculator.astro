@@ -1,0 +1,354 @@
+---
+/**
+ * "What's left for you" — the margin sum on the Upwork page, done in front of
+ * the reader.
+ *
+ * `src/scripts/margin-calculator.ts` does the arithmetic through the
+ * `data-margin` hooks; the prices and hours sit on the options themselves,
+ * put there from `src/data/upwork.ts`. The card is two halves: what he tells
+ * it on the left, what it tells him on the right, with what stays with him
+ * set largest and read out as it changes. A field's hover and focus are rings
+ * laid over it and faded in, so nothing is repainted to show them.
+ */
+import Todo from "@/components/pricing/Todo.astro";
+import { DETAILS, JOB_TYPES } from "@/data/upwork.ts";
+
+/* The currency's own sign, from the same locale the script formats in. */
+const sign =
+  new Intl.NumberFormat(DETAILS.locale, {
+    style: "currency",
+    currency: DETAILS.currency,
+  })
+    .formatToParts(0)
+    .find((part) => part.type === "currency")?.value ?? DETAILS.currency;
+
+const unpriced = JOB_TYPES.some((job) => !job.price);
+---
+
+<div class="margin-calc">
+  <div
+    class="margin-calc_card"
+    data-margin
+    data-currency={DETAILS.currency}
+    data-locale={DETAILS.locale}
+  >
+    <div class="margin-calc_inputs">
+      <div class="margin-field">
+        <label class="margin-field_label" for="margin-job">The job</label>
+        <div class="margin-field_select">
+          <select class="margin-field_control" id="margin-job" data-margin-job>
+            {
+              JOB_TYPES.map((job) => (
+                <option
+                  value={job.id}
+                  data-price={job.price}
+                  data-hours={job.hours}
+                >
+                  {job.name}
+                </option>
+              ))
+            }
+          </select>
+          <span class="margin-field_ring" aria-hidden="true"></span>
+        </div>
+      </div>
+
+      <div class="margin-field">
+        <label class="margin-field_label" for="margin-charge">
+          What you charge the client
+        </label>
+        <div class="margin-field_money">
+          <span class="margin-field_sign" aria-hidden="true">{sign}</span>
+          <input
+            class="margin-field_control"
+            id="margin-charge"
+            type="number"
+            min="0"
+            step="100"
+            inputmode="numeric"
+            placeholder="0"
+            data-margin-charge
+          />
+          <span class="margin-field_ring" aria-hidden="true"></span>
+        </div>
+      </div>
+    </div>
+
+    <dl class="margin-calc_out">
+      <div class="margin-stat is-main" aria-live="polite" aria-atomic="true">
+        <dt>stays with you</dt>
+        <dd data-margin-keep>—</dd>
+      </div>
+      <div class="margin-stat">
+        <dt>of what you invoice</dt>
+        <dd data-margin-share>—</dd>
+      </div>
+      <div class="margin-stat">
+        <dt>back on your calendar</dt>
+        <dd data-margin-hours>—</dd>
+      </div>
+      <div class="margin-stat">
+        <dt>our price for it</dt>
+        <dd data-margin-ours>—</dd>
+      </div>
+    </dl>
+  </div>
+
+  {
+    unpriced && (
+      <Todo>
+        our price for each job (JOB_TYPES in src/data/upwork.ts) — until they
+        are set, the sum shows dashes.
+      </Todo>
+    )
+  }
+</div>
+
+<style is:global>
+  @layer components {
+    .margin-calc {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: 1rem;
+    }
+
+    .margin-calc_card {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      overflow: clip;
+      background-color: var(--dark-850);
+      border: var(--border-width) solid rgb(255 255 255 / 0.08);
+      border-radius: 1.25rem;
+
+      @media (width >= 62rem) {
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      }
+    }
+
+    /* ---- what he tells it ----------------------------------------------- */
+    .margin-calc_inputs {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 1.5rem;
+      padding: clamp(1.5rem, 1.1rem + 1.5vw, 2.5rem);
+    }
+
+    .margin-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .margin-field_label {
+      color: var(--text-muted);
+      font-family: var(--mono-family);
+      font-size: 0.6875rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .margin-field_control {
+      width: 100%;
+      min-height: 3.5rem;
+      padding: 0.85rem 1rem;
+      background-color: rgb(0 0 0 / 0.25);
+      border: var(--border-width) solid var(--border);
+      border-radius: 0.75rem;
+      color: var(--text);
+      font-size: 1.125rem;
+
+      &:focus-visible {
+        outline: none;
+      }
+    }
+
+    /* Under the pointer a lighter ring fades in, and in the field a brand one
+       with its glow, both laid over the control. */
+    .margin-field_select,
+    .margin-field_money {
+      position: relative;
+
+      &::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border: var(--border-width) solid
+          color-mix(in srgb, var(--text) 40%, transparent);
+        border-radius: 0.75rem;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity var(--duration-main);
+      }
+
+      @media (hover: hover) {
+        &:hover::before {
+          opacity: 1;
+        }
+      }
+    }
+
+    .margin-field_ring {
+      position: absolute;
+      inset: 0;
+      border: var(--border-width) solid var(--brand-300);
+      border-radius: 0.75rem;
+      box-shadow: 0 0 0 3px
+        color-mix(in srgb, var(--brand-300) 25%, transparent);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration-main);
+
+      .margin-field_control:focus-visible + & {
+        opacity: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .margin-field_select::before,
+      .margin-field_money::before,
+      .margin-field_ring {
+        transition: none;
+      }
+    }
+
+    .margin-field_select {
+      & select {
+        appearance: none;
+        padding-right: 2.75rem;
+        cursor: pointer;
+      }
+
+      & option {
+        background-color: var(--dark-900);
+        color: var(--light-100);
+      }
+
+      &::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: 1.15rem;
+        width: 0.45rem;
+        height: 0.45rem;
+        border-right: 1.5px solid currentcolor;
+        border-bottom: 1.5px solid currentcolor;
+        rotate: 45deg;
+        translate: 0 -70%;
+        pointer-events: none;
+      }
+    }
+
+    /* The currency sign sits inside the field, before the figure. */
+    .margin-field_money .margin-field_control {
+      padding-left: 2.25rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .margin-field_sign {
+      position: absolute;
+      top: 50%;
+      left: 1rem;
+      translate: 0 -50%;
+      color: var(--text-muted);
+      font-size: 1.125rem;
+      pointer-events: none;
+    }
+
+    /* ---- what it tells him ---------------------------------------------- */
+    .margin-calc_out {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      margin: 0;
+      background-image:
+        repeating-linear-gradient(
+          calc(90deg + var(--slant)),
+          transparent 0 calc(1.75rem - 1px),
+          rgb(255 255 255 / 0.035) calc(1.75rem - 1px) 1.75rem
+        ),
+        radial-gradient(
+          70% 80% at 80% 0%,
+          rgb(42 109 218 / 0.3),
+          transparent 70%
+        );
+      border-top: var(--border-width) solid rgb(255 255 255 / 0.08);
+
+      @media (width >= 62rem) {
+        border-top: 0;
+        border-left: var(--border-width) solid rgb(255 255 255 / 0.08);
+      }
+    }
+
+    /* Value over its label on screen; term before value in the reading. */
+    .margin-stat {
+      display: flex;
+      flex-direction: column-reverse;
+      justify-content: end;
+      gap: 0.5rem;
+      padding: clamp(1rem, 0.8rem + 1vw, 1.9rem);
+      border-top: var(--border-width) solid rgb(255 255 255 / 0.08);
+
+      /* The three under the main figure stand side by side. */
+      &:nth-child(n + 3) {
+        border-left: var(--border-width) solid rgb(255 255 255 / 0.08);
+      }
+
+      & dt {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+        line-height: 1.35;
+      }
+
+      & dd {
+        margin: 0;
+        font-size: clamp(1.5rem, 1.25rem + 0.8vw, 2rem);
+        font-weight: 500;
+        letter-spacing: -0.03em;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+    }
+
+    /* What stays with him: the whole first row, and lit. */
+    .margin-stat.is-main {
+      grid-column: 1 / -1;
+      border-top: 0;
+
+      & dd {
+        background-image: linear-gradient(
+          to bottom,
+          var(--light-100) 30%,
+          var(--brand-300)
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-size: clamp(2.75rem, 2rem + 2.5vw, 4.25rem);
+        letter-spacing: -0.05em;
+        line-height: 1;
+      }
+    }
+
+    /* A phone has no room for three figures abreast: under the main one,
+       each takes a row, its label beside it. */
+    @media (width < 36rem) {
+      .margin-calc_out {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .margin-stat:not(.is-main) {
+        flex-direction: row;
+        align-items: baseline;
+        justify-content: space-between;
+        padding-block: 1rem;
+        border-left: 0;
+
+        & dd {
+          font-size: 1.35rem;
+        }
+      }
+    }
+  }
+</style>

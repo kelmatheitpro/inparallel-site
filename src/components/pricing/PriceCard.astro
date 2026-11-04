@@ -1,0 +1,588 @@
+---
+/**
+ * The price card in the /pricing hero: the four services as tabs, and under
+ * them what the chosen one costs, covers and takes.
+ *
+ * The tabs are the home page's four lanes at hand size — parallelograms at
+ * the logo's angle, side by side, each in its service's colour. The chosen
+ * one fills with its colour and the reeded light; choosing one also fades in
+ * the hero's glass in that colour behind the card (the page renders one layer
+ * per service), so the whole opening takes the service's colour the way its
+ * own page does. Every change here is a layer's opacity, never a repaint.
+ *
+ * A tablist with roving focus: arrow keys move between services, Home and
+ * End jump to the ends, and only the chosen tab is in the tab order. The
+ * panels share one grid cell, so the card keeps the height of the tallest
+ * and nothing around it moves when the service changes.
+ */
+import Todo from "@/components/pricing/Todo.astro";
+import {
+  PRICE_TIERS,
+  TIMELINE_SCALE,
+  timelineLabel,
+  usd,
+} from "@/data/pricing.ts";
+
+const lane = ({ theme }: (typeof PRICE_TIERS)[number]["service"]) =>
+  `--lane-dark: ${theme.dark}; --lane-accent: ${theme.accent}; --lane-soft: ${theme.soft};`;
+---
+
+<div class="price-card" data-price-card>
+  <div class="price-card_tabs" role="tablist" aria-label="Services">
+    {
+      PRICE_TIERS.map(({ service }, index) => (
+        <button
+          type="button"
+          class="price-tab"
+          role="tab"
+          id={`price-tab-${service.slug}`}
+          aria-controls={`price-panel-${service.slug}`}
+          aria-selected={index === 0 ? "true" : "false"}
+          tabindex={index === 0 ? 0 : -1}
+          style={lane(service)}
+        >
+          <span class="price-tab_shape" aria-hidden="true" />
+          <span class="price-tab_ring" aria-hidden="true" />
+          <span class="price-tab_index" aria-hidden="true">
+            {String(index + 1).padStart(2, "0")}
+          </span>
+          <span class="price-tab_name">{service.name}</span>
+        </button>
+      ))
+    }
+  </div>
+
+  <div class="price-card_panels">
+    {
+      PRICE_TIERS.map((tier, index) => (
+        <div
+          class="price-panel"
+          role="tabpanel"
+          id={`price-panel-${tier.service.slug}`}
+          aria-labelledby={`price-tab-${tier.service.slug}`}
+          data-off={index === 0 ? undefined : ""}
+          style={lane(tier.service)}
+        >
+          <div class="price-panel_head">
+            <span class="price-panel_label">Investment from</span>
+            {tier.from === null ? (
+              <span class="price-panel_price is-todo">
+                <Todo>price</Todo>
+                {tier.monthly && <span class="price-panel_unit">/month</span>}
+              </span>
+            ) : (
+              <span class="price-panel_price">
+                <span class="price-panel_figure">{usd(tier.from)}</span>
+                {tier.monthly && <span class="price-panel_unit">/month</span>}
+              </span>
+            )}
+            <p class="price-panel_text">{tier.text}</p>
+          </div>
+
+          <ul class="price-panel_list" role="list">
+            {tier.includes.map((item) => (
+              <li>
+                <span class="price-panel_tick" aria-hidden="true" />
+                {item}
+              </li>
+            ))}
+          </ul>
+
+          <div class="price-panel_time">
+            <div class="price-panel_time_row">
+              <span class="price-panel_label">Timeline</span>
+              <span class="price-panel_time_value">
+                {timelineLabel(tier.timeline)}
+              </span>
+            </div>
+            {tier.timeline.kind === "weeks" ? (
+              <span
+                class="price-bar"
+                aria-hidden="true"
+                style={`--from: ${tier.timeline.from / TIMELINE_SCALE}; --to: ${tier.timeline.to / TIMELINE_SCALE};`}
+              >
+                <span class="price-bar_least" />
+                <span class="price-bar_most" />
+              </span>
+            ) : (
+              <span class="price-bar is-monthly" aria-hidden="true">
+                {Array.from({ length: 12 }, () => (
+                  <i />
+                ))}
+              </span>
+            )}
+          </div>
+
+          <a class="btn price-panel_cta" href="/contact">
+            Get a custom quote
+          </a>
+        </div>
+      ))
+    }
+  </div>
+</div>
+
+<script>
+  for (const card of document.querySelectorAll<HTMLElement>(
+    "[data-price-card]",
+  )) {
+    const tabs = [...card.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    /* One layer of the hero's glass per tab, in the same order. */
+    const glasses = [
+      ...(card
+        .closest(".page-hero")
+        ?.querySelectorAll<HTMLElement>(".page-hero_glass") ?? []),
+    ];
+    const calm = matchMedia("(prefers-reduced-motion: reduce)");
+    let lit = glasses[0];
+
+    /* The new glass lands on top of the old one and fades in over it, and only
+       then does the old one go: the light passes straight from one service's
+       colour to the next, without dipping to black between them. */
+    const light = (next: HTMLElement | undefined) => {
+      if (!next || !lit || next === lit) return;
+      const last = lit;
+      lit = next;
+      next.hidden = false;
+      next.parentElement?.append(next);
+      if (calm.matches) {
+        last.hidden = true;
+        return;
+      }
+      next
+        .animate(
+          { opacity: [0, 1] },
+          { duration: 900, easing: "cubic-bezier(0.22, 1, 0.36, 1)" },
+        )
+        .finished.then(() => {
+          if (last !== lit) last.hidden = true;
+        })
+        .catch(() => undefined);
+    };
+
+    const select = (tab: HTMLButtonElement, focus = false) => {
+      for (const other of tabs) {
+        const on = other === tab;
+        other.setAttribute("aria-selected", String(on));
+        other.tabIndex = on ? 0 : -1;
+        document
+          .getElementById(other.getAttribute("aria-controls") ?? "")
+          ?.toggleAttribute("data-off", !on);
+      }
+      light(glasses[tabs.indexOf(tab)]);
+      if (focus) tab.focus();
+    };
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => select(tab));
+      tab.addEventListener("keydown", (event) => {
+        const last = tabs.length - 1;
+        const to =
+          event.key === "ArrowRight" || event.key === "ArrowDown"
+            ? index === last
+              ? 0
+              : index + 1
+            : event.key === "ArrowLeft" || event.key === "ArrowUp"
+              ? index === 0
+                ? last
+                : index - 1
+              : event.key === "Home"
+                ? 0
+                : event.key === "End"
+                  ? last
+                  : -1;
+        if (to < 0) return;
+        event.preventDefault();
+        select(tabs[to]!, true);
+      });
+    });
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .price-card {
+      position: relative;
+      /* The tabs have to fit the card, and the card is at its narrowest on a
+         small laptop, not on a phone, so they go by its width (see below). */
+      container-type: inline-size;
+      padding: clamp(1rem, 0.6rem + 1.4vw, 1.75rem);
+      background-color: rgb(20 28 44 / 0.88);
+      border: var(--border-width) solid rgb(255 255 255 / 0.1);
+      border-radius: 1.25rem;
+      box-shadow: 0 2.5rem 5rem -2.5rem rgb(0 0 0 / 0.7);
+    }
+
+    /* ---- the four lanes ------------------------------------------------- */
+    .price-card_tabs {
+      --_h: 3.75rem;
+      /* How far a tab's top runs ahead of its foot. */
+      --_lean: calc(var(--_h) * var(--slant-tan));
+      --_gap: 0.35rem;
+      display: flex;
+      flex-wrap: wrap;
+      row-gap: 0.5rem;
+    }
+
+    .price-tab {
+      position: relative;
+      isolation: isolate;
+      flex: 1 1 0;
+      min-width: 0;
+      height: var(--_h);
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--light-100);
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      clip-path: polygon(
+        var(--_lean) 0,
+        100% 0,
+        calc(100% - var(--_lean)) 100%,
+        0 100%
+      );
+
+      &:focus-visible {
+        outline: none;
+      }
+    }
+
+    /* Neighbours overlap by the lean, less the gap, so the strokes stand an
+       even distance apart all the way up. */
+    .price-tab + .price-tab {
+      margin-left: calc(var(--_gap) - var(--_lean));
+    }
+
+    /* A lane at rest, with its two other states laid over it and faded in:
+       the brighter tint under the pointer, and the full colour once chosen. */
+    .price-tab_shape {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background-color: color-mix(
+        in srgb,
+        var(--lane-accent) 14%,
+        rgb(255 255 255 / 0.03)
+      );
+
+      &::before,
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 0.5s var(--ease-out);
+      }
+
+      &::before {
+        background-color: color-mix(
+          in srgb,
+          var(--lane-accent) 12%,
+          transparent
+        );
+      }
+
+      /* The chosen lane: its colour, the reeded light. */
+      &::after {
+        background-color: var(--lane-dark);
+        background-image:
+          repeating-linear-gradient(
+            calc(90deg + var(--slant)),
+            transparent 0 calc(1.1rem - 1px),
+            rgb(255 255 255 / 0.08) calc(1.1rem - 1px) 1.1rem
+          ),
+          radial-gradient(
+            120% 90% at 75% 0%,
+            color-mix(in srgb, var(--lane-accent) 65%, transparent),
+            transparent 70%
+          ),
+          linear-gradient(
+            200deg,
+            color-mix(in srgb, var(--lane-accent) 35%, var(--lane-dark)),
+            var(--lane-dark) 75%
+          );
+      }
+    }
+
+    @media (hover: hover) {
+      .price-tab:hover .price-tab_shape::before {
+        opacity: 1;
+      }
+    }
+
+    .price-tab[aria-selected="true"] .price-tab_shape::after {
+      opacity: 1;
+    }
+
+    /* The focus ring follows the tab's own outline: the parallelogram, with
+       a slightly smaller one cut out of it. */
+    .price-tab_ring {
+      position: absolute;
+      inset: 0;
+      background-color: var(--light-100);
+      clip-path: polygon(
+        evenodd,
+        var(--_lean) 0,
+        100% 0,
+        calc(100% - var(--_lean)) 100%,
+        0 100%,
+        var(--_lean) 0,
+        calc(var(--_lean) + 1.5px) 2.5px,
+        4.5px calc(100% - 2.5px),
+        calc(100% - var(--_lean) - 1.5px) calc(100% - 2.5px),
+        calc(100% - 4.5px) 2.5px,
+        calc(var(--_lean) + 1.5px) 2.5px
+      );
+      opacity: 0;
+    }
+
+    .price-tab:focus-visible .price-tab_ring {
+      opacity: 1;
+    }
+
+    .price-tab_index {
+      position: absolute;
+      top: 0.55rem;
+      right: 0.75rem;
+      color: var(--lane-accent);
+      font-family: var(--mono-family);
+      font-size: 0.625rem;
+      letter-spacing: 0.08em;
+    }
+
+    /* The left edge leans in as it rises, so the name steps in by the share
+       of the lean it climbs. On the right the edge leans the other way, and at
+       the name's foot it has all but the whole lean to run: anything closer
+       and a long name is sliced off by the tab's own outline. */
+    .price-tab_name {
+      position: absolute;
+      left: calc(var(--_lean) * 0.42 + 0.65rem);
+      right: calc(var(--_lean) * 0.9);
+      bottom: 0.55rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      opacity: 0.78;
+      transition: opacity 0.5s var(--ease-out);
+
+      [aria-selected="true"] > & {
+        opacity: 1;
+      }
+    }
+
+    /* ---- the chosen service -------------------------------------------- */
+    .price-card_panels {
+      display: grid;
+      margin-top: clamp(1.25rem, 0.9rem + 1vw, 1.75rem);
+    }
+
+    .price-panel {
+      grid-area: 1 / 1;
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: 1.4rem;
+      transition: opacity 0.45s var(--ease-out) 0.05s;
+
+      &[data-off] {
+        visibility: hidden;
+        opacity: 0;
+        transition: none;
+      }
+    }
+
+    .price-panel_head {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .price-panel_label {
+      color: rgb(255 255 255 / 0.6);
+      font-family: var(--mono-family);
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .price-panel_price {
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+      min-height: clamp(3rem, 2.2rem + 2.6vw, 4.25rem);
+
+      &.is-todo {
+        align-items: center;
+      }
+    }
+
+    /* The figure is lit like a heading on dark, but into the lane's tint. */
+    .price-panel_figure {
+      background-image: linear-gradient(
+        to bottom,
+        var(--light-100) 35%,
+        var(--lane-soft)
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: clamp(3rem, 2.2rem + 2.6vw, 4.25rem);
+      font-weight: 500;
+      line-height: 1;
+      letter-spacing: -0.05em;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .price-panel_unit {
+      color: rgb(255 255 255 / 0.6);
+      font-size: 1rem;
+    }
+
+    .price-panel_text {
+      max-width: 30rem;
+      margin: 0;
+      color: rgb(255 255 255 / 0.72);
+      font-size: 0.975rem;
+      line-height: 1.5;
+    }
+
+    .price-panel_list {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      column-gap: 1.5rem;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+
+      /* Two columns of three, read down the first column, then the second. */
+      @media (width >= 30rem) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: repeat(3, auto);
+        grid-auto-flow: column;
+      }
+
+      & li {
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        padding-block: 0.7rem;
+        border-bottom: var(--border-width) solid rgb(255 255 255 / 0.1);
+        font-size: 0.9375rem;
+      }
+    }
+
+    /* The bullet is the mark's two strokes, in the lane's colour. */
+    .price-panel_tick {
+      flex: none;
+      width: 0.26rem;
+      height: 0.85rem;
+      margin-right: 0.4rem;
+      background-color: var(--lane-accent);
+      transform: skewX(calc(var(--slant) * -1));
+      box-shadow: 0.42rem 0 0 color-mix(in srgb, var(--lane-soft) 70%, white);
+    }
+
+    .price-panel_time {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .price-panel_time_row {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .price-panel_time_value {
+      font-size: 0.9375rem;
+      font-weight: 500;
+    }
+
+    /* Weeks as a bar: solid to the shortest a project takes, reeded to the
+       longest — a parallelogram, like every bar on the site. */
+    .price-bar {
+      position: relative;
+      display: block;
+      height: 0.55rem;
+      background-color: rgb(255 255 255 / 0.08);
+      transform: skewX(calc(var(--slant) * -1));
+    }
+
+    .price-bar_least,
+    .price-bar_most {
+      position: absolute;
+      inset-block: 0;
+      left: 0;
+    }
+
+    .price-bar_least {
+      width: calc(var(--from) * 100%);
+      background-color: var(--lane-accent);
+    }
+
+    .price-bar_most {
+      left: calc(var(--from) * 100%);
+      width: calc((var(--to) - var(--from)) * 100%);
+      background-image: repeating-linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--lane-accent) 75%, transparent) 0 2px,
+        transparent 2px 5px
+      );
+    }
+
+    /* Month to month: twelve strokes, one a month, fading out rather than
+       stopping — there is no end date to draw. */
+    .price-bar.is-monthly {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      gap: 0.3rem;
+      background: none;
+      mask-image: linear-gradient(90deg, #000 55%, transparent);
+
+      & i {
+        display: block;
+        background-color: var(--lane-accent);
+      }
+    }
+
+    .price-panel_cta {
+      margin-top: 0.25rem;
+    }
+
+    /* ---- narrower ------------------------------------------------------- */
+    /* Below this, four to a row leaves a tab narrower than "Development",
+       which its slanted edge would slice off. */
+    @container (width < 33rem) {
+      .price-card_tabs {
+        --_h: 3.5rem;
+      }
+
+      /* Two lanes to a row: each takes half, plus the share of the overlap
+         its neighbour borrows. */
+      .price-tab {
+        flex: 0 0 calc((100% - var(--_gap) + var(--_lean)) / 2);
+      }
+
+      .price-tab:nth-child(odd) {
+        margin-left: 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .price-panel,
+      .price-tab_name,
+      .price-tab_shape::before,
+      .price-tab_shape::after {
+        transition: none;
+      }
+    }
+  }
+</style>

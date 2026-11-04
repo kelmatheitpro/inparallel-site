@@ -1,0 +1,119 @@
+---
+/**
+ * The numbers a study is remembered by, before the story of how they came
+ * about. Each figure climbs to its value as it arrives; the parallel rules
+ * between them are the mark's strokes standing upright.
+ */
+import type { Project } from "@/utils/content.ts";
+
+interface Props {
+  project: Project;
+}
+
+const { data } = Astro.props.project;
+const results = data.results.length
+  ? data.results
+  : [{ value: data.stat, label: data.statLabel }];
+---
+
+<div class="study-results">
+  <h2 class="label study-results_title" data-anim="label">
+    <span class="label_slash" aria-hidden="true">//</span>
+    <span class="label_text">Results</span>
+  </h2>
+  <ul class="study-results_list" role="list" data-anim-group>
+    {
+      results.map((result) => (
+        <li class="study-results_item" data-anim="rise">
+          <span
+            class:list={[
+              "study-results_value",
+              result.value.length > 8 && "is-words",
+            ]}
+            data-anim="count"
+          >
+            {result.value}
+          </span>
+          <span class="study-results_label">{result.label}</span>
+        </li>
+      ))
+    }
+  </ul>
+</div>
+
+<style is:global>
+  @layer components {
+    .study-results {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.75rem;
+
+      @media (width >= 62rem) {
+        grid-template-columns: minmax(12rem, 1fr) minmax(0, 3fr);
+        align-items: start;
+      }
+    }
+
+    .study-results_title {
+      margin: 0;
+      padding-top: 0.6rem;
+    }
+
+    .study-results_list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(13rem, 100%), 1fr));
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    /* Each figure stands after a pair of upright hairlines — the rule,
+       turned on its end. */
+    .study-results_item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      padding: 0.25rem 1.5rem 0.5rem 1.75rem;
+      background-image:
+        linear-gradient(var(--border), var(--border)),
+        linear-gradient(var(--border-soft), var(--border-soft));
+      background-size:
+        1px 100%,
+        1px 100%;
+      background-position:
+        0 0,
+        0.3rem 0;
+      background-repeat: no-repeat;
+    }
+
+    .study-results_value {
+      font-size: clamp(3rem, 2rem + 3.5vw, 5.25rem);
+      font-weight: 500;
+      line-height: 0.95;
+      letter-spacing: -0.055em;
+      white-space: nowrap;
+
+      /* A result in words ("From scratch") is set smaller, and may wrap. */
+      &.is-words {
+        font-size: clamp(2.25rem, 1.6rem + 2vw, 3.25rem);
+        line-height: 1;
+        letter-spacing: -0.04em;
+        white-space: normal;
+        text-wrap: balance;
+      }
+    }
+
+    .study-results_label {
+      max-width: 16rem;
+      color: var(--text-muted);
+      font-size: 0.9375rem;
+      line-height: 1.4;
+    }
+
+    @media (width < 48rem) {
+      .study-results_list {
+        row-gap: 2rem;
+      }
+    }
+  }
+</style>

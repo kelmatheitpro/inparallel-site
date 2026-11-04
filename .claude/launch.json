@@ -4,8 +4,41 @@
     {
       "name": "inparallel",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--", "--port", "4330"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "4330"
+      ],
       "port": 4330,
+      "autoPort": false
+    },
+    {
+      "name": "inparallel-4341",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "4341"
+      ],
+      "port": 4341,
+      "autoPort": false
+    },
+    {
+      "name": "inparallel-dist",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "astro",
+        "preview",
+        "--outDir",
+        "/private/tmp/claude-501/-Users-aleksandardumic-Desktop-new-strt-blue/1094e887-a8f9-4030-967d-4810c746d936/scratchpad/build-dist",
+        "--port",
+        "4342"
+      ],
+      "port": 4342,
       "autoPort": false
     }
   ]

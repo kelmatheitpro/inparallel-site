@@ -1,0 +1,126 @@
+---
+/**
+ * "What happens next" — the three steps after someone books or writes, along
+ * the foot of the /contact hero.
+ *
+ * A parallel rule runs under the hero the way it does on the home page, and
+ * the steps stand on it, each numbered on a short stroke of the mark.
+ */
+import { NEXT_STEPS } from "@/components/contact/copy.ts";
+---
+
+<div class="next-steps">
+  <div class="rule-pair" data-anim="rule"><i></i><i></i></div>
+  <div class="next-steps_row">
+    <h2 class="next-steps_title">
+      <span class="label">
+        <span class="label_slash" aria-hidden="true">//</span>
+        <span class="label_text">What happens next</span>
+      </span>
+    </h2>
+    <ol class="next-steps_list" role="list" data-anim-group>
+      {
+        NEXT_STEPS.map((step, index) => (
+          <li class="next-step" data-anim="rise">
+            <span class="next-step_index" aria-hidden="true">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <h3 class="next-step_title">{step.title}</h3>
+            <p class="next-step_text">{step.text}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</div>
+
+<style is:global>
+  @layer components {
+    .next-steps {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin: clamp(3.5rem, 2.5rem + 3vw, 5.5rem) auto 0;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(1.75rem, 1.4rem + 1vw, 2.5rem);
+    }
+
+    .next-steps_row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.75rem;
+
+      @media (width >= 62rem) {
+        grid-template-columns: 12rem minmax(0, 1fr);
+        gap: 2rem;
+      }
+    }
+
+    .next-steps_title {
+      margin: 0;
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .next-steps_list {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 1.75rem clamp(1.5rem, 1rem + 1.5vw, 2.5rem);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+
+      /* Three abreast or one above the other: never two and a stray. */
+      @media (width >= 48rem) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    /* Packed to the top: the steps share a row's height, and left to stretch
+       a shorter step would open a gap between its title and its text. */
+    .next-step {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-content: start;
+      align-items: baseline;
+      column-gap: 1rem;
+      row-gap: 0.45rem;
+    }
+
+    /* The number stands on a short stroke of the mark. */
+    .next-step_index {
+      grid-row: span 2;
+      position: relative;
+      padding-left: 0.85rem;
+      color: var(--brand-300);
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+
+      &::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: -0.1em;
+        width: 0.2rem;
+        height: 1.1em;
+        background-color: var(--brand-500);
+        transform: skewX(calc(var(--slant) * -1));
+      }
+    }
+
+    .next-step_title {
+      margin: 0;
+      font-size: 1.125rem;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+      line-height: 1.2;
+    }
+
+    .next-step_text {
+      margin: 0;
+      color: rgb(255 255 255 / 0.65);
+      font-size: 0.9375rem;
+      line-height: 1.5;
+    }
+  }
+</style>

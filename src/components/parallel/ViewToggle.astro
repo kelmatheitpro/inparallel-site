@@ -1,0 +1,267 @@
+---
+/**
+ * "View — Design / Build": the page, and the same page as it was built.
+ *
+ * Build view lays the construction over the design without moving a pixel of
+ * it: the column grid the layout sits on, every section outlined and named
+ * with its theme and its spacing, and each heading's type spec. Two views of
+ * one page, side by side in time — which is the name, again.
+ *
+ * The choice lasts for the visit (sessionStorage), so moving between pages
+ * keeps it. Everything it draws is decoration: `aria-hidden`, out of the
+ * pointer's way, gone the moment the view is switched back.
+ */
+---
+
+<div class="view-toggle" role="group" aria-label="Page view">
+  <span class="view-toggle_label">View</span>
+  <button
+    type="button"
+    class="view-toggle_btn"
+    data-view="design"
+    aria-pressed="true"
+  >
+    Design
+  </button>
+  <button
+    type="button"
+    class="view-toggle_btn"
+    data-view="build"
+    aria-pressed="false"
+  >
+    Build
+  </button>
+</div>
+
+<script>
+  const KEY = "inparallel:view";
+  const root = document.documentElement;
+  const buttons = [
+    ...document.querySelectorAll<HTMLButtonElement>("[data-view]"),
+  ];
+  let layer: HTMLDivElement | null = null;
+  let redraw = 0;
+
+  /** "64px / 65px · 500" — a heading's spec, read off the computed style. */
+  const spec = (el: Element) => {
+    const cs = getComputedStyle(el);
+    const size = Math.round(parseFloat(cs.fontSize));
+    const leading = Math.round(parseFloat(cs.lineHeight) || size * 1.2);
+    return `${el.tagName.toLowerCase()} · ${size}/${leading} · ${cs.fontWeight}`;
+  };
+
+  /** "section#work · theme-dark · 128 ↕ 64" */
+  const sectionName = (el: HTMLElement) => {
+    const cs = getComputedStyle(el);
+    const id = el.id ? `#${el.id}` : "";
+    const first = (
+      el.className.split(" ").find((c) => c && !c.startsWith("theme-")) ?? ""
+    ).split("_")[0];
+    const theme =
+      el.className.match(/theme-(dark|light|brand)/)?.[0] ?? "inherit";
+    const pad = `${Math.round(parseFloat(cs.paddingTop))} ↕ ${Math.round(parseFloat(cs.paddingBottom))}`;
+    return `<${el.tagName.toLowerCase()}${id}${first ? `.${first}` : ""}> · ${theme} · ${pad}`;
+  };
+
+  const draw = () => {
+    redraw = 0;
+    if (!layer) return;
+    layer.replaceChildren();
+    const page = document.querySelector("main");
+    if (!page) return;
+    const scrollY = window.scrollY;
+    const sections = [
+      ...page.querySelectorAll<HTMLElement>(
+        ":scope > section, :scope > div > section",
+      ),
+      ...document.querySelectorAll<HTMLElement>("footer"),
+    ];
+    for (const section of sections) {
+      const box = section.getBoundingClientRect();
+      if (box.height < 2) continue;
+      const frame = document.createElement("div");
+      frame.className = "build-frame";
+      frame.style.cssText = `top:${box.top + scrollY}px;left:${box.left}px;width:${box.width}px;height:${box.height}px`;
+      const tag = document.createElement("span");
+      tag.className = "build-tag";
+      tag.textContent = sectionName(section);
+      /* A section that starts under the fixed nav gets its tag below it. */
+      const navHeight =
+        document.querySelector("[data-nav]")?.getBoundingClientRect().height ??
+        0;
+      if (box.top + scrollY < navHeight)
+        tag.style.top = `${navHeight + 8 - (box.top + scrollY)}px`;
+      frame.append(tag);
+      layer.append(frame);
+    }
+    for (const heading of page.querySelectorAll<HTMLElement>("h1, h2")) {
+      const box = heading.getBoundingClientRect();
+      if (box.width < 2) continue;
+      const tag = document.createElement("span");
+      tag.className = "build-tag is-type";
+      tag.textContent = spec(heading);
+      tag.style.cssText = `top:${box.top + scrollY - 22}px;left:${box.left}px`;
+      layer.append(tag);
+    }
+  };
+
+  /* Only while it's showing: a hidden layer has nothing to keep up to date. */
+  const schedule = () => {
+    if (!root.classList.contains("view-build")) return;
+    if (!redraw) redraw = requestAnimationFrame(draw);
+  };
+
+  const set = (view: string) => {
+    const build = view === "build";
+    root.classList.toggle("view-build", build);
+    for (const button of buttons)
+      button.setAttribute("aria-pressed", String(button.dataset.view === view));
+    try {
+      sessionStorage.setItem(KEY, view);
+    } catch {
+      /* storage blocked: the view just won't carry to the next page */
+    }
+    if (build && !layer) {
+      layer = document.createElement("div");
+      layer.className = "build-layer";
+      layer.setAttribute("aria-hidden", "true");
+      document.body.append(layer);
+      window.addEventListener("resize", schedule);
+      new ResizeObserver(schedule).observe(document.body);
+    }
+    if (layer) layer.hidden = !build;
+    if (build) schedule();
+  };
+
+  for (const button of buttons)
+    button.addEventListener("click", () =>
+      set(button.dataset.view ?? "design"),
+    );
+
+  try {
+    if (sessionStorage.getItem(KEY) === "build") set("build");
+  } catch {
+    /* storage blocked */
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .view-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem;
+      border: var(--border-width) solid rgb(255 255 255 / 0.14);
+      border-radius: 0.6rem;
+      font-family: var(--mono-family);
+      font-size: 0.6875rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .view-toggle_label {
+      padding: 0 0.5rem;
+      color: rgb(255 255 255 / 0.45);
+    }
+
+    .view-toggle_btn {
+      padding: 0.35rem 0.65rem;
+      border: 0;
+      border-radius: 0.4rem;
+      background: none;
+      color: rgb(255 255 255 / 0.6);
+      font: inherit;
+      letter-spacing: inherit;
+      text-transform: inherit;
+      cursor: pointer;
+      transition:
+        background-color 0.3s,
+        color 0.3s;
+
+      @media (hover: hover) {
+        &:hover {
+          color: var(--light-100);
+        }
+      }
+
+      &[aria-pressed="true"] {
+        background-color: var(--light-100);
+        color: var(--ink-900);
+      }
+
+      &:focus-visible {
+        outline: var(--focus-width) solid var(--brand-300);
+        outline-offset: 2px;
+      }
+    }
+
+    /* ---- the build view -------------------------------------------------- */
+
+    /* The column grid the layout sits on: twelve columns inside the site's
+       container, gutters between, drawn over everything. */
+    html.view-build body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 150;
+      /* The site's container: the Lumos width, the site margin either side. */
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      pointer-events: none;
+      background-origin: content-box;
+      background-clip: content-box;
+      background-image: repeating-linear-gradient(
+        90deg,
+        rgb(42 109 218 / 0.07) 0 calc((100% - 11 * var(--site-gutter)) / 12),
+        transparent calc((100% - 11 * var(--site-gutter)) / 12)
+          calc((100% - 11 * var(--site-gutter)) / 12 + var(--site-gutter))
+      );
+    }
+
+    .build-layer {
+      position: absolute;
+      inset: 0 auto auto 0;
+      z-index: 151;
+      width: 100%;
+      pointer-events: none;
+    }
+
+    .build-frame {
+      position: absolute;
+      outline: 1px dashed rgb(139 183 255 / 0.85);
+      outline-offset: -1px;
+    }
+
+    .build-tag {
+      position: absolute;
+      top: 0.5rem;
+      left: 0.5rem;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.3rem;
+      background-color: var(--brand-500);
+      color: var(--light-100);
+      font-family: var(--mono-family);
+      font-size: 0.6875rem;
+      line-height: 1.2;
+      white-space: nowrap;
+
+      &.is-type {
+        top: auto;
+        left: auto;
+        background-color: var(--ink-900);
+        border: 1px solid var(--brand-300);
+      }
+    }
+
+    /* The page's own pictures and type, outlined where they sit. */
+    html.view-build main :is(img, video, canvas, picture) {
+      outline: 1px solid rgb(139 183 255 / 0.5);
+      outline-offset: -1px;
+    }
+
+    html.view-build main :is(h1, h2, h3, p, li) {
+      box-shadow: inset 0 0 0 1px rgb(255 122 199 / 0.28);
+    }
+  }
+</style>

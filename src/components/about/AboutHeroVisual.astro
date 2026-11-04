@@ -1,0 +1,137 @@
+---
+/**
+ * The about page's hero picture: the two of us, standing in front of the
+ * mark.
+ *
+ * Two strokes at the logo's lean, a gap apart — the first in the action blue,
+ * the second in its light tint, ribbed like the hero glass — and the cut-out
+ * of Darko and Aleksandar in front of them, heads clear of the top edge.
+ * On a wide screen the picture runs down into the hero's bottom padding, so
+ * the two of us stand on the section's edge instead of floating above it.
+ *
+ * Sized by its own height: the lean of each stroke is that height times the
+ * slant, so the angle stays the logo's at every width.
+ *
+ * Everything here is painted once: plain ribs instead of a blend mode, and a
+ * soft pool of shade behind the cut-out instead of a filter on it, so scrolling
+ * past it costs nothing.
+ */
+import Img from "@/components/Img.astro";
+import founders from "@/assets/inparallel/founders.webp";
+---
+
+<div class="about-visual">
+  <div class="about-visual_strokes" aria-hidden="true">
+    <span class="about-visual_stroke is-first"
+      ><span class="about-visual_ribs"></span></span
+    >
+    <span class="about-visual_stroke is-second"
+      ><span class="about-visual_ribs"></span></span
+    >
+  </div>
+  <Img
+    src={founders}
+    alt="Darko Milošević and Aleksandar Dumić side by side, arms folded"
+    class="about-visual_photo"
+    variant="constrained"
+    sizes="(width >= 62rem) 36vw, 80vw"
+    loading="eager"
+    fetchPriority="high"
+    transparent
+  />
+</div>
+
+<style is:global>
+  @layer components {
+    .about-visual {
+      --_h: clamp(24rem, 14rem + 26vw, 38rem);
+      /* The strokes start a little below the top, so the two heads clear
+         them; everything about their shape is measured off that height. */
+      --_sh: calc(var(--_h) * 0.9);
+      --_lean: calc(var(--_sh) * var(--slant-tan));
+      --_t: clamp(5.5rem, 3rem + 7vw, 10.5rem);
+      --_gap: clamp(0.6rem, 0.3rem + 0.8vw, 1.1rem);
+      position: relative;
+      height: var(--_h);
+      /* Down into the hero's bottom padding, so the cut-out meets the
+         section's edge. The figure is PageHero's own bottom padding. */
+      margin-bottom: calc(clamp(4rem, 2.5rem + 5vw, 7.5rem) * -1);
+    }
+
+    .about-visual_strokes {
+      position: absolute;
+      inset: auto 0 0;
+      height: var(--_sh);
+
+      /* The shade behind the two of us, lifting them off the strokes. */
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(
+          36% 58% at 50% 66%,
+          rgb(6 10 19 / 0.5),
+          transparent 72%
+        );
+      }
+    }
+
+    /* Each stroke is a box as wide as its band plus the lean, cut to a
+       parallelogram. The pair is centred on the picture at mid-height, which
+       is where the eye reads a leaning band's position. */
+    .about-visual_stroke {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: calc(var(--_t) + var(--_lean));
+      left: calc(50% - var(--_lean) / 2 - var(--_t) - var(--_gap) / 2);
+      clip-path: polygon(
+        var(--_lean) 0,
+        100% 0,
+        calc(100% - var(--_lean)) 100%,
+        0 100%
+      );
+      background-image:
+        radial-gradient(
+          60% 50% at 60% 30%,
+          rgb(255 255 255 / 0.2),
+          transparent 70%
+        ),
+        linear-gradient(180deg, var(--_top), var(--_bottom));
+
+      &.is-first {
+        --_top: #3b82f0;
+        --_bottom: #123a85;
+      }
+
+      &.is-second {
+        --_top: #a8c8ff;
+        --_bottom: #3d6fc4;
+        left: calc(50% - var(--_lean) / 2 + var(--_gap) / 2);
+      }
+    }
+
+    .about-visual_ribs {
+      position: absolute;
+      inset: 0;
+      background-image: repeating-linear-gradient(
+        calc(90deg + var(--slant)),
+        transparent 0 calc(1.9rem - 1px),
+        rgb(255 255 255 / 0.07) calc(1.9rem - 1px) 1.9rem
+      );
+    }
+
+    .about-visual_photo {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      z-index: 1;
+      width: auto;
+      max-width: none;
+      height: 100%;
+      translate: -50% 0;
+      object-fit: contain;
+      object-position: bottom;
+    }
+  }
+</style>

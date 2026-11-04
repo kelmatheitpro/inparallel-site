@@ -1,0 +1,324 @@
+---
+/**
+ * "Every site we shipped" — every client on one grid, written-up studies
+ * first, the ones still being written after them.
+ *
+ * The filters narrow the grid in place, without a reload. They need the
+ * script: without it there is nothing to filter with, so the row isn't shown
+ * and the grid simply lists everything. Its room is kept all the same, so the
+ * grid doesn't jump when the row arrives. A filter is offered only for a
+ * category that has a site in it.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import WorkCard from "@/components/work/WorkCard.astro";
+import { getProjects } from "@/utils/content.ts";
+import { WORK_INDEX, WORK_CATEGORIES, categoryKey } from "@/data/work.ts";
+
+const all = await getProjects({ includeSoon: true });
+const sites = [
+  ...all.filter(({ data }) => data.status === "live"),
+  ...all.filter(({ data }) => data.status === "soon"),
+];
+
+/* A study filed under a category the row doesn't offer would only ever show
+   under "All" — worth knowing about while the content is being written. */
+for (const { id, data } of sites) {
+  if (
+    data.category &&
+    !(WORK_CATEGORIES as readonly string[]).includes(data.category)
+  ) {
+    console.warn(
+      `[work] "${id}" is filed under "${data.category}", which isn't one of the filters in src/data/work.ts.`,
+    );
+  }
+}
+
+const filters = WORK_CATEGORIES.flatMap((category) => {
+  const count = sites.filter(({ data }) => data.category === category).length;
+  return count ? [{ label: category, key: categoryKey(category), count }] : [];
+});
+
+const { index, label, lead } = WORK_INDEX.grid;
+const two = (n: number) => String(n).padStart(2, "0");
+---
+
+<section
+  id="sites"
+  class="work-grid theme-dark"
+  aria-labelledby="sites-title"
+  data-work-grid
+>
+  <div class="work-grid_inner">
+    <SectionHead
+      index={index}
+      label={label}
+      lead={lead}
+      align="center"
+      headingId="sites-title"
+    >
+      Every site we shipped
+    </SectionHead>
+
+    <div
+      class="work-grid_filters"
+      role="group"
+      aria-label="Filter the sites by category"
+      data-filters
+    >
+      <button
+        type="button"
+        class="work-filter"
+        data-filter="all"
+        data-label="All"
+        aria-pressed="true"
+        aria-controls="sites-list"
+      >
+        <span class="work-filter_label">All</span>
+        <span class="work-filter_count" aria-hidden="true">
+          {two(sites.length)}
+        </span>
+      </button>
+      {
+        filters.map((filter) => (
+          <button
+            type="button"
+            class="work-filter"
+            data-filter={filter.key}
+            data-label={filter.label}
+            aria-pressed="false"
+            aria-controls="sites-list"
+          >
+            <span class="work-filter_label">{filter.label}</span>
+            <span class="work-filter_count" aria-hidden="true">
+              {two(filter.count)}
+            </span>
+          </button>
+        ))
+      }
+    </div>
+
+    <p class="sr-only" role="status" data-filter-status></p>
+
+    <ul id="sites-list" class="work-grid_list" role="list">
+      {
+        sites.map((project) => (
+          <li
+            class="work-grid_item"
+            data-category={
+              project.data.category ? categoryKey(project.data.category) : ""
+            }
+          >
+            <WorkCard project={project} />
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<script>
+  import { ScrollTrigger } from "@/scripts/motion.ts";
+
+  for (const root of document.querySelectorAll<HTMLElement>(
+    "[data-work-grid]",
+  )) {
+    const bar = root.querySelector<HTMLElement>("[data-filters]");
+    const buttons = [
+      ...root.querySelectorAll<HTMLButtonElement>("[data-filter]"),
+    ];
+    const items = [...root.querySelectorAll<HTMLElement>("[data-category]")];
+    const status = root.querySelector<HTMLElement>("[data-filter-status]");
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const apply = (key: string, label: string) => {
+      let shown = 0;
+      for (const item of items) {
+        const match = key === "all" || item.dataset.category === key;
+        const was = !item.hidden;
+        item.hidden = !match;
+        if (match) shown += 1;
+        /* Cards coming back in arrive the way the page's other things do —
+           up and in — unless the reader has asked for less motion. */
+        if (match && !was && !still.matches) {
+          item.classList.remove("is-entering");
+          void item.offsetWidth;
+          item.classList.add("is-entering");
+        }
+      }
+      for (const button of buttons)
+        button.setAttribute(
+          "aria-pressed",
+          String(button.dataset.filter === key),
+        );
+      if (status)
+        status.textContent =
+          key === "all"
+            ? `Showing all ${items.length} sites.`
+            : `Showing ${shown} of ${items.length} sites: ${label}.`;
+      /* The grid changed height; the reveals further down have to know. */
+      ScrollTrigger.refresh();
+    };
+
+    for (const button of buttons)
+      button.addEventListener("click", () =>
+        apply(button.dataset.filter ?? "all", button.dataset.label ?? ""),
+      );
+
+    bar?.classList.add("is-ready");
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .work-grid {
+      padding-block: var(--section-space-large) var(--section-space-large);
+      background-color: var(--dark-900);
+    }
+
+    .work-grid_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(2rem, 1.25rem + 2vw, 3rem);
+    }
+
+    /* ---- filters -------------------------------------------------------- */
+    .work-grid_filters {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 0.5rem 0.75rem;
+      visibility: hidden;
+
+      &.is-ready {
+        visibility: visible;
+      }
+    }
+
+    /* A tab is a parallelogram, the mark's stroke at the size of a word: the
+       shape leans, the label inside it stands up straight. Its outline and
+       its fill are two layers that fade, because hover may only ever touch
+       opacity; the ink changes colour on a click alone. */
+    .work-filter {
+      position: relative;
+      isolation: isolate;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      min-height: 2.75rem;
+      padding: 0 1.4rem;
+      border: 0;
+      background: none;
+      color: var(--text);
+      font: inherit;
+      font-size: 0.9375rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: color 0.35s var(--ease-out);
+
+      &::before,
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 0.35rem;
+        transform: skewX(calc(var(--slant) * -1));
+        transition: opacity 0.35s var(--ease-out);
+      }
+
+      &::before {
+        z-index: -2;
+        border: var(--border-width) solid var(--border);
+        background-color: rgb(255 255 255 / 0.02);
+        opacity: 0.6;
+      }
+
+      &::after {
+        z-index: -1;
+        background-color: var(--light-100);
+        opacity: 0;
+      }
+
+      @media (hover: hover) {
+        &:hover::before,
+        &:hover .work-filter_label {
+          opacity: 1;
+        }
+      }
+
+      &[aria-pressed="true"] {
+        color: var(--ink-900);
+
+        &::after,
+        & .work-filter_label {
+          opacity: 1;
+        }
+
+        & .work-filter_count {
+          color: var(--brand-500);
+        }
+      }
+
+      &:focus-visible {
+        outline: none;
+
+        &::before {
+          outline: var(--focus-width) solid var(--brand-300);
+          outline-offset: var(--focus-offset);
+          opacity: 1;
+        }
+      }
+    }
+
+    .work-filter_label {
+      opacity: 0.72;
+      transition: opacity 0.35s var(--ease-out);
+    }
+
+    .work-filter_count {
+      color: rgb(255 255 255 / 0.55);
+      font-family: var(--mono-family);
+      font-size: 0.6875rem;
+      letter-spacing: 0.04em;
+      transition: color 0.35s var(--ease-out);
+    }
+
+    /* ---- the grid ------------------------------------------------------- */
+    .work-grid_list {
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: clamp(2.5rem, 1.75rem + 2vw, 3.5rem)
+        clamp(1.25rem, 0.5rem + 2vw, 2rem);
+      margin: clamp(0.5rem, 0rem + 1.5vw, 1.5rem) 0 0;
+      padding: 0;
+      list-style: none;
+
+      @media (width >= 48rem) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    .work-grid_item {
+      display: flex;
+      flex-direction: column;
+
+      &[hidden] {
+        display: none;
+      }
+
+      &.is-entering {
+        animation: work-grid-enter 0.7s var(--ease-out) both;
+      }
+    }
+
+    @keyframes work-grid-enter {
+      from {
+        opacity: 0;
+        translate: 0 1.25rem;
+      }
+    }
+  }
+</style>

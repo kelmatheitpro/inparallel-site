@@ -1,0 +1,682 @@
+---
+/**
+ * The home hero: the logo as light behind reeded glass.
+ *
+ * The two strokes of the mark glow behind a pane whose ribs arrive level, like
+ * slats, and turn until they run parallel to the strokes — at which point the
+ * light resolves into lines. Copy on the left, the most recent launches
+ * cycling in a card on the right, a parallel rule along the floor.
+ *
+ * The glass is a canvas (`hero-glass.ts` decides whether it runs); under it, a
+ * CSS poster of the same scene, which is all a reader without WebGL 2, with
+ * reduced motion, or on a weak device ever sees.
+ */
+import Img from "@/components/Img.astro";
+import Icon from "@/components/Icon.astro";
+import webflowBadge from "@/assets/inparallel/webflow-badge.png";
+import jobSuccess from "@/assets/inparallel/icons/upwork-job-success.svg";
+import { getImage } from "astro:assets";
+import glassWide from "@/assets/inparallel/hero-glass-wide.webp";
+import glassTall from "@/assets/inparallel/hero-glass-tall.webp";
+import { SOCIAL_PROOF } from "@/consts.ts";
+import { getProjects } from "@/utils/content.ts";
+
+interface Props {
+  /** Where "Book an intro call" goes. */
+  booking: string;
+}
+
+const { booking } = Astro.props;
+
+/* The launches the card cycles through: every study with a screen to show. */
+const live = (await getProjects())
+  .filter(({ data }) => (data.media.card ?? data.media.desktop) && data.liveUrl)
+  .slice(0, 4);
+
+const hostOf = (url: string) => new URL(url).hostname.replace(/^www\./, "");
+
+/* The glass, rendered once and frozen: what a reader sees when the live pane
+   can't or shouldn't run. Portrait screens get the tall framing. */
+const stillWide = await getImage({
+  src: glassWide,
+  width: 2400,
+  format: "webp",
+});
+const stillTall = await getImage({
+  src: glassTall,
+  width: 780,
+  format: "webp",
+});
+---
+
+<section class="hero-p theme-dark" aria-labelledby="hero-title">
+  <div class="hero-p_glass" data-glass aria-hidden="true">
+    <div class="hero-p_poster"></div>
+    <picture class="hero-p_still">
+      <source media="(orientation: portrait)" srcset={stillTall.src} />
+      <img src={stillWide.src} alt="" loading="lazy" decoding="async" />
+    </picture>
+    <canvas class="hero-p_canvas"></canvas>
+    <div class="hero-p_shade"></div>
+  </div>
+  {
+    /* Decided before first paint: if the live glass is going to run, the
+       frozen one is never shown, and — being lazy and hidden — never loaded. */
+  }
+  <script is:inline>
+    (function () {
+      var host = document.querySelector("[data-glass]");
+      if (!host) return;
+      var nav = navigator;
+      var weak =
+        (nav.deviceMemory || 8) <= 2 ||
+        (nav.hardwareConcurrency || 8) <= 2 ||
+        (nav.connection && nav.connection.saveData);
+      var still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (window.WebGL2RenderingContext && !weak && !still)
+        host.classList.add("glass-dynamic");
+    })();
+  </script>
+
+  <div class="hero-p_inner">
+    <div class="hero-p_copy">
+      <div class="hero-p_badges">
+        <span class="hero-p_badge is-webflow">
+          <Img
+            src={webflowBadge}
+            class="hero-p_badge_mark"
+            width={1080}
+            height={674}
+            variant="densities"
+            loading="eager"
+            transparent
+          />
+          Certified Partner
+        </span>
+        <span class="hero-p_badge is-glass">
+          <Icon src={jobSuccess} class="hero-p_badge_icon" aria-hidden="true" />
+          <strong>{SOCIAL_PROOF.score}</strong>
+          <span>{SOCIAL_PROOF.source}</span>
+        </span>
+      </div>
+
+      <h1 class="hero-p_title" id="hero-title" data-anim="slash" data-intro>
+        Your Webflow team, <span class="hero-p_lit"
+          ><span class="serif">in parallel</span> with yours.</span
+        >
+      </h1>
+
+      <p class="hero-p_lead">
+        We design, build and grow Webflow sites for B2B teams — two senior
+        people working alongside yours, from first sketch to long after launch.
+      </p>
+
+      <div class="hero-p_actions">
+        <a class="btn" href={booking}> Book an intro call </a>
+        <a class="btn btn-ghost" href="#work">See our work</a>
+      </div>
+    </div>
+
+    {
+      live.length > 0 && (
+        <aside class="hero-p_live" aria-label="Recently launched" data-live>
+          <p class="hero-p_live_head">
+            <span class="hero-p_live_dot" aria-hidden="true" />
+            Live now
+            <span class="hero-p_live_count" aria-hidden="true">
+              <span data-live-index>01</span> /{" "}
+              {String(live.length).padStart(2, "0")}
+            </span>
+          </p>
+          <ul class="hero-p_live_list" role="list">
+            {live.map(({ id, data }, index) => (
+              <li
+                class:list={["hero-p_live_item", index === 0 && "is-on"]}
+                data-live-item
+              >
+                <a class="hero-p_live_link" href={`/work/${id}`}>
+                  <span class="hero-p_live_shot">
+                    <Img
+                      src={(data.media.card ?? data.media.desktop)!}
+                      alt=""
+                      class="hero-p_live_img"
+                      variant="constrained"
+                      sizes="20rem"
+                      loading={index === 0 ? "eager" : "lazy"}
+                    />
+                  </span>
+                  <span class="hero-p_live_meta">
+                    <span class="hero-p_live_name">{data.client}</span>
+                    <span class="hero-p_live_url">{hostOf(data.liveUrl!)}</span>
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      )
+    }
+  </div>
+
+  <div class="hero-p_floor">
+    <div class="rule-pair" data-anim="rule"><i></i><i></i></div>
+    <div class="hero-p_floor_row">
+      <a class="label hero-p_cue" href="#shipped">
+        <span class="label_slash" aria-hidden="true">//</span>
+        <span class="label_text">Scroll</span>
+      </a>
+      <p class="label hero-p_where">
+        <span class="label_text">Belgrade · CET — working worldwide</span>
+      </p>
+    </div>
+  </div>
+</section>
+
+<script>
+  /* The card beside the copy steps through the latest launches. */
+  const card = document.querySelector<HTMLElement>("[data-live]");
+  const items = card
+    ? [...card.querySelectorAll<HTMLElement>("[data-live-item]")]
+    : [];
+  const index = card?.querySelector<HTMLElement>("[data-live-index]");
+  const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (card && items.length > 1 && !still) {
+    let at = 0;
+    let paused = false;
+    card.addEventListener("pointerenter", () => (paused = true));
+    card.addEventListener("pointerleave", () => (paused = false));
+    card.addEventListener("focusin", () => (paused = true));
+    card.addEventListener("focusout", () => (paused = false));
+    window.setInterval(() => {
+      if (paused || document.hidden) return;
+      items[at]?.classList.remove("is-on");
+      at = (at + 1) % items.length;
+      items[at]?.classList.add("is-on");
+      if (index) index.textContent = String(at + 1).padStart(2, "0");
+    }, 4200);
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .hero-p {
+      position: relative;
+      isolation: isolate;
+      display: flex;
+      flex-direction: column;
+      min-height: max(40rem, 100svh);
+      padding-top: var(--nav-height);
+      overflow: clip;
+      background-color: var(--dark-950);
+    }
+
+    /* ---- the glass ------------------------------------------------------ */
+    .hero-p_glass {
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+    }
+
+    .hero-p_canvas,
+    .hero-p_poster,
+    .hero-p_shade {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .hero-p_canvas {
+      opacity: 0;
+      transition: opacity 1.2s var(--ease-out);
+    }
+
+    .hero-p_glass.is-live .hero-p_canvas {
+      opacity: 1;
+    }
+
+    /* The dark pane before the glass lights up: no light yet, and its ribs
+       level — the way the live glass starts them, before it turns them to
+       the slant — so nothing changes direction as the canvas fades in. */
+    .hero-p_poster {
+      --_rib: 30px;
+      background-color: var(--dark-950);
+      background-image:
+        repeating-linear-gradient(
+          to bottom,
+          rgb(255 255 255 / 0.025) 0 1px,
+          transparent 1px calc(var(--_rib) - 2px),
+          rgb(0 0 0 / 0.3) calc(var(--_rib) - 2px) var(--_rib)
+        ),
+        radial-gradient(
+          60% 70% at 72% 50%,
+          rgb(42 109 218 / 0.16),
+          transparent 70%
+        ),
+        linear-gradient(100deg, #05080f 30%, #0a1428);
+    }
+
+    /* The frozen glass: for every reader the live pane won't run for. */
+    .hero-p_still {
+      position: absolute;
+      inset: 0;
+      display: none;
+
+      & img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: 70% 50%;
+      }
+    }
+
+    .hero-p_glass:not(.glass-dynamic) .hero-p_still {
+      display: block;
+    }
+
+    .hero-p_glass.is-live .hero-p_poster {
+      opacity: 0;
+      transition: opacity 1.2s var(--ease-out);
+    }
+
+    /* Keeps the copy legible whatever the light is doing behind it, and the
+       nav, which sits over the brightest of it. */
+    .hero-p_shade {
+      background-image:
+        linear-gradient(
+          to bottom,
+          rgb(6 10 19 / 0.72),
+          transparent calc(var(--nav-height) * 1.6)
+        ),
+        linear-gradient(
+          90deg,
+          rgb(6 10 19 / 0.82) 0%,
+          rgb(6 10 19 / 0.45) 42%,
+          transparent 70%
+        ),
+        linear-gradient(0deg, rgb(6 10 19 / 0.7), transparent 30%);
+      pointer-events: none;
+    }
+
+    /* ---- copy ----------------------------------------------------------- */
+    .hero-p_inner {
+      flex: 1;
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      padding-block: var(--space-8);
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: var(--space-8);
+    }
+
+    .hero-p_copy {
+      max-width: 50rem;
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+    }
+
+    .hero-p_badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.625rem;
+      margin-bottom: 2.25rem;
+    }
+
+    .hero-p_badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      min-height: 2.5rem;
+      padding: 0 0.875rem;
+      border-radius: 0.6rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      line-height: 1;
+      white-space: nowrap;
+
+      &.is-webflow {
+        background-color: #146ef5;
+        color: var(--light-100);
+      }
+
+      &.is-glass {
+        background-color: rgb(20 28 44 / 0.82);
+        border: var(--border-width) solid rgb(255 255 255 / 0.12);
+        color: var(--light-100);
+
+        & span {
+          color: rgb(255 255 255 / 0.65);
+          font-weight: 400;
+        }
+      }
+    }
+
+    .hero-p_badge_mark {
+      width: 1.35rem;
+      height: auto;
+    }
+
+    .hero-p_badge_icon {
+      --_size: 1.05rem;
+      color: var(--brand-300);
+    }
+
+    .hero-p_title {
+      margin: 0;
+      font-size: clamp(2.75rem, 1.6rem + 4.6vw, 5.75rem);
+      font-weight: 500;
+      line-height: 0.98;
+      letter-spacing: -0.045em;
+      text-wrap: balance;
+      color: var(--light-100);
+    }
+
+    /* The back half of the claim is lit: white from above into the blue. */
+    .hero-p_lit {
+      background-image: linear-gradient(
+        to bottom,
+        var(--light-100) 10%,
+        var(--brand-300) 95%
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      padding-bottom: 0.12em;
+    }
+
+    .hero-p_title .serif {
+      letter-spacing: -0.02em;
+      padding-right: 0.04em;
+    }
+
+    .hero-p_lead {
+      max-width: 36rem;
+      margin: 2.25rem 0 0;
+      color: rgb(255 255 255 / 0.72);
+      font-size: clamp(1.05rem, 0.95rem + 0.35vw, 1.3rem);
+      line-height: 1.5;
+      text-wrap: pretty;
+    }
+
+    .hero-p_actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 2.5rem;
+    }
+
+    /* ---- live card ------------------------------------------------------ */
+    .hero-p_live {
+      align-self: end;
+      width: 19rem;
+      padding: 0.75rem;
+      background-color: rgb(11 19 34 / 0.86);
+      border: var(--border-width) solid rgb(255 255 255 / 0.1);
+      border-radius: 1rem;
+    }
+
+    /* A flex row on a `<p>`: the leading trim's two pseudo-elements would be
+       empty items in it, a gap wide at each end. */
+    .hero-p_live_head::before,
+    .hero-p_live_head::after,
+    .hero-p_where::before,
+    .hero-p_where::after {
+      content: none;
+    }
+
+    .hero-p_live_head {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0.15rem 0.25rem 0.75rem;
+      font-family: var(--mono-family);
+      font-size: 0.6875rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: rgb(255 255 255 / 0.7);
+    }
+
+    .hero-p_live_dot {
+      position: relative;
+      width: 0.45rem;
+      height: 0.45rem;
+      border-radius: 50%;
+      background-color: #3ee08f;
+
+      /* The pulse is a second dot growing out of it and fading: it never
+         stops, so it runs where nothing has to be painted again. */
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background-color: inherit;
+        animation: hero-live-pulse 2.4s infinite;
+      }
+    }
+
+    @keyframes hero-live-pulse {
+      from {
+        opacity: 0.55;
+        transform: scale(1);
+      }
+      70%,
+      to {
+        opacity: 0;
+        transform: scale(3.2);
+      }
+    }
+
+    .hero-p_live_count {
+      margin-left: auto;
+      color: rgb(255 255 255 / 0.45);
+    }
+
+    .hero-p_live_list {
+      display: grid;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    /* All the launches stack in one cell; only the current one shows. */
+    /* One launch leaves before the next arrives — never two names on top
+       of each other: the outgoing one fades in 0.3s, the incoming one waits
+       for it, then comes in. */
+    .hero-p_live_item {
+      grid-area: 1 / 1;
+      min-width: 0;
+      opacity: 0;
+      visibility: hidden;
+      transition:
+        opacity 0.3s ease-in,
+        visibility 0s 0.3s;
+
+      &.is-on {
+        opacity: 1;
+        visibility: visible;
+        transition: opacity 0.6s var(--ease-out) 0.3s;
+      }
+    }
+
+    .hero-p_live_link {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+      color: inherit;
+      text-decoration: none;
+    }
+
+    /* A fixed 16:10 window; the square shot inside is pinned to it, so a
+       taller picture can't stretch the frame (and every launch in the stack
+       is the same height). */
+    .hero-p_live_shot {
+      position: relative;
+      display: block;
+      aspect-ratio: 16 / 10;
+      min-height: 0;
+      border-radius: 0.6rem;
+      overflow: clip;
+      background-color: var(--dark-800);
+    }
+
+    .hero-p_live_img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+      transition: scale 1.2s var(--ease-out);
+    }
+
+    .hero-p_live_item.is-on .hero-p_live_img {
+      animation: hero-live-pan 4.2s linear both;
+    }
+
+    @keyframes hero-live-pan {
+      from {
+        scale: 1.06;
+      }
+      to {
+        scale: 1;
+      }
+    }
+
+    /* Name over address, each held to one line, so every launch in the
+       stack is the same height and the card never jumps between them. */
+    .hero-p_live_meta {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      min-width: 0;
+      padding: 0 0.25rem 0.15rem;
+    }
+
+    .hero-p_live_name,
+    .hero-p_live_url {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .hero-p_live_name {
+      font-weight: 500;
+    }
+
+    .hero-p_live_url {
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      opacity: 0.55;
+      transition: opacity 0.35s var(--ease-soft);
+    }
+
+    @media (hover: hover) {
+      .hero-p_live_link:hover .hero-p_live_url {
+        opacity: 1;
+      }
+    }
+
+    .hero-p_live_link:focus-visible .hero-p_live_url {
+      opacity: 1;
+    }
+
+    /* ---- floor ---------------------------------------------------------- */
+    .hero-p_floor {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      padding-bottom: var(--space-6);
+    }
+
+    .hero-p_floor .rule-pair > i {
+      background-color: rgb(255 255 255 / 0.16);
+    }
+
+    .hero-p_floor .rule-pair > i + i {
+      background-color: rgb(255 255 255 / 0.07);
+    }
+
+    .hero-p_floor_row {
+      display: flex;
+      justify-content: space-between;
+      gap: var(--space-4);
+      margin-top: 1.1rem;
+    }
+
+    /* Small as a label, but a finger's height to tap: the padding is taken
+       back by the margin, so nothing moves. */
+    .hero-p_cue {
+      margin-block: -0.875rem;
+      padding-block: 0.875rem;
+      color: rgb(255 255 255 / 0.7);
+      text-decoration: none;
+
+      & .label_slash {
+        animation: hero-cue 2.4s var(--ease-out) infinite;
+      }
+    }
+
+    @keyframes hero-cue {
+      0%,
+      100% {
+        translate: 0 0;
+      }
+      50% {
+        translate: 0.35em 0;
+      }
+    }
+
+    .hero-p_where {
+      margin: 0;
+      color: rgb(255 255 255 / 0.5);
+    }
+
+    /* ---- narrower ------------------------------------------------------- */
+    @media (width < 62rem) {
+      .hero-p_inner {
+        grid-template-columns: minmax(0, 1fr);
+        align-items: end;
+      }
+      .hero-p_live {
+        display: none;
+      }
+      .hero-p_shade {
+        background-image:
+          linear-gradient(
+            to bottom,
+            rgb(6 10 19 / 0.72),
+            transparent calc(var(--nav-height) * 1.6)
+          ),
+          linear-gradient(
+            0deg,
+            rgb(6 10 19 / 0.92) 10%,
+            rgb(6 10 19 / 0.35) 60%,
+            transparent
+          );
+      }
+    }
+
+    @media (width < 36rem) {
+      .hero-p_where {
+        display: none;
+      }
+      .hero-p_actions .btn {
+        flex: 1 1 100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .hero-p_cue .label_slash,
+      .hero-p_live_item.is-on .hero-p_live_img {
+        animation: none;
+      }
+
+      .hero-p_live_dot::after {
+        display: none;
+      }
+    }
+  }
+</style>

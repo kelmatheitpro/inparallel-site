@@ -1,47 +1,61 @@
 ---
 import Layout from "@/layouts/BaseLayout.astro";
-import ServicesHero from "@/components/sections/ServicesHero.astro";
-import ProofStrip from "@/components/sections/ProofStrip.astro";
-import ServiceLanes from "@/components/sections/ServiceLanes.astro";
-import QuoteEstimate from "@/components/sections/QuoteEstimate.astro";
-import ComparisonTable from "@/components/sections/ComparisonTable.astro";
-import ClientProof from "@/components/sections/ClientProof.astro";
-import WhereWebflowStops from "@/components/sections/WhereWebflowStops.astro";
-import Beliefs from "@/components/sections/Beliefs.astro";
-import AlwaysIncluded from "@/components/sections/AlwaysIncluded.astro";
-import DontDo from "@/components/sections/DontDo.astro";
-import TwoOfUs from "@/components/sections/TwoOfUs.astro";
-import ServicesFaq from "@/components/sections/ServicesFaq.astro";
-import ClosingCta from "@/components/sections/ClosingCta.astro";
+import PageHero from "@/components/parallel/PageHero.astro";
+import CtaBand from "@/components/parallel/CtaBand.astro";
+import Trusted from "@/components/sections/Trusted.astro";
+import Lightbox from "@/components/inparallel/Lightbox.astro";
+import ServiceDoors from "@/components/services/ServiceDoors.astro";
+import ServiceRows from "@/components/services/ServiceRows.astro";
+import CompareTable from "@/components/services/CompareTable.astro";
+import ServiceFinder from "@/components/services/ServiceFinder.astro";
+import ServiceFigures from "@/components/services/ServiceFigures.astro";
+import WebflowLimits from "@/components/services/WebflowLimits.astro";
+import ServiceFaq from "@/components/services/ServiceFaq.astro";
+import { OVERVIEW_FAQ, OVERVIEW_RESULTS } from "@/data/service-pages.ts";
 ---
 
 {
-  /* A junction, not a catalogue. Its job is to get the visitor onto the one
-     lane that matches where their site is today — so it names the four, lets
-     them be compared and priced, and then argues for the studio rather than
-     for any one service. Everything specific to a lane lives on its own page. */
+  /* The way in, not the catalogue: name the four, set them side by side,
+     help the undecided pick one, say plainly where Webflow and we stop, and
+     send each reader on to the page for their service, where the process
+     and the proof live. */
 }
 <Layout
-  theme="light"
+  theme="dark"
   overlap
-  title="Services"
-  description="Four ways to work with a two-person Webflow studio — design, build, launch, or a retained crew. Fixed price, quoted within 24 hours."
+  title="Webflow services: design, development, SEO and growth"
+  description="Four ways in, two senior people behind them: Webflow design and development, Webflow builds from your designs, SEO and AEO, and ongoing growth."
 >
-  <ServicesHero variant="both" />
-  <ProofStrip />
+  <PageHero
+    label="Services"
+    lead="Webflow design and development, builds from your own designs, SEO and AEO, and growth after launch. Whichever way in, the two of us do the work."
+  >
+    Four ways in. <br /><span class="serif">Two</span> people behind them.
+    <Fragment slot="actions">
+      <a class="btn" href="#services"> Explore the services </a>
+      <a class="btn btn-ghost" href="/work">See our work</a>
+    </Fragment>
+    <ServiceDoors slot="after" />
+  </PageHero>
 
-  {/* Pick a lane. */}
-  <ServiceLanes />
-  <QuoteEstimate />
-  <ComparisonTable />
+  <Trusted />
+  <ServiceRows index="02" />
+  <CompareTable index="03" />
+  <ServiceFinder index="04" />
+  <ServiceFigures results={OVERVIEW_RESULTS} index="05" />
+  <CtaBand />
+  <WebflowLimits index="06" />
+  <ServiceFaq items={OVERVIEW_FAQ} index="07" theme="dark" />
 
-  {/* Then the case for us, whichever lane they took. */}
-  <ClientProof />
-  <WhereWebflowStops />
-  <Beliefs />
-  <AlwaysIncluded />
-  <DontDo />
-  <TwoOfUs />
-  <ServicesFaq />
-  <ClosingCta />
+  {/* The one dialog the client film in the logo wall opens into. */}
+  <Lightbox />
 </Layout>
+
+<style is:global>
+  /* The page is dark at its root, which lights every label's strokes for a
+     dark section: on cream they'd all but vanish. */
+  main .trusted-p .label_slash,
+  main .theme-light .label_slash {
+    color: var(--brand-500);
+  }
+</style>

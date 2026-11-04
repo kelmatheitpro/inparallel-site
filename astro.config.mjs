@@ -1,8 +1,6 @@
 // @ts-check
 import { defineConfig } from "astro/config";
-import sitemap from "@astrojs/sitemap";
 import { SITE_URL } from "./src/consts.ts";
-import { isNoindexRoute } from "./src/utils/seo.ts";
 
 /**
  * Stop the dev server telling browsers to keep generated images for a year.
@@ -61,11 +59,17 @@ export default defineConfig({
      */
     host: "::",
   },
-  integrations: [
-    sitemap({
-      filter: (page) => !isNoindexRoute(new URL(page).pathname),
-    }),
-  ],
+  /**
+   * The service pages' first addresses, from before the four services were
+   * renamed. They were live, so they keep working: each sends its visitors to
+   * the page that does that job now.
+   */
+  redirects: {
+    "/services/design": "/services/design-development",
+    "/services/build": "/services/webflow-development",
+    "/services/launch": "/services/design-development",
+    "/services/plus": "/services/growth",
+  },
   vite: {
     plugins: [freshImagesInDev],
   },

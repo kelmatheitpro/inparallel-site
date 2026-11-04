@@ -1,0 +1,496 @@
+---
+/**
+ * The work index's opening picture: the live sites, one at a time, in one
+ * large browser under the copy. Each brings its headline figure, pinned to the
+ * corner, and its mark and a way into the study under the window.
+ *
+ * The studies come from `WORK_INDEX.hero.featured`. The script runs them, the
+ * line under the window filling as each has its turn; it stops for a pointer
+ * or keyboard focus, off screen, and for good once a reader picks a site. Only
+ * opacity and a line's transform move, so the change costs the compositor
+ * nothing however large the pictures are. Without the script, or for a reader
+ * who has asked for less motion, the first site simply stays, and the lines
+ * are there to change it by hand, or not drawn at all.
+ */
+import Img from "@/components/Img.astro";
+import ArrowCircle from "@/components/inparallel/ArrowCircle.astro";
+import BrowserFrame from "@/components/work/BrowserFrame.astro";
+import { getProjects } from "@/utils/content.ts";
+import { WORK_INDEX, hostOf, logoHeight } from "@/data/work.ts";
+
+const studies = await getProjects();
+const slides = WORK_INDEX.hero.featured.flatMap((id) => {
+  const study = studies.find((project) => project.id === id);
+  const screen = study?.data.media.desktop ?? study?.data.media.card;
+  return study && screen ? [{ study, screen }] : [];
+});
+const first = slides[0];
+---
+
+{
+  first && (
+    <div class="featured" data-featured>
+      <div class="featured_stage">
+        {/* The picture is a second way into the study for a pointer; the
+            link under it is the one a keyboard and a screen reader get. */}
+        <a
+          class="featured_frame"
+          href={`/work/${first.study.id}`}
+          data-cursor="View case"
+          data-featured-link
+          tabindex="-1"
+          aria-hidden="true"
+        >
+          <BrowserFrame tone="glass" live>
+            <span slot="address" class="featured_hosts">
+              {slides.map(({ study }, index) => (
+                <span
+                  class:list={["featured_host", index === 0 && "is-on"]}
+                  data-slide={index}
+                >
+                  {study.data.liveUrl && hostOf(study.data.liveUrl)}
+                </span>
+              ))}
+            </span>
+            {slides.map(({ screen }, index) => (
+              <Img
+                src={screen}
+                alt=""
+                class:list={["featured_img", index === 0 && "is-on"]}
+                data-slide={index}
+                data-featured-image
+                variant="constrained"
+                sizes="(width >= 75rem) 68rem, 92vw"
+                loading={index === 0 ? "eager" : "lazy"}
+                fetchPriority={index === 0 ? "high" : "auto"}
+              />
+            ))}
+          </BrowserFrame>
+        </a>
+        {slides.map(({ study }, index) => (
+          <p
+            class:list={["featured_stat", index === 0 && "is-on"]}
+            data-slide={index}
+          >
+            <span class="featured_value">{study.data.stat}</span>
+            <span class="featured_label">{study.data.statLabel}</span>
+          </p>
+        ))}
+      </div>
+
+      <div
+        class="featured_steps"
+        role="group"
+        aria-label="Choose a site to show"
+      >
+        {slides.map(({ study }, index) => (
+          <button
+            type="button"
+            class:list={["featured_step", index === 0 && "is-on"]}
+            data-slide={index}
+            data-featured-step
+            aria-label={`Show ${study.data.client}`}
+            aria-pressed={index === 0 ? "true" : "false"}
+          >
+            <i />
+          </button>
+        ))}
+      </div>
+
+      <div class="featured_metas">
+        {slides.map(({ study }, index) => (
+          <div
+            class:list={["featured_meta", index === 0 && "is-on"]}
+            data-slide={index}
+          >
+            <Img
+              src={study.data.logo}
+              alt={study.data.client}
+              class="featured_logo"
+              style={`--_h: ${logoHeight(study.data.logo, 1.5)};`}
+              transparent
+              loading="eager"
+            />
+            <span class="featured_industry">{study.data.industry}</span>
+            <a class="featured_link" href={`/work/${study.id}`}>
+              Read the study
+              <span class="sr-only">: {study.data.client}</span>
+              <ArrowCircle bare class="featured_arrow" />
+            </a>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>(
+    "[data-featured]",
+  )) {
+    const steps = [
+      ...root.querySelectorAll<HTMLButtonElement>("[data-featured-step]"),
+    ];
+    if (steps.length < 2) continue;
+
+    const parts = [...root.querySelectorAll<HTMLElement>("[data-slide]")];
+    const images = [
+      ...root.querySelectorAll<HTMLImageElement>("[data-featured-image]"),
+    ];
+    const link = root.querySelector<HTMLAnchorElement>("[data-featured-link]");
+    const hrefs = [
+      ...root.querySelectorAll<HTMLAnchorElement>(".featured_link"),
+    ];
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let current = 0;
+
+    const show = async (index: number) => {
+      /* The picture is decoded before it is asked to appear, so a fade never
+         waits on a large image half way through. A slow one gets a moment,
+         not a veto. */
+      await Promise.race([
+        images[index]?.decode().catch(() => undefined),
+        new Promise((done) => setTimeout(done, 1200)),
+      ]);
+      current = index;
+      for (const part of parts)
+        part.classList.toggle("is-on", part.dataset.slide === String(index));
+      steps.forEach((step, at) =>
+        step.setAttribute("aria-pressed", String(at === index)),
+      );
+      const href = hrefs[index]?.href;
+      if (link && href) link.href = href;
+    };
+
+    /* The line filling is the clock: when it arrives, the next site has its
+       turn. Pausing the line pauses the whole thing. */
+    root.addEventListener("animationend", (event) => {
+      if (event.animationName === "featured-run")
+        void show((current + 1) % steps.length);
+    });
+
+    const pause = new Set<string>();
+    const hold = (reason: string, on: boolean) => {
+      if (on) pause.add(reason);
+      else pause.delete(reason);
+      root.classList.toggle("is-paused", pause.size > 0);
+    };
+    const stage = root.querySelector(".featured_stage");
+    stage?.addEventListener("pointerenter", () => hold("pointer", true));
+    stage?.addEventListener("pointerleave", () => hold("pointer", false));
+    root.addEventListener("focusin", () => hold("focus", true));
+    root.addEventListener("focusout", () => hold("focus", false));
+    new IntersectionObserver(([entry]) =>
+      hold("offscreen", !entry?.isIntersecting),
+    ).observe(root);
+
+    /* Picking a site is asking to look at it: it stays. */
+    steps.forEach((step, index) =>
+      step.addEventListener("click", () => {
+        root.classList.remove("is-running");
+        void show(index);
+      }),
+    );
+
+    root.classList.add("is-ready");
+    if (!still.matches) root.classList.add("is-running");
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .featured {
+      --_hold: 6s;
+      --_fade: 0.8s;
+      width: min(100% - var(--site-margin) * 2, 69rem);
+      margin: clamp(2.5rem, 1.5rem + 3vw, 4rem) auto 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .featured_stage {
+      position: relative;
+    }
+
+    .featured_frame {
+      display: block;
+      color: inherit;
+      text-decoration: none;
+      transition: translate 0.6s var(--ease-out);
+    }
+
+    @media (hover: hover) {
+      .featured_stage:hover .featured_frame {
+        translate: 0 -0.35rem;
+      }
+    }
+
+    /* ---- what changes ---------------------------------------------------- */
+    /* The pictures stack in the view. The one arriving fades in over the one
+       leaving, which stays whole beneath it until it is covered: fading both
+       at once would let the white of the view show through half way. */
+    .featured_img {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+      opacity: 0;
+      visibility: hidden;
+      transition:
+        opacity 0s var(--_fade),
+        visibility 0s var(--_fade);
+
+      &.is-on {
+        z-index: 1;
+        opacity: 1;
+        visibility: visible;
+        transition: opacity var(--_fade) var(--ease-out);
+      }
+    }
+
+    .featured_hosts {
+      display: grid;
+    }
+
+    /* The address, the figure and the row under the window each take one spot
+       and swap in it. */
+    .featured_host,
+    .featured_stat,
+    .featured_meta {
+      opacity: 0;
+      visibility: hidden;
+      transition:
+        opacity 0.35s var(--ease-out),
+        visibility 0s 0.35s,
+        transform 0.5s var(--ease-out);
+
+      &.is-on {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
+        transition:
+          opacity 0.5s var(--ease-out) 0.2s,
+          transform 0.6s var(--ease-out) 0.2s;
+      }
+    }
+
+    .featured_host {
+      grid-area: 1 / 1;
+      text-align: center;
+    }
+
+    /* The figure, pinned over the corner of the window like a note. */
+    .featured_stat {
+      position: absolute;
+      z-index: 2;
+      margin: 0;
+      pointer-events: none;
+      right: clamp(-1.5rem, -2vw, -0.5rem);
+      bottom: -1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      min-width: 11rem;
+      padding: 1rem 1.25rem 1.1rem;
+      background-color: var(--light-100);
+      border-radius: 0.9rem;
+      box-shadow: 0 1.25rem 2.5rem -1rem rgb(0 0 0 / 0.55);
+      color: var(--ink-900);
+      transform: translateY(0.5rem);
+    }
+
+    .featured_value {
+      font-size: clamp(2.25rem, 1.8rem + 1.5vw, 3rem);
+      font-weight: 500;
+      line-height: 1;
+      letter-spacing: -0.05em;
+    }
+
+    .featured_label {
+      max-width: 12rem;
+      color: rgb(13 25 40 / 0.62);
+      font-size: 0.8125rem;
+      line-height: 1.3;
+    }
+
+    /* ---- the lines ------------------------------------------------------- */
+    /* They need the script, but their room is kept for them from the first
+       paint: showing them must not push the page down as it loads. */
+    .featured_steps {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(0, 1fr);
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+      /* The figure hangs over the last line's end, so the row stops short. */
+      padding-right: 12rem;
+      visibility: hidden;
+
+      .is-ready & {
+        visibility: visible;
+      }
+    }
+
+    /* A tall button around a thin line: the target a finger needs. */
+    .featured_step {
+      display: flex;
+      align-items: center;
+      height: 2.75rem;
+      padding: 0;
+      background: none;
+      border: 0;
+      cursor: pointer;
+
+      & > i {
+        position: relative;
+        display: block;
+        width: 100%;
+        height: 0.1875rem;
+        overflow: clip;
+        background-color: rgb(255 255 255 / 0.18);
+      }
+
+      & > i::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-color: var(--brand-300);
+        transform: scaleX(0);
+        transform-origin: left;
+      }
+
+      &[aria-pressed="true"] > i::before {
+        transform: none;
+      }
+
+      &:focus-visible {
+        outline: var(--focus-width) solid var(--brand-300);
+        outline-offset: 0;
+      }
+    }
+
+    .is-running [aria-pressed="true"] > i::before {
+      animation: featured-run var(--_hold) linear both;
+    }
+
+    .is-paused [aria-pressed="true"] > i::before {
+      animation-play-state: paused;
+    }
+
+    @keyframes featured-run {
+      from {
+        transform: scaleX(0);
+      }
+      to {
+        transform: none;
+      }
+    }
+
+    /* ---- under the window ------------------------------------------------ */
+    .featured_metas {
+      display: grid;
+      padding-top: 1rem;
+      padding-right: 12rem;
+    }
+
+    .featured_meta {
+      grid-area: 1 / 1;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.75rem 1.25rem;
+      transform: translateY(0.35rem);
+    }
+
+    /* The marks on file are white, ready for the dark hero. */
+    .featured_logo {
+      width: auto;
+      height: var(--_h, 1.5rem);
+    }
+
+    .featured_industry {
+      color: rgb(255 255 255 / 0.6);
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .featured_link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      color: var(--light-100);
+      font-size: 0.9375rem;
+      font-weight: 500;
+      text-decoration: none;
+    }
+
+    .featured_arrow {
+      --arrow-ink: var(--brand-300);
+      color: var(--brand-300);
+    }
+
+    @media (width < 48rem) {
+      /* Pinned over a window this small, the figure would hide a third of the
+         site. It takes a bar of its own under it instead, every site's figure
+         in the one spot so the page doesn't move as they change. */
+      .featured_stage {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      .featured_frame {
+        grid-area: 1 / 1;
+      }
+
+      .featured_stat {
+        position: relative;
+        right: auto;
+        bottom: auto;
+        grid-area: 2 / 1;
+        flex-direction: row;
+        align-items: center;
+        gap: 0.85rem;
+        min-width: 0;
+        padding: 0.7rem 0.9rem;
+      }
+
+      .featured_value {
+        font-size: 1.75rem;
+        white-space: nowrap;
+      }
+
+      .featured_label {
+        max-width: none;
+      }
+
+      .featured_steps {
+        margin-top: 0.25rem;
+        padding-right: 0;
+      }
+
+      .featured_metas {
+        padding-top: 0.5rem;
+        padding-right: 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .featured_frame,
+      .featured_img,
+      .featured_host,
+      .featured_stat,
+      .featured_meta {
+        transition: none;
+
+        &.is-on {
+          transition: none;
+        }
+      }
+    }
+  }
+</style>

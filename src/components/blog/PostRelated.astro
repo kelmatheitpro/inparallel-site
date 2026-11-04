@@ -1,0 +1,83 @@
+---
+/**
+ * "Continue reading" — three more posts under an article, on navy, with the
+ * way back to all of them. Others on the same topic come first.
+ */
+import SectionHead from "@/components/parallel/SectionHead.astro";
+import PostCard from "@/components/blog/PostCard.astro";
+import type { Post } from "@/utils/content.ts";
+
+interface Props {
+  posts: Post[];
+}
+
+const { posts } = Astro.props;
+---
+
+{
+  posts.length > 0 && (
+    <section
+      class="post-related theme-dark"
+      aria-labelledby="post-related-title"
+    >
+      <div class="post-related_inner">
+        <SectionHead label="Insights" headingId="post-related-title">
+          Continue <span class="serif">reading</span>
+          <a slot="aside" class="btn btn-ghost" href="/blog">
+            All insights
+          </a>
+        </SectionHead>
+
+        <ul class="post-related_list" role="list" data-anim-group>
+          {posts.map((post) => (
+            <li data-anim="rise">
+              <PostCard post={post} />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}
+
+<style is:global>
+  @layer components {
+    .post-related {
+      padding-block: var(--section-space-large);
+      background-color: var(--dark-900);
+    }
+
+    .post-related_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(2.5rem, 1.75rem + 2.5vw, 4rem);
+    }
+
+    .post-related_list {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: clamp(2.5rem, 2rem + 1.5vw, 3.5rem) var(--space-6);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+
+      @media (width >= 40rem) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      @media (width >= 62rem) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      /* Two to a row, the third would hang alone: it waits for the wide
+         layout. */
+      @media (40rem <= width < 62rem) {
+        & > li:nth-child(3) {
+          display: none;
+        }
+      }
+    }
+  }
+</style>

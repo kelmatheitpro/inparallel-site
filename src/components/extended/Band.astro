@@ -1,0 +1,85 @@
+---
+/**
+ * One section of a partner page: navy or cream, the site's section spacing,
+ * and the content in the site's container, stacked with room between parts.
+ *
+ *   <Band theme="light" id="who" labelledby="who-title"> … </Band>
+ */
+interface Props {
+  theme: "light" | "dark";
+  id?: string;
+  /** The id of the heading that names the section. */
+  labelledby?: string;
+}
+
+const { theme, id, labelledby } = Astro.props;
+---
+
+<section
+  class:list={["band", `theme-${theme}`]}
+  id={id}
+  aria-labelledby={labelledby}
+>
+  <div class="band_inner">
+    <slot />
+  </div>
+</section>
+
+<style is:global>
+  @layer components {
+    /* Cream or navy: each is its theme's own background. */
+    .band {
+      position: relative;
+      padding-block: var(--section-space-large, 8rem);
+      overflow: clip;
+      background-color: var(--background);
+    }
+
+    .band_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(2.5rem, 2rem + 2.5vw, 4.5rem);
+    }
+
+    /* A second heading further down the same section stands well clear of
+       what came before it. */
+    .band_inner > .section-head-p:not(:first-child) {
+      margin-top: clamp(1.5rem, 1rem + 2vw, 3rem);
+    }
+
+    /* Two halves side by side on wide screens. */
+    .band_split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: clamp(3.5rem, 2.5rem + 3vw, 5rem);
+
+      @media (width >= 62rem) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: clamp(3rem, 1rem + 4vw, 6rem);
+      }
+    }
+
+    .band_column {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(1.75rem, 1.4rem + 1vw, 2.5rem);
+    }
+
+    /* A closing line under a section's content: muted, with its link. */
+    .band_note {
+      max-width: 40rem;
+      margin: 0;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    .band_notes {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: 1rem;
+    }
+  }
+</style>

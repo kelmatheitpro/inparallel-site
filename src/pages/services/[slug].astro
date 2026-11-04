@@ -1,89 +1,249 @@
 ---
+import type { GetStaticPaths } from "astro";
 import Layout from "@/layouts/BaseLayout.astro";
-import ServicesHero from "@/components/sections/ServicesHero.astro";
-import ProofStrip from "@/components/sections/ProofStrip.astro";
-import LaneClients from "@/components/sections/LaneClients.astro";
-import LaneProblem from "@/components/sections/LaneProblem.astro";
-import LaneCapabilities from "@/components/sections/LaneCapabilities.astro";
-import LaneCredentials from "@/components/sections/LaneCredentials.astro";
-import LaneProcess from "@/components/sections/LaneProcess.astro";
-import LaneNumbers from "@/components/sections/LaneNumbers.astro";
-import AlwaysIncluded from "@/components/sections/AlwaysIncluded.astro";
-import Reviews from "@/components/sections/Reviews.astro";
-import CleanBuild from "@/components/sections/CleanBuild.astro";
-import Handover from "@/components/sections/Handover.astro";
-import Automations from "@/components/sections/Automations.astro";
-import QuoteEstimate from "@/components/sections/QuoteEstimate.astro";
-import ServicesFaq from "@/components/sections/ServicesFaq.astro";
-import ClosingCta from "@/components/sections/ClosingCta.astro";
-import { LANE_PAGES } from "@/data/lanes.ts";
+import PageHero from "@/components/parallel/PageHero.astro";
+import CtaBand from "@/components/parallel/CtaBand.astro";
+import Trusted from "@/components/sections/Trusted.astro";
+import Lightbox from "@/components/inparallel/Lightbox.astro";
+import TitleLines from "@/components/services/TitleLines.astro";
+import ServiceSpec from "@/components/services/ServiceSpec.astro";
+import ServiceProblem from "@/components/services/ServiceProblem.astro";
+import ProcessScene from "@/components/services/ProcessScene.astro";
+import ServiceIncluded from "@/components/services/ServiceIncluded.astro";
+import EveryProject from "@/components/services/EveryProject.astro";
+import ServiceLedger from "@/components/services/ServiceLedger.astro";
+import ServiceAutomations from "@/components/services/ServiceAutomations.astro";
+import CaseStudies from "@/components/sections/CaseStudies.astro";
+import ServiceFigures from "@/components/services/ServiceFigures.astro";
+import WorkInMotion from "@/components/home/WorkInMotion.astro";
+import ServiceFaq from "@/components/services/ServiceFaq.astro";
+import { SERVICES_P } from "@/data/offer.ts";
+import { SERVICE_PAGES, laneStyle, laneTheme } from "@/data/service-pages.ts";
+import { getProjects } from "@/utils/content.ts";
 
-export function getStaticPaths() {
-  return LANE_PAGES.map((lane) => ({
-    params: { slug: lane.slug },
-    props: { lane },
-  }));
-}
+export const getStaticPaths = (async () => {
+  const projects = await getProjects();
+  return SERVICES_P.map((service, position) => {
+    /* A service without its page copy, or pointing at a study that isn't
+       published, fails the build here rather than shipping a broken page. */
+    const page = SERVICE_PAGES[service.slug];
+    if (!page)
+      throw new Error(
+        `No page copy for "${service.slug}" in src/data/service-pages.ts.`,
+      );
+    const project = projects.find(({ id }) => id === page.study);
+    if (!project)
+      throw new Error(
+        `"${service.slug}" shows the study "${page.study}", which isn't published.`,
+      );
+    return {
+      params: { slug: service.slug },
+      props: { service, page, project, position },
+    };
+  });
+}) satisfies GetStaticPaths;
 
-const { lane } = Astro.props;
+const { service, page, project, position } = Astro.props;
 
-/**
- * The one section each lane gets that the others don't. A page arguing for a
- * retainer and a page arguing for a build are not short of the same thing.
- */
-const extra = {
-  build: "navigator",
-  launch: "handover",
-  plus: "automations",
-} as const;
-
-const only = extra[lane.id as keyof typeof extra];
+/* `// 01` is the client wall's; the rest count on from it. */
+let count = 1;
+const next = () => String(++count).padStart(2, "0");
+const problemIndex = page.problem ? next() : "";
+const processIndex = next();
+const middleIndex = page.included || page.extra ? next() : "";
+const workIndex = next();
+const resultsIndex = next();
+const storiesIndex = next();
+const faqIndex = next();
 ---
 
-<Layout theme="light" overlap title={lane.name} description={lane.description}>
-  <ServicesHero
-    variant="both"
-    mark={lane.slug}
-    title={lane.hero.title}
-    titleMuted={lane.hero.titleMuted}
-    lead={lane.hero.lead}
-  />
-  <ProofStrip />
+{
+  /* One service, in its own colour: the hero's light, and the deep shade the
+     dark sections stand on, with the site's cream between them. */
+}
+<Layout
+  theme="dark"
+  overlap
+  title={page.meta.title}
+  description={page.meta.description}
+>
+  <style slot="head" is:inline set:html={laneTheme(service)}></style>
+
+  <PageHero
+    label={service.name}
+    lead={page.hero.lead}
+    accent={service.theme.accent}
+  >
+    <TitleLines title={page.hero} />
+    <Fragment slot="actions">
+      <a class="btn" href="/contact"> Book a 30-minute call </a>
+      <a class="btn btn-ghost" href="/work">See our work</a>
+    </Fragment>
+    <ServiceSpec
+      slot="visual"
+      service={service}
+      facts={page.facts}
+      terms={page.terms}
+      position={position + 1}
+      total={SERVICES_P.length}
+    />
+  </PageHero>
+
+  <Trusted service={service} />
 
   {
-    /* Who we've done it for, then their situation, then what it takes to
-      fix it — the grid answers the problem while the problem is still on
-      screen, rather than after two sections of something else. */
+    page.problem && (
+      <ServiceProblem
+        service={service}
+        problem={page.problem}
+        index={problemIndex}
+      />
+    )
   }
-  <LaneClients
-    services={lane.proofServices}
-    title="Who we built for,"
-    titleMuted="and what moved."
+
+  <ProcessScene service={service} process={page.process} index={processIndex} />
+
+  {
+    page.included && (
+      <ServiceIncluded
+        service={service}
+        included={page.included}
+        index={middleIndex}
+      />
+    )
+  }
+
+  <CtaBand />
+
+  {
+    page.extra === "every-project" && (
+      <EveryProject service={service} index={middleIndex} />
+    )
+  }
+  {
+    page.extra === "ledger" && (
+      <ServiceLedger service={service} index={middleIndex} />
+    )
+  }
+  {
+    page.extra === "automations" && (
+      <ServiceAutomations service={service} index={middleIndex} />
+    )
+  }
+
+  <CaseStudies index={workIndex} service={service} lead={project.id} />
+
+  <ServiceFigures
+    service={service}
+    results={page.results}
+    index={resultsIndex}
   />
-  <LaneProblem problem={lane.problem} />
-  <LaneCapabilities
-    capabilities={lane.capabilities}
-    title="What that takes."
-    titleMuted="All of it included."
+
+  <WorkInMotion index={storiesIndex} service={service} />
+
+  <ServiceFaq
+    items={page.faq}
+    index={faqIndex}
+    theme="dark"
+    style={laneStyle(service)}
   />
 
-  {only === "navigator" && <CleanBuild />}
-  {only === "handover" && <Handover variant="cards" />}
-  {only === "automations" && <Automations />}
-
-  <AlwaysIncluded />
-  <LaneCredentials />
-  <LaneProcess title={lane.processTitle} titleMuted={lane.processTitleMuted} />
-
-  <Reviews />
-  <LaneNumbers
-    services={lane.proofServices}
-    title="The work,"
-    titleMuted="with the numbers attached."
-    lead="Every figure below is lifted from the case study it belongs to. Click one and you can read how it happened."
-  />
-
-  <QuoteEstimate initial={lane.id} />
-  <ServicesFaq items={lane.faq} />
-  <ClosingCta />
+  {/* The one dialog the client video in the logo wall opens into. */}
+  <Lightbox />
 </Layout>
+
+<style is:global>
+  /* What the page's colours can't reach on their own, because the site's blue
+     is drawn into it. Unlayered, to stand over the components' own. */
+  .page-hero_glass {
+    background-image:
+      repeating-linear-gradient(
+        calc(90deg + var(--slant)),
+        rgb(255 255 255 / 0.03) 0 1px,
+        transparent 1px calc(1.9rem - 2px),
+        rgb(0 0 0 / 0.3) calc(1.9rem - 2px) 1.9rem
+      ),
+      linear-gradient(
+        calc(90deg + var(--slant)),
+        transparent 0 66%,
+        color-mix(in srgb, var(--hero-accent) 45%, transparent) 68% 71%,
+        transparent 73% 76%,
+        color-mix(in srgb, var(--hero-accent) 65%, transparent) 78% 81%,
+        transparent 83%
+      ),
+      radial-gradient(
+        55% 80% at 82% 40%,
+        color-mix(in srgb, var(--hero-accent) 30%, transparent),
+        transparent 70%
+      ),
+      linear-gradient(100deg, var(--dark-950) 35%, var(--lane-dark));
+
+    &::after {
+      background-image: linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--dark-950) 85%, transparent) 0%,
+        color-mix(in srgb, var(--dark-950) 40%, transparent) 50%,
+        transparent 75%
+      );
+    }
+  }
+
+  /* Each title is written as two lines, and beside the terms the hero's usual
+     size would break the second in two. */
+  .page-hero_title {
+    @media (width < 30rem) {
+      font-size: max(2.1rem, 9.6vw);
+    }
+
+    @media (width >= 62rem) {
+      font-size: clamp(2.6rem, 4.7vw, 4.25rem);
+    }
+  }
+
+  .cta-band_glass::before {
+    background-image:
+      radial-gradient(
+        40% 90% at 82% 70%,
+        color-mix(in srgb, var(--lane-accent) 38%, transparent),
+        transparent 70%
+      ),
+      radial-gradient(
+        30% 60% at 12% 0%,
+        color-mix(in srgb, var(--lane-soft) 14%, transparent),
+        transparent 70%
+      );
+  }
+
+  /* The footer's light is a picture, in blue. Here it's the lane's. */
+  .footer_wrap {
+    background-image: radial-gradient(
+      70% 55% at 78% 8%,
+      color-mix(in srgb, var(--lane-accent) 30%, transparent),
+      transparent 70%
+    );
+  }
+
+  .footer_glow,
+  .footer_line {
+    display: none;
+  }
+
+  /* The small print is set for navy, and the lanes are lighter than that. */
+  .footer_wrap :is(.footer_column_title, .footer_bottom p, .view-toggle_label) {
+    color: rgb(255 255 255 / 0.66);
+  }
+
+  /* The same on cream, where the ink is the lane's and not the site's. */
+  .trusted-p.has-lane,
+  .stories.has-lane {
+    --text-muted: color-mix(in srgb, var(--text) 74%, transparent);
+  }
+
+  .cases.has-lane {
+    --text-faded: color-mix(in srgb, var(--lane-soft) 76%, transparent);
+  }
+
+  main :is(.theme-light, .trusted-p) .label_slash {
+    color: var(--brand-500);
+  }
+</style>

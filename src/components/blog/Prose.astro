@@ -1,0 +1,473 @@
+---
+/**
+ * Long-form reading: the typography for anything written rather than
+ * designed — an Insights article rendered from markdown, a legal page.
+ *
+ *   <Prose><Content /></Prose>
+ *
+ * Everything inside is plain HTML from markdown, so the styles reach the
+ * elements themselves: headings, paragraphs, lists, tables, images, quotes,
+ * code. The house marks carry through — bullets are strokes of the logo,
+ * quotes and rules come in pairs. Set on cream; the measure is about seventy
+ * characters, so it reads as a column, not a page.
+ *
+ * Two blocks a markdown file can ask for by class:
+ *   <aside class="prose_callout"> — a boxed summary ("Key takeaways")
+ *   <mark>                        — a highlighted note, e.g. a `TODO:`
+ *
+ * Tables get their box from the script below. On a phone each row stacks into
+ * a small block of label and value, so no column is cut off the side and
+ * nothing has to scroll sideways; without the script a table scrolls instead.
+ */
+import type { HTMLAttributes } from "astro/types";
+
+type Props = HTMLAttributes<"div">;
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class:list={["prose", className]} {...rest}>
+  <slot />
+</div>
+
+<script>
+  /* The labels a stacked row shows come from the table's head. The roles are
+     there because some browsers stop treating a table as one once its
+     display changes, and the stacked rows are still a table to a screen
+     reader. */
+  for (const table of document.querySelectorAll<HTMLTableElement>(
+    ".prose table",
+  )) {
+    if (table.parentElement?.classList.contains("prose_table")) continue;
+    const box = document.createElement("div");
+    box.className = "prose_table";
+    table.before(box);
+    box.append(table);
+
+    const heads = [...table.querySelectorAll("thead th")].map(
+      (th) => th.textContent?.trim() ?? "",
+    );
+    table.setAttribute("role", "table");
+    for (const group of table.querySelectorAll("thead, tbody"))
+      group.setAttribute("role", "rowgroup");
+    for (const row of table.querySelectorAll("tr")) {
+      row.setAttribute("role", "row");
+      [...row.children].forEach((cell, i) => {
+        cell.setAttribute("data-label", heads[i] ?? "");
+        if (cell.tagName === "TH") cell.setAttribute("role", "columnheader");
+        else cell.setAttribute("role", i === 0 ? "rowheader" : "cell");
+      });
+    }
+  }
+</script>
+
+<style is:global>
+  @layer components {
+    .prose {
+      --_measure: 43rem;
+      --_ink: color-mix(in srgb, var(--text) 84%, transparent);
+      max-width: var(--_measure);
+      color: var(--_ink);
+      font-size: clamp(1.0625rem, 1rem + 0.2vw, 1.1875rem);
+      line-height: 1.7;
+      letter-spacing: 0;
+      overflow-wrap: break-word;
+
+      /* Spacing runs on the element that follows, so a block never carries
+         space it doesn't need at the top or the foot of the column. The
+         site trims every paragraph and heading to its letters (see the
+         leading trim in base.css), so these figures are the visible gaps,
+         and larger than they would be on untrimmed text. */
+      & > * + * {
+        margin-top: 1.7em;
+      }
+
+      /* A list's lines aren't trimmed, so it needs less space of its own
+         to sit the same distance from a paragraph. */
+      & > * + :is(ul, ol),
+      & > :is(ul, ol) + * {
+        margin-top: 1.2em;
+      }
+
+      /* ---- headings ------------------------------------------------------ */
+      & :is(h2, h3, h4) {
+        color: var(--text);
+        font-weight: 500;
+        text-wrap: balance;
+        scroll-margin-top: calc(var(--nav-height) + 2rem);
+
+        /* Reached by the contents list, not by the keyboard: no ring. */
+        &:focus {
+          outline: none;
+        }
+      }
+
+      & h2 {
+        font-size: clamp(1.7rem, 1.35rem + 1.1vw, 2.35rem);
+        line-height: 1.1;
+        letter-spacing: -0.035em;
+      }
+
+      & > * + h2 {
+        margin-top: 2.4em;
+      }
+
+      & h3 {
+        font-size: clamp(1.25rem, 1.12rem + 0.45vw, 1.55rem);
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+      }
+
+      & > * + h3 {
+        margin-top: 2.2em;
+      }
+
+      & h4 {
+        font-size: 1.1em;
+        line-height: 1.3;
+        letter-spacing: -0.01em;
+      }
+
+      /* A heading belongs to what follows it, so nothing sits closer to the
+         text under it than the paragraphs in that text do to each other. */
+      & > h2 + * {
+        margin-top: 2.5em;
+      }
+
+      & > :is(h3, h4) + * {
+        margin-top: 1.8em;
+      }
+
+      /* Questions and answers read as a list of pairs, a hairline apart. */
+      & > h2[id^="frequently-asked"] ~ h3 {
+        margin-top: 1.6em;
+        padding-top: 1.4em;
+        border-top: var(--border-width) solid var(--border-soft);
+      }
+
+      /* ---- inline -------------------------------------------------------- */
+      & strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      & a:not([class]) {
+        color: var(--text);
+        text-decoration-color: color-mix(
+          in srgb,
+          var(--brand-500) 55%,
+          transparent
+        );
+        text-decoration-thickness: 0.08em;
+        text-underline-offset: 0.2em;
+        transition: opacity var(--duration-main);
+
+        /* Fades rather than changes colour, so the base link's own hover has
+           to be held off. */
+        @media (hover: hover) {
+          &:hover {
+            color: var(--text);
+            text-decoration-color: color-mix(
+              in srgb,
+              var(--brand-500) 55%,
+              transparent
+            );
+            opacity: 0.6;
+          }
+        }
+      }
+
+      & :not(pre) > code {
+        padding: 0.1em 0.35em;
+        background-color: var(--light-300);
+        border-radius: 0.3rem;
+        color: var(--text);
+        font-family: var(--mono-family);
+        font-size: 0.86em;
+      }
+
+      & mark {
+        padding: 0.05em 0.3em;
+        background-color: color-mix(in srgb, var(--brand-300) 40%, transparent);
+        border-radius: 0.25rem;
+        color: var(--text);
+        -webkit-box-decoration-break: clone;
+        box-decoration-break: clone;
+      }
+
+      /* ---- lists --------------------------------------------------------- */
+      & :is(ul, ol) {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45em;
+        padding: 0;
+        list-style: none;
+      }
+
+      & li {
+        position: relative;
+        padding-left: 1.75em;
+      }
+
+      /* A bullet is one stroke of the mark. */
+      & ul > li::before {
+        content: "";
+        position: absolute;
+        top: 0.55em;
+        left: 0.2em;
+        width: 0.38em;
+        height: 0.72em;
+        background-color: var(--brand-500);
+        transform: skewX(calc(var(--slant) * -1));
+      }
+
+      & ol {
+        counter-reset: prose-item;
+      }
+
+      & ol > li {
+        counter-increment: prose-item;
+      }
+
+      & ol > li::before {
+        content: counter(prose-item, decimal-leading-zero);
+        position: absolute;
+        top: 0.3em;
+        left: 0;
+        color: var(--brand-500);
+        font-family: var(--mono-family);
+        font-size: 0.75em;
+        font-weight: 500;
+        letter-spacing: 0.04em;
+      }
+
+      & li > :is(ul, ol) {
+        margin-top: 0.6em;
+      }
+
+      /* ---- images -------------------------------------------------------- */
+      /* Markdown sets a picture alone in a paragraph. It gets more room than
+         a paragraph would, and the soft mount the site's media sit in. */
+      & p:has(> img:only-child) {
+        margin-block: 2.25em;
+      }
+
+      & img {
+        width: 100%;
+        height: auto;
+        border-radius: var(--radius-large);
+        background-color: var(--dark-900);
+        box-shadow: 0 1.5rem 3rem -2rem rgb(13 25 40 / 0.45);
+      }
+
+      & figure {
+        margin-block: 2.25em;
+      }
+
+      & figcaption {
+        margin-top: 0.85em;
+        color: var(--text-muted);
+        font-size: 0.85em;
+      }
+
+      /* ---- quotes and rules ---------------------------------------------- */
+      /* A quote stands behind the two strokes, as a parallel rule. */
+      & blockquote {
+        padding-left: 1.5em;
+        background-image:
+          linear-gradient(var(--brand-500), var(--brand-500)),
+          linear-gradient(var(--brand-300), var(--brand-300));
+        background-size:
+          2px 100%,
+          2px 100%;
+        background-position:
+          0 0,
+          6px 0;
+        background-repeat: no-repeat;
+        color: var(--text);
+        font-size: 1.12em;
+        line-height: 1.5;
+      }
+
+      & hr {
+        height: 6px;
+        margin-block: 2.5em;
+        border: 0;
+        background-image:
+          linear-gradient(var(--border), var(--border)),
+          linear-gradient(var(--border-soft), var(--border-soft));
+        background-size:
+          100% 1px,
+          100% 1px;
+        background-position:
+          0 0,
+          0 100%;
+        background-repeat: no-repeat;
+      }
+
+      /* ---- code blocks --------------------------------------------------- */
+      & pre {
+        padding: 1.25em 1.4em;
+        overflow-x: auto;
+        border-radius: var(--radius-card);
+        background-color: var(--dark-900) !important;
+        color: var(--light-100);
+        font-family: var(--mono-family);
+        font-size: 0.85em;
+        line-height: 1.6;
+      }
+
+      /* ---- tables -------------------------------------------------------- */
+      /* Until the script has wrapped it, or without one, a table scrolls by
+         itself rather than widen the page. */
+      & > table {
+        display: block;
+        overflow-x: auto;
+      }
+
+      & .prose_table {
+        margin-block: 2em;
+        overflow-x: auto;
+        background-color: var(--light-100);
+        border: var(--border-width) solid var(--border-soft);
+        border-radius: var(--radius-card);
+        box-shadow: 0 1.25rem 2.5rem -2rem rgb(13 25 40 / 0.3);
+
+        & table {
+          margin: 0;
+        }
+
+        /* A row as a block: the first cell its title, the rest label and
+           value. */
+        @media (width < 36rem) {
+          & :is(table, tbody, tr) {
+            display: block;
+          }
+
+          & thead {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+          }
+
+          & tbody tr {
+            padding: 0.9em 1.1em 1em;
+          }
+
+          & tbody tr + tr {
+            border-top: var(--border-width) solid var(--border-soft);
+          }
+
+          & td {
+            display: grid;
+            grid-template-columns: minmax(0, 6.5rem) minmax(0, 1fr);
+            gap: 0.75em;
+            padding: 0.2em 0;
+            border: 0 !important;
+          }
+
+          & td::before {
+            content: attr(data-label);
+            color: var(--text-muted);
+          }
+
+          & td:first-child {
+            display: block;
+            padding-bottom: 0.4em;
+
+            &::before {
+              content: none;
+            }
+          }
+        }
+      }
+
+      & table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875em;
+        line-height: 1.45;
+      }
+
+      & th {
+        padding: 1em 1.1em 0.9em;
+        border-bottom: var(--border-width) solid var(--border);
+        color: var(--text-muted);
+        font-family: var(--mono-family);
+        font-size: 0.78em;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        text-align: left;
+        text-transform: uppercase;
+        vertical-align: bottom;
+      }
+
+      & td {
+        padding: 0.85em 1.1em;
+        vertical-align: top;
+      }
+
+      & tbody tr + tr td {
+        border-top: var(--border-width) solid var(--border-soft);
+      }
+
+      & td:first-child {
+        color: var(--text);
+        font-weight: 500;
+      }
+
+      /* ---- callout ------------------------------------------------------- */
+      & .prose_callout {
+        position: relative;
+        padding: clamp(1.25rem, 1rem + 1vw, 1.75rem)
+          clamp(1.25rem, 1rem + 1.25vw, 2rem);
+        overflow: clip;
+        background-color: var(--light-100);
+        border: var(--border-width) solid var(--border-soft);
+        border-radius: var(--radius-large);
+        font-size: 0.95em;
+        line-height: 1.6;
+
+        /* The ribs along the slant, faint, in the corner. */
+        &::before {
+          content: "";
+          position: absolute;
+          inset: 0 0 auto auto;
+          width: 9rem;
+          height: 100%;
+          background-image: repeating-linear-gradient(
+            calc(90deg + var(--slant)),
+            transparent 0 calc(1.1rem - 1px),
+            color-mix(in srgb, var(--brand-500) 9%, transparent)
+              calc(1.1rem - 1px) 1.1rem
+          );
+          mask-image: linear-gradient(90deg, transparent, black);
+          pointer-events: none;
+        }
+
+        & > * + * {
+          margin-top: 0.85em;
+        }
+
+        & > p:first-child strong {
+          font-family: var(--mono-family);
+          font-size: 0.75rem;
+          font-weight: 500;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: var(--brand-500);
+        }
+
+        & ul {
+          gap: 0.7em;
+        }
+      }
+
+      & .prose_callout + * {
+        margin-top: 2.25em;
+      }
+    }
+  }
+</style>

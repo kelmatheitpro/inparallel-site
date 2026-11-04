@@ -1,0 +1,42 @@
+---
+import Layout from "@/layouts/BaseLayout.astro";
+import PageHero from "@/components/parallel/PageHero.astro";
+import PostFeature from "@/components/blog/PostFeature.astro";
+import PostGrid from "@/components/blog/PostGrid.astro";
+import { getPosts } from "@/utils/content.ts";
+
+const posts = await getPosts();
+const latest = posts.slice(0, 3);
+---
+
+<Layout
+  theme="dark"
+  overlap
+  title="Insights"
+  description="Honest comparisons, how-tos and what changed in Webflow, SEO and AEO, written by the inParallel studio from real builds."
+>
+  <PageHero
+    label="Insights"
+    lead="Honest comparisons, how-tos and what changed in Webflow, SEO and AEO — written for the marketing teams who run the sites."
+  >
+    Industry insights, <br />from real <span class="serif">builds</span>.
+    {
+      latest.length > 0 && (
+        <div slot="after" class="blog-index_feature">
+          <PostFeature posts={latest} />
+        </div>
+      )
+    }
+  </PageHero>
+
+  <PostGrid posts={posts} />
+</Layout>
+
+<style is:global>
+  @layer components {
+    .blog-index_feature {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin: clamp(3rem, 2rem + 3vw, 4.5rem) auto 0;
+    }
+  }
+</style>

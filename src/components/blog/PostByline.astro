@@ -1,0 +1,115 @@
+---
+/**
+ * Who wrote it and when: the author's portrait, name, the date and the
+ * reading time. Colours follow the section's theme, so the same byline sits
+ * on the navy hero and on a cream card.
+ *
+ * `size="large"` is the article's own byline; the default is the one on
+ * cards.
+ */
+import Img from "@/components/Img.astro";
+import FormattedDate from "@/components/FormattedDate.astro";
+import { AUTHORS } from "@/data/about.ts";
+
+interface Props {
+  author: keyof typeof AUTHORS;
+  date: Date;
+  minutes: number;
+  /** Cards state the reading time elsewhere; they turn it off here. */
+  showMinutes?: boolean;
+  size?: "small" | "large";
+  class?: string;
+}
+
+const {
+  author: key,
+  date,
+  minutes,
+  showMinutes = true,
+  size = "small",
+  class: className,
+} = Astro.props;
+const author = AUTHORS[key];
+const px = size === "large" ? 56 : 36;
+---
+
+<div class:list={["post-byline", `is-${size}`, className]}>
+  <Img
+    src={author.photo}
+    alt=""
+    class="post-byline_avatar"
+    variant="densities"
+    width={px}
+  />
+  <div class="post-byline_text">
+    <span class="post-byline_name">{author.name}</span>
+    <span class="post-byline_meta">
+      <FormattedDate date={date} />
+      {
+        showMinutes && (
+          <>
+            <span aria-hidden="true">·</span>
+            {minutes} min read
+          </>
+        )
+      }
+    </span>
+  </div>
+</div>
+
+<style is:global>
+  @layer components {
+    .post-byline {
+      --_size: 2.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      &.is-large {
+        --_size: 3.5rem;
+        gap: 1rem;
+      }
+    }
+
+    .post-byline_avatar {
+      flex: none;
+      width: var(--_size);
+      height: var(--_size);
+      object-fit: cover;
+      object-position: 50% 15%;
+      border-radius: 50%;
+      background-color: var(--brand-100);
+      box-shadow: 0 0 0 1px var(--border-soft);
+    }
+
+    .post-byline_text {
+      display: flex;
+      flex-direction: column;
+      gap: 0.2rem;
+      margin: 0;
+      line-height: 1.2;
+    }
+
+    .post-byline_name {
+      color: var(--text);
+      font-size: 0.9375rem;
+      font-weight: 500;
+
+      .is-large & {
+        font-size: 1.0625rem;
+      }
+    }
+
+    .post-byline_meta {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      color: var(--text-muted);
+      font-size: 0.8125rem;
+
+      .is-large & {
+        font-size: 0.9375rem;
+      }
+    }
+  }
+</style>

@@ -1,29 +1,116 @@
 ---
+/**
+ * Not found — short, on brand, and three ways back.
+ *
+ * The copy stands at the top of the hero's glass; at its foot, clear of every
+ * word, the error itself: three tiles cut to the mark's lean, side by side.
+ * They land once along the slant, one a beat behind the other, and then the
+ * page holds still. For a reader who has asked for less motion they simply
+ * stand there.
+ */
 import Layout from "@/layouts/BaseLayout.astro";
-import Section from "@/components/Section.astro";
-import Heading from "@/components/Heading.astro";
-import Paragraph from "@/components/Paragraph.astro";
-import ButtonWrapper from "@/components/ButtonWrapper.astro";
-import Button from "@/components/Button.astro";
-import ContentWrapper from "@/components/ContentWrapper.astro";
+import PageHero from "@/components/parallel/PageHero.astro";
 ---
 
 <Layout
+  theme="dark"
+  overlap
   title="Page not found"
   description="The page you're looking for doesn't exist."
 >
-  <Section paddingTop="large" paddingBottom="large" class="flex-grow">
-    <ContentWrapper centered={true}>
-      <Heading variant="h3" tag="h1" maxWidth={17}
-        >This page doesn't exist</Heading
-      >
-      <Paragraph variant="large" maxWidth={36}
-        >The page you're looking for may have moved, or the link that brought
-        you here might be out of date.</Paragraph
-      >
-      <ButtonWrapper>
-        <Button element="link" href="/">Back to home</Button>
-      </ButtonWrapper>
-    </ContentWrapper>
-  </Section>
+  <div class="not-found">
+    <PageHero
+      label="Error 404"
+      align="center"
+      lead="The link may be old, or the page has moved. Here's the way back."
+    >
+      This page ran off <br />in <span class="serif">parallel</span>.
+      <a slot="actions" class="btn" href="/">Back to home</a>
+      <a slot="actions" class="btn btn-ghost" href="/work">See our work</a>
+      <a slot="actions" class="btn btn-ghost" href="/contact">Contact us</a>
+      <div slot="after" class="not-found_tiles" aria-hidden="true">
+        <span class="not-found_tile"><span>4</span></span>
+        <span class="not-found_tile"><span>0</span></span>
+        <span class="not-found_tile"><span>4</span></span>
+      </div>
+    </PageHero>
+  </div>
 </Layout>
+
+<style is:global>
+  @layer components {
+    /* The whole first screen: the copy at the top, the tiles on the floor. */
+    .not-found .page-hero {
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      padding-top: calc(var(--nav-height) + clamp(2rem, 7svh, 5rem));
+      padding-bottom: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+    }
+
+    .not-found .page-hero_lead {
+      text-wrap: balance;
+    }
+
+    /* Sized by the room there is: a tile answers to the width on a phone and
+       to the height on a short laptop, so the three always stay whole. */
+    .not-found_tiles {
+      --_h: clamp(6.5rem, min(3rem + 14vw, 26svh), 15rem);
+      --_w: min(22vw, var(--_h) * 1.06);
+      display: flex;
+      justify-content: center;
+      gap: clamp(0.5rem, 0.25rem + 1vw, 1.5rem);
+      margin-top: auto;
+      padding-top: clamp(2.5rem, 5svh, 3.5rem);
+    }
+
+    /* The shape leans; the figure inside it stands up straight. */
+    .not-found_tile {
+      flex: none;
+      display: grid;
+      place-items: center;
+      width: var(--_w);
+      height: var(--_h);
+      background-image: linear-gradient(
+        200deg,
+        color-mix(in srgb, var(--brand-500) 82%, var(--light-100)),
+        var(--brand-500) 70%
+      );
+      border-radius: clamp(0.75rem, 1.4vw, 1.25rem);
+      color: var(--dark-950);
+      font-size: calc(var(--_h) * 0.72);
+      font-weight: 500;
+      line-height: 1;
+      letter-spacing: -0.04em;
+      transform: skewX(calc(var(--slant) * -1));
+      animation: not-found-land 1s var(--ease-out) 0.25s both;
+
+      & > span {
+        display: block;
+        transform: skewX(var(--slant));
+      }
+
+      &:nth-child(2) {
+        background-image: linear-gradient(
+          200deg,
+          var(--light-100),
+          var(--brand-300) 75%
+        );
+        animation-delay: 0.37s;
+      }
+
+      &:nth-child(3) {
+        animation-delay: 0.49s;
+      }
+    }
+
+    /* In along the slant: as far across as it climbs, times the lean. */
+    @keyframes not-found-land {
+      from {
+        opacity: 0;
+        translate: calc(var(--_h) * -0.35 * var(--slant-tan))
+          calc(var(--_h) * 0.35);
+      }
+    }
+  }
+</style>

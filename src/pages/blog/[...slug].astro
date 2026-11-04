@@ -1,0 +1,295 @@
+---
+/**
+ * An Insights article.
+ *
+ * The hero carries the title and the byline; the cover overlaps its foot,
+ * the way a print is laid half on the desk and half off it. Under that, the
+ * article in a reading column, with the contents and the share links in a
+ * column beside it that stays in view; the author at the foot, then three
+ * more posts on navy. The footer's call to action closes the page.
+ */
+import { render } from "astro:content";
+import { getImage } from "astro:assets";
+import Layout from "@/layouts/BaseLayout.astro";
+import PageHero from "@/components/parallel/PageHero.astro";
+import ArrowLink from "@/components/inparallel/ArrowLink.astro";
+import Img from "@/components/Img.astro";
+import Prose from "@/components/blog/Prose.astro";
+import PostByline from "@/components/blog/PostByline.astro";
+import PostToc from "@/components/blog/PostToc.astro";
+import PostShare from "@/components/blog/PostShare.astro";
+import PostSummary from "@/components/blog/PostSummary.astro";
+import PostAuthor from "@/components/blog/PostAuthor.astro";
+import PostRelated from "@/components/blog/PostRelated.astro";
+import { readingMinutes, relatedPosts } from "@/components/blog/posts.ts";
+import { getPosts, type Post } from "@/utils/content.ts";
+import { AUTHORS } from "@/data/about.ts";
+import { SITE_URL } from "@/consts.ts";
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post) => ({
+    params: { slug: post.id },
+    props: { post, posts },
+  }));
+}
+
+interface Props {
+  post: Post;
+  posts: Post[];
+}
+
+const { post, posts } = Astro.props;
+const { Content, headings } = await render(post);
+const {
+  title,
+  description,
+  date,
+  updated,
+  author: authorKey,
+  category,
+  cover,
+  coverAlt,
+} = post.data;
+
+const author = AUTHORS[authorKey];
+const minutes = readingMinutes(post);
+const related = relatedPosts(post, posts);
+const site = Astro.site ?? new URL(SITE_URL);
+const canonical = new URL(Astro.url.pathname, site).href;
+
+/* A JPEG at the size the networks show, rather than the WebP original. */
+const social = await getImage({ src: cover, width: 1200, format: "jpg" });
+
+/* Structured data for search and answer engines: the article, its author
+   and the studio — nobody else. */
+const structured = {
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  headline: title,
+  description,
+  image: [new URL(social.src, site).href],
+  datePublished: date.toISOString(),
+  dateModified: (updated ?? date).toISOString(),
+  inLanguage: "en",
+  articleSection: category,
+  url: canonical,
+  mainEntityOfPage: { "@type": "WebPage", "@id": canonical },
+  author: {
+    "@type": "Person",
+    name: author.name,
+    jobTitle: author.role,
+    ...(author.linkedin ? { sameAs: [author.linkedin] } : {}),
+    worksFor: { "@type": "Organization", name: "inParallel", url: SITE_URL },
+  },
+  publisher: { "@type": "Organization", name: "inParallel", url: SITE_URL },
+};
+---
+
+<Layout
+  theme="dark"
+  overlap
+  title={title}
+  description={description}
+  image={social.src}
+  type="article"
+>
+  <script
+    is:inline
+    slot="head"
+    type="application/ld+json"
+    set:html={JSON.stringify(structured)}
+  />
+
+  <article class="post">
+    <div class="post_head">
+      <PageHero label={category ? `Insights · ${category}` : "Insights"}>
+        {title}
+        <PostByline
+          slot="actions"
+          author={authorKey}
+          date={date}
+          minutes={minutes}
+          size="large"
+        />
+        <ArrowLink slot="actions" href="/blog">All insights</ArrowLink>
+      </PageHero>
+    </div>
+
+    <div class="post_body theme-light">
+      <div class="post_inner">
+        <figure class="post_cover">
+          <Img
+            src={cover}
+            alt={coverAlt}
+            class="post_cover-img"
+            variant="constrained"
+            sizes="(width >= 90rem) 84rem, 94vw"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
+          />
+        </figure>
+
+        <div class="post_layout">
+          <div class="post_side">
+            <PostToc headings={headings} />
+            <PostShare url={canonical} title={title} class="post_share" />
+          </div>
+
+          <div class="post_main">
+            <PostSummary url={canonical} />
+            <Prose>
+              <Content />
+            </Prose>
+            {
+              /* Run where it stands, so the row is in the box before the page
+                paints and nothing moves. */
+            }
+            <script is:inline>
+              document
+                .querySelector(".prose_callout")
+                ?.append(document.querySelector("[data-post-summary]"));
+            </script>
+            <PostAuthor author={authorKey} />
+          </div>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <PostRelated posts={related} />
+</Layout>
+
+<style is:global>
+  @layer components {
+    .post {
+      /* How far the cover reaches up into the hero. The hero's foot grows by
+         the same amount, so the byline keeps its room above it. */
+      --post-overlap: clamp(4.5rem, 1.5rem + 12vw, 13rem);
+    }
+
+    /* An article title is a sentence, not a slogan: a size down from the
+       other pages' heroes. */
+    .post_head .page-hero {
+      padding-bottom: calc(clamp(3rem, 2rem + 3vw, 5rem) + var(--post-overlap));
+    }
+
+    .post_head .page-hero_copy {
+      max-width: 60rem;
+    }
+
+    .post_head .page-hero_title {
+      font-size: clamp(2.25rem, 1.55rem + 2.7vw, 4rem);
+      line-height: 1.04;
+      letter-spacing: -0.04em;
+    }
+
+    .post_head .page-hero_actions {
+      align-items: center;
+      gap: 1rem 2.5rem;
+      margin-top: 1rem;
+    }
+
+    .post_body {
+      background-color: var(--light-200);
+      padding-bottom: var(--section-space-large);
+    }
+
+    /* A flex column, so the cover's negative margin pulls the cover up
+       without collapsing through and dragging the cream up with it. */
+    .post_inner {
+      width: min(100% - var(--site-margin) * 2, var(--max-width-main));
+      margin-inline: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* At the picture's own shape, whatever that is, so no cover loses its
+       top and bottom to a fixed frame. */
+    .post_cover {
+      position: relative;
+      z-index: 1;
+      margin: calc(var(--post-overlap) * -1) 0 0;
+      overflow: clip;
+      border-radius: var(--radius-large);
+      background-color: var(--dark-900);
+      box-shadow: 0 2.5rem 5rem -3rem rgb(6 10 19 / 0.6);
+    }
+
+    .post_cover-img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    /* The reading column on the left, under the cover's edge; contents and
+       sharing at the right margin, in view while the article scrolls. On a
+       narrow screen the contents come first, then the article. */
+    .post_layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: clamp(2.5rem, 2rem + 2vw, 3.5rem);
+      margin-top: clamp(2.5rem, 1.75rem + 2.5vw, 4.5rem);
+
+      @media (width >= 62rem) {
+        grid-template-columns: minmax(0, 52.5rem) clamp(15rem, 28vw, 25rem);
+        grid-template-areas: "main side";
+        justify-content: space-between;
+        column-gap: clamp(2.5rem, 7vw, 6.25rem);
+      }
+    }
+
+    .post_main {
+      display: flex;
+      flex-direction: column;
+      gap: clamp(3rem, 2.25rem + 2.5vw, 4.5rem);
+      min-width: 0;
+
+      /* A wider column than a legal page's, so the pictures in it get their
+         full size; the type steps up with it to keep the line a readable
+         length. */
+      & .prose {
+        --_measure: 52.5rem;
+        font-size: clamp(1.0625rem, 0.95rem + 0.45vw, 1.3125rem);
+        line-height: 1.65;
+      }
+
+      /* Named only where the grid names its areas: an area the template
+         doesn't define would open an extra column on a phone. */
+      @media (width >= 62rem) {
+        grid-area: main;
+      }
+    }
+
+    .post_side {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      padding: 0.75rem 1.25rem;
+      background-color: var(--light-100);
+      border: var(--border-width) solid var(--border-soft);
+      border-radius: var(--radius-large);
+
+      @media (width >= 62rem) {
+        grid-area: side;
+        position: sticky;
+        top: calc(var(--nav-height) + 1.5rem);
+        align-self: start;
+        gap: 2.25rem;
+        padding: 0;
+        background: none;
+        border: 0;
+      }
+    }
+
+    .post_share {
+      padding-top: 0.75rem;
+      border-top: var(--border-width) solid var(--border-soft);
+
+      @media (width >= 62rem) {
+        padding-top: 2rem;
+      }
+    }
+  }
+</style>

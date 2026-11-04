@@ -32,26 +32,32 @@ export function initMarginCalculator() {
   /** An unset price is a dash rather than a zero, which would read as free. */
   const EMPTY = "—";
 
+  /* Most keystrokes leave most figures as they were, and rewriting one would
+     still send the browser back to lay it out. */
+  const write = (el: HTMLElement, text: string) => {
+    if (el.textContent !== text) el.textContent = text;
+  };
+
   const update = () => {
     const option = job.selectedOptions[0];
     const price = Number(option?.dataset.price ?? 0);
     const jobHours = Number(option?.dataset.hours ?? 0);
     const charged = Number(charge.value);
 
-    hours.textContent = jobHours ? `${jobHours} hours` : EMPTY;
-    ours.textContent = price ? money.format(price) : EMPTY;
+    write(hours, jobHours ? `${jobHours} hours` : EMPTY);
+    write(ours, price ? money.format(price) : EMPTY);
 
-    if (!price || !charged) {
-      keep.textContent = EMPTY;
-      share.textContent = EMPTY;
+    if (!price || !(charged > 0)) {
+      write(keep, EMPTY);
+      write(share, EMPTY);
       return;
     }
 
     const left = charged - price;
-    keep.textContent = money.format(left);
+    write(keep, money.format(left));
     /* Of what he invoices, not of what he pays us: it is his margin he is
        weighing, and a negative one is worth showing as plainly as a good one. */
-    share.textContent = `${Math.round((left / charged) * 100)}%`;
+    write(share, `${Math.round((left / charged) * 100)}%`);
   };
 
   job.addEventListener("change", update);

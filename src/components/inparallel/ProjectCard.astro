@@ -1,9 +1,8 @@
 ---
 import Img from "@/components/Img.astro";
-import Icon from "@/components/Icon.astro";
+import ArrowCircle from "./ArrowCircle.astro";
 import type { Project } from "@/utils/content.ts";
-import glowDiagonal from "@/assets/inparallel/glow-diagonal.svg";
-import arrowCircle from "@/assets/inparallel/icons/arrow-circle.svg";
+import glowDiagonal from "@/assets/inparallel/glow-diagonal.webp";
 
 interface Props {
   project: Project;
@@ -36,7 +35,7 @@ const { data } = project;
       <span class="stat_value">{data.stat}</span>
       <span class="stat_label">{data.statLabel}</span>
     </span>
-    <Icon src={arrowCircle} class="case_arrow" />
+    <ArrowCircle diagonal class="case_arrow" />
   </div>
 </a>
 
@@ -48,12 +47,37 @@ const { data } = project;
       align-items: start;
       justify-content: space-between;
       gap: var(--space-5);
-      height: 31.25rem;
-      padding: var(--space-5);
+      height: 100%;
+      padding: 1.5625rem;
       background-color: rgb(255 255 255 / 0.03);
       border: var(--border-width) solid var(--border);
       color: inherit;
       text-decoration: none;
+      --arrow-fill: var(--lane-accent, var(--brand-500));
+      --arrow-ink: var(--dark-900);
+
+      /* Hover lifts the whole surface a shade, as a fade on a layer of its
+         own: nothing repaints but the arrow. */
+      &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        background-color: color-mix(in srgb, var(--text) 5%, transparent);
+        opacity: 0;
+        transition: opacity 0.35s var(--ease-soft);
+        pointer-events: none;
+      }
+    }
+
+    @media (hover: hover) {
+      .case_card:hover::after {
+        opacity: 1;
+      }
+    }
+
+    .case_card:focus-visible::after {
+      opacity: 1;
     }
 
     /* The bar the design rakes across the card at 15°. */
@@ -66,9 +90,23 @@ const { data } = project;
       rotate: 15deg;
     }
 
+    /* On a service's page the card's light is that service's. */
+    .has-lane .case_glow {
+      display: none;
+    }
+
+    .has-lane .case_card {
+      background-image: linear-gradient(
+        to top right,
+        transparent 55%,
+        color-mix(in srgb, var(--lane-accent) 14%, transparent)
+      );
+    }
+
     .case_card_top {
       display: flex;
       flex-direction: column;
+      align-items: start;
       gap: var(--space-5);
     }
 
@@ -87,22 +125,16 @@ const { data } = project;
       gap: var(--space-4);
       padding-top: var(--space-5);
       border-top: var(--border-width) solid var(--border);
-      --_stat-size: 3rem;
-    }
+      /* Eases down with the narrow card of a mid-sized screen, so the figure
+         keeps to one line beside the arrow. */
+      --_stat-size: clamp(2.25rem, 1rem + 2.4vw, 3rem);
 
-    .case_arrow {
-      --_size: 2.5rem;
-      rotate: -45deg;
-      transition: transform var(--duration-main) var(--ease-out);
-    }
-
-    @media (hover: hover) {
-      .case_card:hover .case_arrow {
-        transform: translate(0.2rem, -0.2rem);
+      & .stat_value {
+        white-space: nowrap;
       }
     }
 
-    @media (width < 64rem) {
+    @media (width < 62rem) {
       .case_card {
         height: auto;
         min-height: 22rem;

@@ -1,0 +1,242 @@
+---
+/**
+ * What the agency offer costs, and the week to try it.
+ *
+ * Three cards, one per way of buying, then the line about margins and the
+ * next opening, then the trial week on a cream ticket — the one light thing
+ * in a navy section, cut along the slant at one end.
+ *
+ * Every figure comes from `src/data/extended-team.ts`, where they are still
+ * placeholders; the note under the cards says so on the page until they're
+ * filled in.
+ */
+import Todo from "@/components/pricing/Todo.astro";
+import { DETAILS, PRICING } from "@/data/extended-team.ts";
+
+/* A figure still written as X's, or "TBC", hasn't been set. */
+const unset = (value: string) => /X|TBC/.test(value);
+const placeholders = [
+  ...PRICING.map((tier) => tier.price),
+  DETAILS.availability,
+  DETAILS.trialPrice,
+].some(unset);
+---
+
+<div class="tiers">
+  <ul class="tiers_list" role="list" data-anim-group>
+    {
+      PRICING.map((tier, index) => (
+        <li class="tier-card" data-anim="rise">
+          <span class="tier-card_index" aria-hidden="true">
+            {String(index + 1).padStart(2, "0")}
+          </span>
+          <h3 class="tier-card_name">{tier.name}</h3>
+          <p class="tier-card_price">{tier.price}</p>
+          <p class="tier-card_text">{tier.text}</p>
+        </li>
+      ))
+    }
+  </ul>
+
+  <div class="tiers_foot">
+    <p class="tiers_note">
+      What you charge your client is your business, and our price doesn't move
+      with it. <strong>{DETAILS.availability}</strong>
+    </p>
+    {
+      placeholders && (
+        <Todo>
+          rates, the trial price and the next opening are placeholders — fill
+          them in src/data/extended-team.ts before this page is shared.
+        </Todo>
+      )
+    }
+  </div>
+
+  <aside class="trial" aria-labelledby="trial-title">
+    <span class="trial_mark" aria-hidden="true"><i></i><i></i></span>
+    <div class="trial_body">
+      <h3 class="trial_title" id="trial-title">Try it for a week first</h3>
+      <p class="trial_text">
+        One week, fixed price, deliverables agreed before it starts, and no
+        obligation to carry on. You're deciding about a week, not about a
+        partnership.
+      </p>
+    </div>
+    <p class="trial_price">{DETAILS.trialPrice}</p>
+  </aside>
+</div>
+
+<style is:global>
+  @layer components {
+    .tiers {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: clamp(2rem, 1.5rem + 1.5vw, 3rem);
+    }
+
+    .tiers_list {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-4);
+      margin: 0;
+      padding: 0;
+      list-style: none;
+
+      /* Three abreast or one above the other: never two and a stray. */
+      @media (width >= 48rem) {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    .tier-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      padding: clamp(1.4rem, 1.1rem + 1vw, 2rem);
+      background-color: var(--dark-850);
+      border: var(--border-width) solid rgb(255 255 255 / 0.08);
+      border-radius: 1rem;
+    }
+
+    .tier-card_index {
+      color: var(--text-faded);
+      font-family: var(--mono-family);
+      font-size: 0.75rem;
+      letter-spacing: 0.06em;
+    }
+
+    .tier-card_name {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 500;
+      letter-spacing: -0.015em;
+    }
+
+    .tier-card_price {
+      margin: 0.35rem 0 0;
+      background-image: linear-gradient(
+        to bottom,
+        var(--light-100) 30%,
+        var(--brand-300)
+      );
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem);
+      font-weight: 500;
+      letter-spacing: -0.03em;
+      line-height: 1.15;
+    }
+
+    .tier-card_text {
+      margin: 0;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .tiers_foot {
+      display: flex;
+      flex-direction: column;
+      align-items: start;
+      gap: 1rem;
+    }
+
+    .tiers_note {
+      max-width: 40rem;
+      margin: 0;
+      color: var(--text-muted);
+      line-height: 1.55;
+
+      & strong {
+        display: block;
+        margin-top: 0.5rem;
+        color: var(--text);
+        font-weight: 500;
+      }
+    }
+
+    /* The trial: a cream ticket in the navy, two opposite corners cut along
+       the slant — the studio's own card, as on the pricing page. */
+    .trial {
+      --_h: 2.25rem;
+      --_c: calc(var(--_h) * var(--slant-tan));
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      align-items: center;
+      gap: clamp(1.25rem, 1rem + 1.5vw, 2.5rem);
+      padding: clamp(1.5rem, 1.1rem + 1.5vw, 2.5rem);
+      background-color: var(--light-200);
+      color: var(--ink-900);
+      border-radius: 0.35rem;
+      clip-path: polygon(
+        var(--_c) 0,
+        100% 0,
+        100% calc(100% - var(--_h)),
+        calc(100% - var(--_c)) 100%,
+        0 100%,
+        0 var(--_h)
+      );
+    }
+
+    .trial_mark {
+      display: flex;
+      gap: 0.3rem;
+      height: 3.5rem;
+
+      & > i {
+        width: 0.55rem;
+        background-color: var(--brand-500);
+        transform: skewX(calc(var(--slant) * -1));
+      }
+
+      & > i + i {
+        background-color: var(--brand-300);
+      }
+    }
+
+    .trial_body {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      max-width: 36rem;
+    }
+
+    .trial_title {
+      margin: 0;
+      font-size: clamp(1.35rem, 1.15rem + 0.7vw, 1.85rem);
+      font-weight: 500;
+      letter-spacing: -0.025em;
+      line-height: 1.1;
+    }
+
+    .trial_text {
+      margin: 0;
+      color: color-mix(in srgb, var(--ink-900) 70%, transparent);
+      line-height: 1.55;
+    }
+
+    .trial_price {
+      margin: 0;
+      font-size: clamp(1.25rem, 1.05rem + 0.6vw, 1.6rem);
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+
+    @media (width < 48rem) {
+      .trial {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .trial_mark {
+        height: 2.25rem;
+      }
+
+      .trial_price {
+        white-space: normal;
+      }
+    }
+  }
+</style>

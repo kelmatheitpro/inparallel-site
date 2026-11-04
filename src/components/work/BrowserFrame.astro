@@ -1,0 +1,232 @@
+---
+/**
+ * A browser window around a screen of a client's site: three dots and the
+ * address in the bar, the capture in the view.
+ *
+ *   <BrowserFrame image={media.desktop} alt="…" ratio="16 / 10"
+ *                 url="https://ballerine.com/" sizes="60vw" />
+ *
+ * A window that changes what it shows takes its pictures in the default slot
+ * and its addresses in `address`, instead of `image` and `url`.
+ *
+ * `tone="glass"` is the dark chrome for a dark hero; the default is the light
+ * chrome of a desktop browser.
+ */
+import Img from "@/components/Img.astro";
+import { hostOf } from "@/data/work.ts";
+
+interface Props {
+  /** Without one, the view holds whatever is in the default slot. */
+  image?: ImageMetadata;
+  alt?: string;
+  /** The live site. Its domain is written in the address bar. */
+  url?: string;
+  /** The view's shape. A capture taller than it is cropped to its top. */
+  ratio?: string;
+  tone?: "light" | "glass";
+  /** A "Live" light at the end of the bar. */
+  live?: boolean;
+  sizes?: string;
+  loading?: "lazy" | "eager";
+  fetchPriority?: "auto" | "high" | "low";
+  class?: string;
+}
+
+const {
+  image,
+  alt = "",
+  url,
+  ratio = "16 / 10",
+  tone = "light",
+  live = false,
+  sizes,
+  loading = "lazy",
+  fetchPriority = "auto",
+  class: className,
+} = Astro.props;
+---
+
+<div
+  class:list={["browser", `is-${tone}`, className]}
+  style={`--_ratio: ${ratio};`}
+>
+  <div class="browser_bar" aria-hidden="true">
+    <span class="browser_dots"><span></span><span></span><span></span></span>
+    {url && <span class="browser_url">{hostOf(url)}</span>}
+    {
+      Astro.slots.has("address") && (
+        <span class="browser_url">
+          <slot name="address" />
+        </span>
+      )
+    }
+    {
+      live && (
+        <span class="browser_live">
+          <span class="browser_live_dot" />
+          Live
+        </span>
+      )
+    }
+  </div>
+  <div class="browser_view">
+    {
+      image ? (
+        <Img
+          src={image}
+          alt={alt}
+          class="browser_img"
+          variant="constrained"
+          sizes={sizes}
+          loading={loading}
+          fetchPriority={fetchPriority}
+        />
+      ) : (
+        <slot />
+      )
+    }
+  </div>
+</div>
+
+<style is:global>
+  @layer components {
+    .browser {
+      --_bar: #eef0f4;
+      --_bar-ink: rgb(13 25 40 / 0.6);
+      --_dot: rgb(13 25 40 / 0.18);
+      display: flex;
+      flex-direction: column;
+      overflow: clip;
+      border-radius: 0.8rem;
+      background-color: var(--light-100);
+      box-shadow: 0 2rem 4rem -1.5rem rgb(6 10 19 / 0.45);
+
+      &.is-glass {
+        --_bar: rgb(255 255 255 / 0.06);
+        --_bar-ink: rgb(255 255 255 / 0.72);
+        --_dot: rgb(255 255 255 / 0.22);
+        padding: 0 0.5rem 0.5rem;
+        background-color: rgb(30 38 54 / 0.9);
+        border: var(--border-width) solid rgb(255 255 255 / 0.14);
+        border-radius: 1.1rem;
+        box-shadow:
+          inset 0 1px 0 rgb(255 255 255 / 0.12),
+          0 2.5rem 5rem -2rem rgb(0 0 0 / 0.6);
+      }
+    }
+
+    .browser_bar {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      min-height: 2.25rem;
+      padding: 0.55rem 0.85rem;
+      background-color: var(--_bar);
+      border-bottom: 1px solid rgb(13 25 40 / 0.08);
+
+      .is-glass & {
+        min-height: 2.75rem;
+        padding-inline: 0.5rem;
+        background-color: transparent;
+        border-bottom: 0;
+      }
+    }
+
+    .browser_dots {
+      display: flex;
+      gap: 0.3rem;
+
+      & > span {
+        width: 0.55rem;
+        height: 0.55rem;
+        border-radius: 50%;
+        background-color: var(--_dot);
+      }
+    }
+
+    /* The address sits in the middle of the bar, the way a browser sets it. */
+    .browser_url {
+      position: absolute;
+      left: 50%;
+      translate: -50% 0;
+      max-width: calc(100% - 9rem);
+      overflow: hidden;
+      padding: 0.2rem 0.75rem;
+      border-radius: 1rem;
+      background-color: var(--light-100);
+      color: var(--_bar-ink);
+      font-family: var(--mono-family);
+      font-size: 0.6875rem;
+      line-height: 1.4;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      .is-glass & {
+        padding: 0.3rem 1rem;
+        background-color: rgb(255 255 255 / 0.06);
+        border: var(--border-width) solid rgb(255 255 255 / 0.08);
+      }
+    }
+
+    /* A phone's window is narrow: the address gives up its padding before it
+       gives up any of its letters. */
+    @media (width < 48rem) {
+      .browser_bar {
+        gap: 0.5rem;
+        padding-inline: 0.6rem;
+      }
+
+      .browser_url {
+        max-width: calc(100% - 5.5rem);
+        padding-inline: 0.5rem;
+        font-size: 0.625rem;
+      }
+    }
+
+    .browser_live {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      margin-left: auto;
+      color: var(--_bar-ink);
+      font-family: var(--mono-family);
+      font-size: 0.6875rem;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .browser_live_dot {
+      width: 0.45rem;
+      height: 0.45rem;
+      border-radius: 50%;
+      background-color: #3ddc97;
+      box-shadow: 0 0 0 0.2rem rgb(61 220 151 / 0.2);
+    }
+
+    .browser_view {
+      position: relative;
+      aspect-ratio: var(--_ratio);
+      overflow: clip;
+      background-color: var(--light-100);
+
+      /* Dark until the picture lands: white would flash in a dark hero. */
+      .is-glass & {
+        border-radius: 0.6rem;
+        background-color: var(--dark-800);
+      }
+    }
+
+    /* Pinned to the view, so a capture taller than the view is cropped by it
+       rather than stretching it. */
+    .browser_img {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top;
+    }
+  }
+</style>

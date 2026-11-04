@@ -1,0 +1,41 @@
+---
+/**
+ * A two-line heading from the services data, with its one softer word set in
+ * the serif. Renders only the inside of the heading, so it can sit in a
+ * `PageHero` or a `SectionHead` slot.
+ */
+import type { Title } from "@/data/service-pages.ts";
+
+interface Props {
+  title: Title;
+}
+
+const { title } = Astro.props;
+
+/* The serif word is wrapped where it first appears, in either line; a word
+   that happens to occur twice is still only set once. */
+let pending = title.serif;
+const lines = title.lines.map((line) => {
+  const at = pending ? line.indexOf(pending) : -1;
+  if (!pending || at < 0) return { before: line, word: "", after: "" };
+  const word = pending;
+  pending = undefined;
+  return {
+    before: line.slice(0, at),
+    word,
+    after: line.slice(at + word.length),
+  };
+});
+---
+
+{
+  lines.map((line, index) => (
+    <>
+      {index > 0 && " "}
+      {index > 0 && <br />}
+      {line.before}
+      {line.word && <span class="serif">{line.word}</span>}
+      {line.after}
+    </>
+  ))
+}

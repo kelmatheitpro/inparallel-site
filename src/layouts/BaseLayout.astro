@@ -4,6 +4,8 @@ import BaseHead from "@/components/BaseHead.astro";
 import SkipLink from "@/components/SkipLink.astro";
 import Nav from "@/components/Nav.astro";
 import Footer from "@/components/Footer.astro";
+import PageSlash from "@/components/parallel/PageSlash.astro";
+import ScrollRail from "@/components/parallel/ScrollRail.astro";
 import type { SeoProps } from "@/types.ts";
 
 type Props = SeoProps & {
@@ -24,10 +26,35 @@ const { theme = "inherit", overlap = false, ...seo } = Astro.props;
 <html lang="en" class:list={[theme !== "inherit" && `theme-${theme}`]}>
   <head>
     <BaseHead {...seo} />
+    {
+      /* Marks the root while a page-change transition plays, so the strokes
+         that ride the cut exist only then. Must run before first render. */
+    }
+    <script is:inline>
+      /* Intros on: the stylesheet may hide the page's first heading until it's
+         cut in. Desktop only — on a phone the heading is the page's largest
+         paint, and it shouldn't wait for an entrance. */
+      if (
+        matchMedia("(prefers-reduced-motion: no-preference)").matches &&
+        matchMedia("(min-width: 62rem) and (hover: hover) and (pointer: fine)")
+          .matches
+      )
+        document.documentElement.classList.add("intro");
+      addEventListener("pagereveal", function (event) {
+        if (!event.viewTransition) return;
+        var root = document.documentElement;
+        root.classList.add("is-arriving");
+        event.viewTransition.finished.finally(function () {
+          root.classList.remove("is-arriving");
+        });
+      });
+    </script>
     <slot name="head" />
   </head>
   <body>
     <SkipLink />
+    <PageSlash />
+    <ScrollRail />
     <Nav overlap={overlap} />
     {
       /* `tabindex` so the jump moves focus here, not just the scroll position */
